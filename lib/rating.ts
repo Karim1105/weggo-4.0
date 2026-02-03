@@ -1,7 +1,7 @@
 import Product from '@/models/Product'
 import User from '@/models/User'
 import Review from '@/models/Review'
-import { connectDB } from '@/lib/db'
+import connectDB from '@/lib/db'
 
 /**
  * Calculate average rating for a product from its reviews
