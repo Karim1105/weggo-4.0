@@ -1,5 +1,98 @@
-// Seller rating system that affects overall seller rating
-// Implements weighted rating system based on transaction history
+import Product from '@/models/Product'
+import User from '@/models/User'
+import Review from '@/models/Review'
+import { connectDB } from '@/lib/db'
+
+/**
+ * Calculate average rating for a product from its reviews
+ */
+export async function calculateProductRating(productId: string): Promise<{ average: number; count: number }> {
+  await connectDB()
+
+  const reviews = await Review.find({ product: productId }).select('rating').lean()
+
+  if (reviews.length === 0) {
+    return { average: 0, count: 0 }
+  }
+
+  const total = reviews.reduce((sum, review) => sum + review.rating, 0)
+  const average = Math.round((total / reviews.length) * 10) / 10 // Round to 1 decimal
+
+  return { average, count: reviews.length }
+}
+
+/**
+ * Calculate average rating for a seller from all their product reviews
+ */
+export async function calculateSellerRating(sellerId: string): Promise<{ average: number; count: number }> {
+  await connectDB()
+
+  // Get all products by this seller
+  const products = await Product.find({ seller: sellerId }).select('_id').lean()
+  const productIds = products.map((p) => p._id)
+
+  if (productIds.length === 0) {
+    return { average: 0, count: 0 }
+  }
+
+  // Get all reviews for these products
+  const reviews = await Review.find({ product: { $in: productIds } }).select('rating').lean()
+
+  if (reviews.length === 0) {
+    return { average: 0, count: 0 }
+  }
+
+  const total = reviews.reduce((sum, review) => sum + review.rating, 0)
+  const average = Math.round((total / reviews.length) * 10) / 10
+
+  return { average, count: reviews.length }
+}
+
+/**
+ * Update product rating in database
+ */
+export async function updateProductRating(productId: string): Promise<void> {
+  const { average, count } = await calculateProductRating(productId)
+
+  await Product.findByIdAndUpdate(productId, {
+    averageRating: average,
+    ratingCount: count,
+  })
+}
+
+/**
+ * Update all products' ratings for a seller
+ */
+export async function updateSellerProductsRatings(sellerId: string): Promise<void> {
+  const products = await Product.find({ seller: sellerId }).select('_id')
+
+  for (const product of products) {
+    await updateProductRating(product._id.toString())
+  }
+}
+
+/**
+ * Get formatted rating display (e.g., "4.5 (23 reviews)")
+ */
+export function formatRating(average: number, count: number): string {
+  if (count === 0) return 'No ratings yet'
+  
+  const stars = '★'.repeat(Math.floor(average)) + '☆'.repeat(5 - Math.floor(average))
+  return `${stars} ${average} (${count} ${count === 1 ? 'review' : 'reviews'})`
+}
+
+/**
+ * Get rating category
+ */
+export function getRatingCategory(average: number): 'excellent' | 'good' | 'fair' | 'poor' | 'none' {
+  if (average === 0) return 'none'
+  if (average >= 4.5) return 'excellent'
+  if (average >= 3.5) return 'good'
+  if (average >= 2.5) return 'fair'
+  return 'poor'
+}
+
+// Legacy mock data and interfaces below (kept for backward compatibility)
 
 export interface Rating {
   id: string

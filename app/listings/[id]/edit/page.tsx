@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
-import { subcategoriesByCategory } from '@/lib/utils'
+import { subcategoriesByCategory, withCsrfHeader } from '@/lib/utils'
 
 interface Listing {
   _id: string
@@ -76,7 +76,7 @@ export default function EditListingPage() {
     try {
       const res = await fetch(`/api/listings/${id}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
         credentials: 'include',
         body: JSON.stringify({
           title: title.trim(),

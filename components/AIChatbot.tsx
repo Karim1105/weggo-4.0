@@ -3,7 +3,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageCircle, X, Send, Sparkles, Loader2 } from 'lucide-react'
-import { generateAIResponseWithRAG, getSearchContext } from '@/lib/rag'
 
 interface Message {
   id: string
@@ -48,13 +47,13 @@ export default function AIChatbot() {
     setInput('')
     setIsLoading(true)
 
-    // Use RAG system for intelligent responses
-    setTimeout(() => {
-      const context = getSearchContext()
+    // Fetch AI response - uses real products from API
+    setTimeout(async () => {
+      const response = await generateAIResponse(input)
       const aiResponse: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: generateAIResponseWithRAG(input, context),
+        content: response,
         timestamp: new Date()
       }
       setMessages(prev => [...prev, aiResponse])
@@ -62,19 +61,65 @@ export default function AIChatbot() {
     }, 1500)
   }
 
-  const generateAIResponse = (query: string): string => {
+  const generateAIResponse = async (query: string): Promise<string> => {
     const lowerQuery = query.toLowerCase()
     
+    // Fetch products by category if user is searching
     if (lowerQuery.includes('phone') || lowerQuery.includes('mobile')) {
-      return 'I found some great phones for you! Here are top picks:\n\n📱 iPhone 13 Pro - 15,000 EGP (Cairo)\n📱 Samsung Galaxy S22 - 12,500 EGP (Alexandria)\n📱 OnePlus 10 Pro - 11,000 EGP (Giza)\n\nWould you like to see more details about any of these?'
+      try {
+        const res = await fetch('/api/listings?category=electronics&limit=3')
+        const data = await res.json()
+        if (data.success && data.data.listings.length > 0) {
+          const phones = data.data.listings.filter((p: any) => 
+            p.title.toLowerCase().includes('phone') || p.title.toLowerCase().includes('mobile')
+          ).slice(0, 3)
+          
+          if (phones.length > 0) {
+            return `I found some great phones for you! Here are top picks:\n\n${phones.map((p: any) => 
+              `📱 ${p.title} - ${p.price.toLocaleString()} EGP (${p.location})`
+            ).join('\n')}\n\nWould you like to see more details about any of these?`
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching phones:', err)
+      }
+      return 'I found some great phones for you! Browse our electronics section to see all available options.'
     }
     
     if (lowerQuery.includes('laptop') || lowerQuery.includes('computer')) {
-      return 'I found excellent laptops in your area:\n\n💻 Dell XPS 15 - 18,000 EGP (Cairo)\n💻 MacBook Pro M1 - 25,000 EGP (Alexandria)\n💻 Lenovo ThinkPad - 14,500 EGP (Giza)\n\nAll are in great condition with warranty!'
+      try {
+        const res = await fetch('/api/listings?category=electronics&limit=3')
+        const data = await res.json()
+        if (data.success && data.data.listings.length > 0) {
+          const laptops = data.data.listings.filter((p: any) => 
+            p.title.toLowerCase().includes('laptop') || p.title.toLowerCase().includes('computer')
+          ).slice(0, 3)
+          
+          if (laptops.length > 0) {
+            return `I found excellent laptops in your area:\n\n${laptops.map((p: any) => 
+              `💻 ${p.title} - ${p.price.toLocaleString()} EGP (${p.location})`
+            ).join('\n')}\n\nAll are in great condition!`
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching laptops:', err)
+      }
+      return 'I found excellent laptops in our electronics section. Browse to see all available options.'
     }
     
     if (lowerQuery.includes('furniture') || lowerQuery.includes('sofa')) {
-      return 'Here are some beautiful furniture pieces:\n\n🛋️ Modern L-Shaped Sofa - 8,000 EGP (Cairo)\n🛋️ Vintage Armchair - 3,500 EGP (Alexandria)\n🛋️ Office Desk Set - 5,000 EGP (Giza)\n\nAll items are gently used and well-maintained!'
+      try {
+        const res = await fetch('/api/listings?category=furniture&limit=3')
+        const data = await res.json()
+        if (data.success && data.data.listings.length > 0) {
+          return `Here are some beautiful furniture pieces:\n\n${data.data.listings.map((p: any) => 
+            `🛋️ ${p.title} - ${p.price.toLocaleString()} EGP (${p.location})`
+          ).join('\n')}\n\nAll items are gently used and well-maintained!`
+        }
+      } catch (err) {
+        console.error('Error fetching furniture:', err)
+      }
+      return 'Here are some beautiful furniture pieces in our furniture section. Browse to see all available options.'
     }
     
     if (lowerQuery.includes('price') || lowerQuery.includes('سعر')) {
@@ -85,7 +130,7 @@ export default function AIChatbot() {
       return 'Here\'s how Weggo works:\n\n1️⃣ Browse personalized listings\n2️⃣ Chat with me to find items\n3️⃣ Contact sellers directly\n4️⃣ Meet safely in public places\n5️⃣ Complete your purchase\n\nSelling is easy too! Just click "Sell" and I\'ll help you price it right.'
     }
 
-    return 'I\'m here to help you find exactly what you\'re looking for! You can ask me about:\n\n🔍 Finding specific items\n💰 Price suggestions\n📍 Items in your area\n❓ How Weggo works\n\nWhat would you like to know?'
+    return 'I\'m here to help you find exactly what you\'re looking for! You can ask me about:\n\n🔍 Finding specific items (phones, laptops, furniture, etc.)\n💰 Price suggestions\n📍 Items in your area\n❓ How Weggo works\n\nWhat would you like to know?'
   }
 
   const quickQuestions = [

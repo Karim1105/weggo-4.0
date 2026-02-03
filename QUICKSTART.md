@@ -1,4 +1,4 @@
-# 🚀 Weggo Quick Start Guide
+# Weggo Quick Start Guide
 
 ## Installation (5 minutes)
 
@@ -18,7 +18,7 @@ Navigate to: **http://localhost:3000**
 
 ---
 
-## 🎮 Try These Features Now!
+## Try These Features Now!
 
 ### 1. AI Chatbot (30 seconds)
 1. Look for the **chat icon** in the bottom-right corner
@@ -60,7 +60,7 @@ Navigate to: **http://localhost:3000**
 
 ---
 
-## 📁 Project Structure (Quick Reference)
+## Project Structure (Quick Reference)
 
 ```
 weggo/
@@ -84,7 +84,7 @@ weggo/
 
 ---
 
-## 🎨 Key Design Elements
+## Key Design Elements
 
 ### Colors
 - **Primary Blue**: `#0ea5e9` - Trust, technology
@@ -103,7 +103,7 @@ weggo/
 
 ---
 
-## 🛠️ Common Tasks
+## Common Tasks
 
 ### Add a New Component
 ```bash
@@ -126,7 +126,7 @@ Edit `app/globals.css` → `@layer utilities`
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Port 3000 Already in Use
 ```bash
@@ -156,7 +156,7 @@ npm run lint
 
 ---
 
-## 📚 Learn More
+## Learn More
 
 ### Documentation
 - **README.md** - Overview and installation
@@ -172,7 +172,7 @@ npm run lint
 
 ---
 
-## 🎯 Next Steps
+## Next Steps
 
 ### For Development
 1. ✅ Explore the AI features
@@ -192,7 +192,7 @@ npm run lint
 
 ---
 
-## 💡 Pro Tips
+## Pro Tips
 
 1. **Hot Reload**: Changes auto-refresh the browser
 2. **Component Library**: All components in `/components`

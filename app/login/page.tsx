@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Mail, Lock, LogIn } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { withCsrfHeader } from '@/lib/utils'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -22,7 +23,7 @@ export default function LoginPage() {
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
         credentials: 'include',
         body: JSON.stringify({ email, password }),
       })

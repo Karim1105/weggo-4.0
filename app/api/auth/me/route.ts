@@ -1,17 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthUser } from '@/lib/auth'
+import { setCsrfTokenCookie } from '@/lib/csrf'
 
 export async function GET(request: NextRequest) {
   try {
     const user = await getAuthUser(request)
     if (!user) {
-      return NextResponse.json(
+      const response = NextResponse.json(
         { success: false, error: 'Unauthorized' },
         { status: 401 }
       )
+      // Prevent caching of auth state
+      response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate')
+      response.headers.set('Pragma', 'no-cache')
+      return response
     }
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       user: {
         id: user._id,
@@ -26,6 +31,15 @@ export async function GET(request: NextRequest) {
         banned: (user as any).banned ?? false,
       },
     })
+    
+    // Prevent caching of auth state
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate')
+    response.headers.set('Pragma', 'no-cache')
+    
+    if (!request.cookies.get('csrfToken')) {
+      setCsrfTokenCookie(response)
+    }
+    return response
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to get user' },

@@ -10,8 +10,19 @@ export interface IProduct extends Document {
   location: string
   images: string[]
   seller: mongoose.Types.ObjectId
+  // Status values:
+  // 'active' - Published and available for purchase
+  // 'pending' - Awaiting seller verification or admin approval before publishing
+  // 'sold' - Transaction completed, no longer available
+  // 'deleted' - Soft-deleted by seller (hidden from listings but data retained)
   status: 'active' | 'sold' | 'pending' | 'deleted'
   views: number
+  isBoosted: boolean
+  boostedAt?: Date
+  boostedBy?: mongoose.Types.ObjectId
+  averageRating: number
+  ratingCount: number
+  lastInquiry?: Date
   createdAt: Date
   updatedAt: Date
 }
@@ -40,7 +51,7 @@ const ProductSchema = new Schema<IProduct>(
     condition: {
       type: String,
       required: [true, 'Condition is required'],
-      enum: ['New', 'Like New', 'Excellent', 'Good', 'Fair'],
+      enum: ['New', 'Like New', 'Excellent', 'Good', 'Fair', 'Poor'],
     },
     location: {
       type: String,
@@ -57,12 +68,40 @@ const ProductSchema = new Schema<IProduct>(
     },
     status: {
       type: String,
-      enum: ['active', 'sold', 'pending', 'deleted'],
+      enum: {
+        values: ['active', 'sold', 'pending', 'deleted'],
+        message: 'Product status must be one of: active, sold, pending, or deleted'
+      },
       default: 'active',
     },
     views: {
       type: Number,
       default: 0,
+    },
+    isBoosted: {
+      type: Boolean,
+      default: false,
+    },
+    boostedAt: {
+      type: Date,
+    },
+    boostedBy: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+    },
+    averageRating: {
+      type: Number,
+      default: 0,
+      min: 0,
+      max: 5,
+    },
+    ratingCount: {
+      type: Number,
+      default: 0,
+    },
+    lastInquiry: {
+      type: Date,
+      default: null,
     },
   },
   {

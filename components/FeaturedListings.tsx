@@ -43,8 +43,10 @@ export default function FeaturedListings() {
         }
       }
       setFavoriteIds(ids)
-      if (data.success && data.listings?.length) {
-        setProducts(data.listings.map((l: any) => mapApiListingToProduct(l, ids)))
+      const listings = data.data?.listings ?? data.listings
+      if (data.success && Array.isArray(listings) && listings.length) {
+        const activeListings = listings.filter((l: any) => l.status !== 'deleted')
+        setProducts(activeListings.map((l: any) => mapApiListingToProduct(l, ids)))
       }
     } catch {
       setProducts([])

@@ -1,12 +1,12 @@
-# 🎯 START HERE - Weggo Quick Launch
+# START HERE - Weggo Quick Launch
 
-## Welcome to Weggo! 🎉
+## Welcome to Weggo!
 
 Your AI-powered marketplace is ready to launch. Follow these 3 simple steps:
 
 ---
 
-## 🚀 Step 1: Install Dependencies (1 minute)
+## Step 1: Install Dependencies (1 minute)
 
 Open your terminal in the `weggo` folder and run:
 
@@ -18,7 +18,7 @@ npm install
 
 ---
 
-## 🎮 Step 2: Start the Development Server (5 seconds)
+## Step 2: Start the Development Server (5 seconds)
 
 ```bash
 npm run dev
@@ -28,7 +28,7 @@ npm run dev
 
 ---
 
-## 🌐 Step 3: Open Your Browser
+## Step 3: Open Your Browser
 
 Navigate to: **http://localhost:3000**
 
@@ -40,32 +40,32 @@ You should see the Weggo homepage with:
 
 ---
 
-## ✨ Try These Features Right Now!
+## Try These Features Right Now!
 
-### 1. AI Chatbot (30 seconds) 🤖
+### 1. AI Chatbot (30 seconds)
 - Click the **chat bubble** icon (bottom-right)
 - Ask: "Show me phones"
 - See instant AI recommendations!
 
-### 2. AI Pricing (1 minute) 💰
+### 2. AI Pricing (1 minute)
 - Click **"Sell"** in the navigation
 - Fill in item details
 - Click **"Get AI Price Suggestion"**
 - Watch AI analyze market data!
 
-### 3. Language Toggle (5 seconds) 🌍
+### 3. Language Toggle (5 seconds)
 - Click the **globe icon** in navbar
 - Toggle between English and Arabic
 - Watch layout flip to RTL!
 
-### 4. Favorites (10 seconds) ❤️
+### 4. Favorites (10 seconds)
 - Click any **heart icon** on products
 - Navigate to **Favorites** page
 - See your saved items!
 
 ---
 
-## 📖 Documentation Guide
+## Documentation Guide
 
 ### Just Starting?
 → **Read: QUICKSTART.md** (5-minute guide)
@@ -84,7 +84,7 @@ You should see the Weggo homepage with:
 
 ---
 
-## 🎨 Customize Your App
+## Customize Your App
 
 ### Change Colors
 Edit: `tailwind.config.ts`
@@ -107,7 +107,7 @@ colors: {
 
 ---
 
-## 🛠️ Common Commands
+## Common Commands
 
 ```bash
 # Start development server
@@ -125,7 +125,7 @@ npm run lint
 
 ---
 
-## 📱 Mobile Testing
+## Mobile Testing
 
 ### Test on Your Phone
 1. Find your computer's IP address
@@ -134,7 +134,7 @@ npm run lint
 
 ---
 
-## 🐛 Troubleshooting
+## Troubleshooting
 
 ### Issue: Port 3000 in use
 **Solution**: 
@@ -158,9 +158,9 @@ npm run dev
 
 ---
 
-## 🎯 What's Included?
+## What's Included?
 
-### ✅ Complete Features
+### Complete Features
 - AI Chatbot for buyers
 - AI Price suggestions for sellers
 - Personalized product feed
@@ -170,25 +170,25 @@ npm run dev
 - Mobile responsive design
 - Modern animations
 
-### ✅ Pages
+### Pages
 - Home (/)
 - Sell (/sell)
 - Profile (/profile)
 - Favorites (/favorites)
 
-### ✅ Components
+### Components
 - 17 reusable components
 - Fully styled & animated
 - TypeScript throughout
 
-### ✅ API Routes
+### API Routes
 - AI Chat endpoint
 - Pricing endpoint
 - Listings endpoint
 
 ---
 
-## 🚀 Next Steps
+## Next Steps
 
 ### Option A: Explore & Learn
 1. Browse the code

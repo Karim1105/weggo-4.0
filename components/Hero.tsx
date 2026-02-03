@@ -35,8 +35,10 @@ export default function Hero() {
     fetch('/api/listings?limit=8&sortBy=newest', { credentials: 'include' })
       .then((r) => r.json())
       .then((data) => {
-        if (data.success && data.listings?.length) {
-          const mapped = data.listings.slice(0, 3).map((p: any) => ({
+        const listings = data.data?.listings ?? data.listings
+        if (data.success && Array.isArray(listings) && listings.length) {
+          const activeListing = listings.filter((p: any) => p.status !== 'deleted')
+          const mapped = activeListing.slice(0, 3).map((p: any) => ({
             id: p._id,
             title: p.title,
             price: p.price,

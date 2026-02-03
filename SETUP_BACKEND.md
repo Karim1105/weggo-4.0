@@ -1,6 +1,6 @@
 # Backend Setup Guide - Weggo
 
-## 🚀 Quick Setup
+## Quick Setup
 
 ### 1. Install Dependencies
 
@@ -89,7 +89,7 @@ npm run dev
 - Password: `not your average admin`
 - URL: `/admin`
 
-## 🔌 API Endpoints
+## API Endpoints
 
 ### Authentication
 - `POST /api/auth/register` - User registration
@@ -126,24 +126,24 @@ npm run dev
 - `POST /api/admin/login` - Admin login
 - `GET /api/admin/analytics` - Get analytics data
 
-## 🛠️ Features Implemented
+## Features Implemented
 
-✅ User registration and login
-✅ JWT-based authentication
-✅ Product CRUD operations
-✅ Image upload (local storage)
-✅ Wishlist/Favorites
-✅ Messaging system
-✅ Reviews and ratings
-✅ Recently viewed items
-✅ Recommendations based on viewing history
-✅ Advanced search with filters
-✅ Rate limiting
-✅ Caching layer
-✅ Admin dashboard
-✅ Analytics
+- User registration and login
+- JWT-based authentication
+- Product CRUD operations
+- Image upload (local storage)
+- Wishlist/Favorites
+- Messaging system
+- Reviews and ratings
+- Recently viewed items
+- Recommendations based on viewing history
+- Advanced search with filters
+- Rate limiting
+- Caching layer
+- Admin dashboard
+- Analytics
 
-## 📝 Notes
+## Notes
 
 - Images are stored locally in `public/uploads/`
 - MongoDB connection is cached for performance
@@ -168,7 +168,7 @@ npm run dev
 - Check JWT_SECRET in .env.local
 - Verify token expiration (7 days)
 
-## 🚀 Production Checklist
+## Production Checklist
 
 Before deploying:
 - [ ] Change JWT_SECRET to a strong random string

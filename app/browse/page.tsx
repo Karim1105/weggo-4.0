@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Search, Filter, Grid, List, Package, Heart, MapPin, Clock } from 'lucide-react'
 import ProductCard from '@/components/ProductCard'
-import { mapApiListingToProduct, categories as apiCategories, subcategoriesByCategory } from '@/lib/utils'
+import { mapApiListingToProduct, categories as apiCategories, subcategoriesByCategory, withCsrfHeader } from '@/lib/utils'
 import { useAppStore } from '@/lib/store'
 import toast from 'react-hot-toast'
 
@@ -55,9 +55,11 @@ export default function BrowsePage() {
     const cat = searchParams.get('category') || 'all'
     const sub = searchParams.get('subcategory') || 'all'
     const loc = searchParams.get('location') || ''
+    const search = searchParams.get('search') || ''
     setSelectedCategory(cat)
     setSelectedSubcategory(sub)
     setLocationFilter(loc)
+    setSearchQuery(search)
   }, [searchParams])
 
   const categories = useMemo(() => ['all', ...apiCategories.map((c) => c.id)], [])
@@ -82,12 +84,14 @@ export default function BrowsePage() {
       if (selectedSubcategory === 'all') params.delete('subcategory')
       else params.set('subcategory', selectedSubcategory)
     }
+    if (searchQuery.trim()) params.set('search', searchQuery.trim())
+    else params.delete('search')
     const q = params.toString()
     const newUrl = q ? `?${q}` : window.location.pathname
     if (window.location.search !== (q ? `?${q}` : '')) {
       router.replace(newUrl, { scroll: false })
     }
-  }, [selectedCategory, selectedSubcategory, router, searchParams])
+  }, [selectedCategory, selectedSubcategory, searchQuery, router, searchParams])
 
   const sortOptions = [
     { value: 'newest', label: 'Newest First' },
@@ -134,9 +138,10 @@ export default function BrowsePage() {
         }
       }
       setFavoriteIds(ids)
-      if (data.success && data.listings) {
-        setProducts(data.listings.map((l: any) => mapApiListingToProduct(l, ids)))
-        setTotalPages(data.totalPages ?? 1)
+      const payload = data.data ?? data
+      if (data.success && Array.isArray(payload?.listings)) {
+        setProducts(payload.listings.map((l: any) => mapApiListingToProduct(l, ids)))
+        setTotalPages(payload.totalPages ?? 1)
       } else {
         setProducts([])
       }
@@ -167,7 +172,7 @@ export default function BrowsePage() {
       addFavorite(id)
       fetch('/api/wishlist', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
         credentials: 'include',
         body: JSON.stringify({ productId: id }),
       }).catch(() => {})
@@ -180,7 +185,7 @@ export default function BrowsePage() {
       removeFavorite(id)
       fetch('/api/wishlist', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
         credentials: 'include',
         body: JSON.stringify({ productId: id }),
       }).catch(() => {})
@@ -238,7 +243,7 @@ export default function BrowsePage() {
     try {
       const res = await fetch('/api/saved-searches', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
         credentials: 'include',
         body: JSON.stringify({ name, params }),
       })
@@ -260,26 +265,12 @@ export default function BrowsePage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40">
-      {/* Header */}
-      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-0 z-40">
+      {/* Header - positioned below main navbar */}
+      <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-16 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-            {/* Search Bar */}
-            <div className="flex-1 max-w-2xl">
-              <div className="relative">
-                <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  placeholder="Search for anything..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-12 pr-4 py-3 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white/70"
-                />
-              </div>
-            </div>
-
             {/* Controls */}
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-4 w-full lg:w-auto justify-center lg:justify-start flex-wrap">
               {/* Filter Button */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
@@ -477,8 +468,8 @@ export default function BrowsePage() {
         </div>
       </div>
 
-      {/* Results */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Results - added extra top padding to prevent sticky header from hiding content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
         {/* Subcategory chips when a category with subcategories is selected */}
         {subcategories.length > 0 && (
           <div className="mb-6">

@@ -28,7 +28,8 @@ export async function POST(request: NextRequest) {
     }
 
     const token = crypto.randomBytes(32).toString('hex')
-    user.resetPasswordToken = token
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex')
+    user.resetPasswordToken = tokenHash
     user.resetPasswordExpires = new Date(Date.now() + 60 * 60 * 1000)
     await user.save({ validateBeforeSave: false })
 

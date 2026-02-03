@@ -7,14 +7,38 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, Search, Heart, User, Plus, Globe, LogIn, LogOut, MessageCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 
+// Type-safe user interface
+interface NavbarUser {
+  id: string
+  name: string
+  email: string
+  role: 'user' | 'admin'
+  avatar?: string
+}
+
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [isArabic, setIsArabic] = useState(false)
-  const [user, setUser] = useState<any>(null)
+  const [user, setUser] = useState<NavbarUser | null>(null)
   const [unreadMessages, setUnreadMessages] = useState(0)
   const router = useRouter()
+    const handleSearch = () => {
+      const query = searchQuery.trim()
+      if (!query) {
+        router.push('/browse')
+        return
+      }
+      router.push(`/browse?search=${encodeURIComponent(query)}`)
+    }
+
+    const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+      if (event.key === 'Enter') {
+        event.preventDefault()
+        handleSearch()
+      }
+    }
   const pathname = usePathname()
 
   useEffect(() => {
@@ -35,8 +59,8 @@ export default function Navbar() {
     try {
       const res = await fetch('/api/auth/me', { credentials: 'include' })
       const data = await res.json()
-      if (data.success) {
-        setUser(data.user)
+      if (data.success && data.user) {
+        setUser(data.user as NavbarUser)
         try {
           const res = await fetch('/api/messages', { credentials: 'include' })
           const msgData = await res.json()
@@ -67,8 +91,8 @@ export default function Navbar() {
       setUser(null)
       setUnreadMessages(0)
       toast.success('Logged out successfully')
-      router.push('/')
-      router.refresh()
+      // Force hard reload to clear all cached state
+      window.location.href = '/'
     } catch (error) {
       toast.error('Logout failed')
     }
@@ -118,6 +142,7 @@ export default function Navbar() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
                 placeholder={isArabic ? "ابحث عن أي شيء..." : "Search for anything..."}
                 className="w-full pl-12 pr-6 py-4 rounded-2xl border border-gray-200/50 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-300 bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 text-lg"
               />
@@ -228,6 +253,7 @@ export default function Navbar() {
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={handleSearchKeyDown}
               placeholder={isArabic ? "ابحث عن أي شيء..." : "Search for anything..."}
               className="w-full pl-12 pr-4 py-3 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white/50 backdrop-blur-sm"
             />

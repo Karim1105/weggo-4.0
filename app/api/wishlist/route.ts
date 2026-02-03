@@ -38,15 +38,20 @@ async function handler(request: NextRequest, user: any) {
       )
     }
 
-    const existing = await Wishlist.findOne({ user: user._id, product: productId })
-    if (existing) {
+    // Use atomic $addToSet to prevent duplicate entries on concurrent requests
+    const userWishlist = await Wishlist.findOne({ user: user._id })
+    if (userWishlist && userWishlist.product.includes(productId)) {
       return NextResponse.json(
         { success: false, error: 'Already in wishlist' },
         { status: 400 }
       )
     }
 
-    await Wishlist.create({ user: user._id, product: productId })
+    await Wishlist.findOneAndUpdate(
+      { user: user._id },
+      { $addToSet: { product: productId } },
+      { upsert: true, new: true }
+    )
 
     return NextResponse.json({
       success: true,
@@ -65,7 +70,12 @@ async function handler(request: NextRequest, user: any) {
       )
     }
 
-    await Wishlist.findOneAndDelete({ user: user._id, product: productId })
+    // Use atomic $pull to safely remove from concurrent requests
+    await Wishlist.findOneAndUpdate(
+      { user: user._id },
+      { $pull: { product: productId } },
+      { new: true }
+    )
 
     return NextResponse.json({
       success: true,

@@ -1,4 +1,4 @@
-# 🏗️ Weggo Architecture
+# Weggo Architecture
 
 ## System Overview
 
@@ -459,13 +459,13 @@ E2E Tests
 ---
 
 This architecture is:
-- ✅ Scalable
-- ✅ Maintainable
-- ✅ Modular
-- ✅ Type-safe
-- ✅ Production-ready
+- Scalable
+- Maintainable
+- Modular
+- Type-safe
+- Production-ready
 
-**Ready to build amazing features! 🚀**
+**Ready to build amazing features!**
 
 
 

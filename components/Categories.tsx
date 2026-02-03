@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { 
@@ -17,19 +18,50 @@ import {
 } from 'lucide-react'
 
 // Slug must match API/listings and lib/utils categories (e.g. home not home-garden)
-const categoryList: { name: string; nameAr: string; slug: string; icon: typeof Smartphone; count: string; gradient: string; bgPattern: string; popular: boolean; description: string }[] = [
-  { name: 'Electronics', nameAr: 'إلكترونيات', slug: 'electronics', icon: Smartphone, count: '2,341', gradient: 'from-blue-400 via-blue-500 to-blue-600', bgPattern: 'circuit', popular: true, description: 'Phones, laptops, cameras & more' },
-  { name: 'Furniture', nameAr: 'أثاث', slug: 'furniture', icon: Sofa, count: '1,567', gradient: 'from-purple-400 via-purple-500 to-purple-600', bgPattern: 'dots', popular: false, description: 'Sofas, tables, chairs & decor' },
-  { name: 'Vehicles', nameAr: 'مركبات', slug: 'vehicles', icon: Car, count: '892', gradient: 'from-green-400 via-green-500 to-green-600', bgPattern: 'waves', popular: true, description: 'Cars, motorcycles, bikes' },
-  { name: 'Fashion', nameAr: 'أزياء', slug: 'fashion', icon: Shirt, count: '3,124', gradient: 'from-pink-400 via-pink-500 to-pink-600', bgPattern: 'zigzag', popular: true, description: 'Clothes, shoes, accessories' },
-  { name: 'Home & Garden', nameAr: 'منزل وحديقة', slug: 'home', icon: Home, count: '1,234', gradient: 'from-yellow-400 via-yellow-500 to-yellow-600', bgPattern: 'grid', popular: false, description: 'Kitchen, garden, tools' },
-  { name: 'Sports', nameAr: 'رياضة', slug: 'sports', icon: Dumbbell, count: '756', gradient: 'from-red-400 via-red-500 to-red-600', bgPattern: 'lines', popular: false, description: 'Fitness, outdoor, equipment' },
-  { name: 'Books', nameAr: 'كتب', slug: 'books', icon: BookOpen, count: '1,890', gradient: 'from-indigo-400 via-indigo-500 to-indigo-600', bgPattern: 'books', popular: false, description: 'Books, magazines, media' },
-  { name: 'Gaming', nameAr: 'ألعاب فيديو', slug: 'gaming', icon: Gamepad2, count: '2,045', gradient: 'from-cyan-400 via-cyan-500 to-cyan-600', bgPattern: 'pixels', popular: true, description: 'Consoles, games, accessories' },
+const categoryList: { name: string; nameAr: string; slug: string; icon: typeof Smartphone; count: number; gradient: string; bgPattern: string; popular: boolean; description: string }[] = [
+  { name: 'Electronics', nameAr: 'إلكترونيات', slug: 'electronics', icon: Smartphone, count: 0, gradient: 'from-blue-400 via-blue-500 to-blue-600', bgPattern: 'circuit', popular: true, description: 'Phones, laptops, cameras & more' },
+  { name: 'Furniture', nameAr: 'أثاث', slug: 'furniture', icon: Sofa, count: 0, gradient: 'from-purple-400 via-purple-500 to-purple-600', bgPattern: 'dots', popular: false, description: 'Sofas, tables, chairs & decor' },
+  { name: 'Vehicles', nameAr: 'مركبات', slug: 'vehicles', icon: Car, count: 0, gradient: 'from-green-400 via-green-500 to-green-600', bgPattern: 'waves', popular: true, description: 'Cars, motorcycles, bikes' },
+  { name: 'Fashion', nameAr: 'أزياء', slug: 'fashion', icon: Shirt, count: 0, gradient: 'from-pink-400 via-pink-500 to-pink-600', bgPattern: 'zigzag', popular: true, description: 'Clothes, shoes, accessories' },
+  { name: 'Home & Garden', nameAr: 'منزل وحديقة', slug: 'home', icon: Home, count: 0, gradient: 'from-yellow-400 via-yellow-500 to-yellow-600', bgPattern: 'grid', popular: false, description: 'Kitchen, garden, tools' },
+  { name: 'Sports', nameAr: 'رياضة', slug: 'sports', icon: Dumbbell, count: 0, gradient: 'from-red-400 via-red-500 to-red-600', bgPattern: 'lines', popular: false, description: 'Fitness, outdoor, equipment' },
+  { name: 'Books', nameAr: 'كتب', slug: 'books', icon: BookOpen, count: 0, gradient: 'from-indigo-400 via-indigo-500 to-indigo-600', bgPattern: 'books', popular: false, description: 'Books, magazines, media' },
+  { name: 'Gaming', nameAr: 'ألعاب فيديو', slug: 'gaming', icon: Gamepad2, count: 0, gradient: 'from-cyan-400 via-cyan-500 to-cyan-600', bgPattern: 'pixels', popular: true, description: 'Consoles, games, accessories' },
 ]
-const categories = categoryList
 
 export default function Categories() {
+  const [categories, setCategories] = useState(categoryList)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchCategoryCounts()
+  }, [])
+
+  const fetchCategoryCounts = async () => {
+    try {
+      const res = await fetch('/api/categories/counts')
+      const data = await res.json()
+      
+      if (data.success) {
+        const updatedCategories = categoryList.map(cat => ({
+          ...cat,
+          count: data.data.counts[cat.slug] || 0
+        }))
+        setCategories(updatedCategories)
+      }
+    } catch (error) {
+      console.error('Failed to fetch category counts:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const formatCount = (count: number) => {
+    if (count === 0) return '0'
+    if (count < 1000) return count.toString()
+    return (count / 1000).toFixed(1).replace(/\.0$/, '') + 'k'
+  }
+
   return (
     <section className="py-20 px-4 relative overflow-hidden">
       {/* Background Pattern */}
@@ -127,7 +159,7 @@ export default function Categories() {
                     </h3>
                     <p className="text-sm text-gray-600 mb-3">{category.description}</p>
                     <div className="flex items-center justify-between">
-                      <span className="text-2xl font-bold text-primary-600">{category.count}</span>
+                      <span className="text-2xl font-bold text-primary-600">{formatCount(category.count)}</span>
                       <span className="text-sm text-gray-500">items</span>
                     </div>
                   </div>
@@ -163,7 +195,7 @@ export default function Categories() {
                     <h4 className="font-semibold text-lg mb-1 group-hover:text-primary-600 transition-colors">
                       {category.name}
                     </h4>
-                    <p className="text-sm text-gray-500">{category.count} items</p>
+                    <p className="text-sm text-gray-500">{formatCount(category.count)} items</p>
                   </div>
                 </motion.div>
               </Link>
@@ -195,4 +227,3 @@ export default function Categories() {
     </section>
   )
 }
-

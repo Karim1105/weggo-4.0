@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isValidObjectId } from 'mongoose'
 import connectDB from '@/lib/db'
 import Message from '@/models/Message'
+import Product from '@/models/Product'
 import User from '@/models/User'
 import { requireAuth } from '@/lib/auth'
 
@@ -14,6 +16,19 @@ async function handler(request: NextRequest, user: any) {
     const productId = searchParams.get('productId')
 
     if (conversationId) {
+      // Validate that user is a participant in the conversation (either sender or receiver)
+      const isParticipant = await Message.exists({
+        conversationId,
+        $or: [{ sender: user._id }, { receiver: user._id }]
+      })
+
+      if (!isParticipant) {
+        return NextResponse.json(
+          { success: false, error: 'Access denied to this conversation' },
+          { status: 403 }
+        )
+      }
+
       // Get messages for a specific conversation
       const messages = await Message.find({ conversationId })
         .populate('sender', 'name email avatar')
@@ -86,6 +101,22 @@ async function handler(request: NextRequest, user: any) {
       )
     }
 
+    // Validate receiverId is a valid ObjectId
+    if (!isValidObjectId(receiverId)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid receiver ID format' },
+        { status: 400 }
+      )
+    }
+
+    // Validate productId if provided
+    if (productId && !isValidObjectId(productId)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid product ID format' },
+        { status: 400 }
+      )
+    }
+
     // Basic validation / anti-spam
     if (typeof content !== 'string' || content.trim().length < 1 || content.trim().length > 2000) {
       return NextResponse.json(
@@ -142,24 +173,41 @@ async function handler(request: NextRequest, user: any) {
     const userIds = [user._id.toString(), receiverId].sort()
     const conversationId = `${userIds[0]}_${userIds[1]}${productId ? `_${productId}` : ''}`
 
-    const message = await Message.create({
-      conversationId,
-      sender: user._id,
-      receiver: receiverId,
-      product: productId,
-      content: content.trim(),
-    })
+    try {
+      // Create the message
+      const message = await Message.create({
+        conversationId,
+        sender: user._id,
+        receiver: receiverId,
+        product: productId || null,
+        content: content.trim(),
+      })
 
-    await message.populate([
-      { path: 'sender', select: 'name email avatar' },
-      { path: 'receiver', select: 'name email avatar' },
-      { path: 'product', select: 'title price images' },
-    ])
+      // If messaging about a specific product, mark product as "inquired" by updating status
+      if (productId) {
+        await Product.updateOne(
+          { _id: productId },
+          { $set: { lastInquiry: new Date() } }
+        )
+      }
 
-    return NextResponse.json({
-      success: true,
-      message,
-    })
+      // Populate the message before returning
+      const populatedMessage = await Message.findById(message._id)
+        .populate('sender', 'name email avatar')
+        .populate('receiver', 'name email avatar')
+        .populate('product', 'title price images')
+
+      return NextResponse.json({
+        success: true,
+        message: populatedMessage,
+      })
+    } catch (error) {
+      console.error('Message creation error:', error)
+      return NextResponse.json(
+        { success: false, error: 'Failed to send message. Please try again.' },
+        { status: 500 }
+      )
+    }
   }
 
   return NextResponse.json(

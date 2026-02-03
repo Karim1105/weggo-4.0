@@ -76,12 +76,12 @@ async function handler(request: NextRequest, user: any) {
       { $group: { _id: '$status', count: { $sum: 1 } } },
     ])
 
-    // Get users by month (last 6 months)
-    const sixMonthsAgo = new Date()
-    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+    // Get users by month (last 12 months for better graphs)
+    const twelveMonthsAgo = new Date()
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12)
 
     const usersByMonth = await User.aggregate([
-      { $match: { createdAt: { $gte: sixMonthsAgo } } },
+      { $match: { createdAt: { $gte: twelveMonthsAgo } } },
       {
         $group: {
           _id: {
@@ -95,7 +95,7 @@ async function handler(request: NextRequest, user: any) {
     ])
 
     const productsByMonth = await Product.aggregate([
-      { $match: { createdAt: { $gte: sixMonthsAgo } } },
+      { $match: { createdAt: { $gte: twelveMonthsAgo } } },
       {
         $group: {
           _id: {
@@ -107,6 +107,39 @@ async function handler(request: NextRequest, user: any) {
       },
       { $sort: { '_id.year': 1, '_id.month': 1 } },
     ])
+
+    // Get daily statistics for last 30 days
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
+    const usersByDay = await User.aggregate([
+      { $match: { createdAt: { $gte: thirtyDaysAgo } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { '_id': 1 } },
+    ])
+
+    const productsByDay = await Product.aggregate([
+      { $match: { createdAt: { $gte: thirtyDaysAgo } } },
+      {
+        $group: {
+          _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+          count: { $sum: 1 },
+        },
+      },
+      { $sort: { '_id': 1 } },
+    ])
+
+    // Get report statistics
+    const Report = (await import('@/models/Report')).default
+    const totalReports = await Report.countDocuments()
+    const pendingReports = await Report.countDocuments({ status: 'pending' })
+    const bannedUsers = await User.countDocuments({ banned: true })
+    const boostedListings = await Product.countDocuments({ isBoosted: true })
 
     const result = {
       success: true,
@@ -120,6 +153,10 @@ async function handler(request: NextRequest, user: any) {
           totalReviews,
           totalViews,
           totalWishlists,
+          totalReports,
+          pendingReports,
+          bannedUsers,
+          boostedListings,
           averageRating: Math.round(avgRating * 10) / 10,
         },
         recentUsers,
@@ -127,8 +164,12 @@ async function handler(request: NextRequest, user: any) {
         topCategories,
         topLocations,
         productsByStatus,
-        usersByMonth,
-        productsByMonth,
+        trends: {
+          usersByMonth,
+          productsByMonth,
+          usersByDay,
+          productsByDay,
+        },
       },
     }
 

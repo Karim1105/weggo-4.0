@@ -8,7 +8,7 @@ import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import AIPricingSuggestion from '@/components/AIPricingSuggestion'
 import { categorizeProduct } from '@/lib/categorization'
-import { subcategoriesByCategory } from '@/lib/utils'
+import { subcategoriesByCategory, withCsrfHeader } from '@/lib/utils'
 
 interface ListingForm {
   title: string
@@ -73,6 +73,7 @@ export default function SellPage() {
       formData.append('idDocument', idFile)
       const res = await fetch('/api/auth/upload-id', {
         method: 'POST',
+        headers: withCsrfHeader({}),
         credentials: 'include',
         body: formData,
       })
@@ -127,6 +128,7 @@ export default function SellPage() {
 
       const res = await fetch('/api/listings', {
         method: 'POST',
+        headers: withCsrfHeader({}),
         credentials: 'include',
         body: formData,
       })
@@ -156,8 +158,9 @@ export default function SellPage() {
       setValue('condition', '')
       setValue('price', 0)
       setValue('location', '')
-      if (result.listing?._id) {
-        window.location.href = `/listings/${result.listing._id}`
+      const createdListing = result.data?.listing || result.listing
+      if (createdListing?._id) {
+        window.location.href = `/listings/${createdListing._id}`
       }
     } catch (err) {
       toast.error('Failed to create listing')

@@ -36,7 +36,7 @@ Weggo is an innovative second-hand marketplace designed specifically for the Egy
 - **Dark/Light Mode Ready** - Easy to implement theme switching
 - **Arabic Language Support** - RTL layout and Cairo font for Arabic text
 
-### 🇪🇬 Egyptian Market Focus
+### Egyptian Market Focus
 
 - **Local Currency** - All prices in Egyptian Pounds (EGP)
 - **Egyptian Cities** - Pre-loaded with major Egyptian cities
@@ -140,7 +140,7 @@ weggo/
 - Responsive image handling
 - Price formatting
 
-## 🔌 API Routes
+## API Routes
 
 ### POST `/api/ai-chat`
 Send messages to the AI chatbot

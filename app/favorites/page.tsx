@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Heart } from 'lucide-react'
 import ProductCard from '@/components/ProductCard'
-import { mapApiListingToProduct } from '@/lib/utils'
+import { mapApiListingToProduct, withCsrfHeader } from '@/lib/utils'
 import { useAppStore } from '@/lib/store'
 
 interface Product {
@@ -57,7 +57,7 @@ export default function FavoritesPage() {
     removeFavorite(productId)
     fetch('/api/wishlist', {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
+      headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
       credentials: 'include',
       body: JSON.stringify({ productId }),
     }).catch(() => {})

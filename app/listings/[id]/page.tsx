@@ -17,7 +17,7 @@ import {
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import ProductCard from '@/components/ProductCard'
-import { mapApiListingToProduct } from '@/lib/utils'
+import { mapApiListingToProduct, withCsrfHeader } from '@/lib/utils'
 
 interface Seller {
   _id: string
@@ -69,8 +69,9 @@ export default function ListingDetailPage() {
       try {
         const res = await fetch(`/api/listings?category=${encodeURIComponent(listing.category)}&limit=8`, { credentials: 'include' })
         const data = await res.json()
-        if (data.success && Array.isArray(data.listings)) {
-          setSimilar(data.listings.filter((p: any) => p._id !== listing._id).slice(0, 4))
+        const listings = data.data?.listings ?? data.listings
+        if (data.success && Array.isArray(listings)) {
+          setSimilar(listings.filter((p: any) => p._id !== listing._id).slice(0, 4))
         }
       } catch {
         setSimilar([])
@@ -134,7 +135,7 @@ export default function ListingDetailPage() {
     try {
       const res = await fetch('/api/messages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
         credentials: 'include',
         body: JSON.stringify({
           receiverId: listing.seller._id,
@@ -170,7 +171,7 @@ export default function ListingDetailPage() {
     try {
       const res = await fetch(`/api/listings/${id}/report`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
         credentials: 'include',
         body: JSON.stringify({ reason: reportReason.trim() }),
       })
@@ -192,14 +193,14 @@ export default function ListingDetailPage() {
       if (isFavorite) {
         await fetch('/api/wishlist', {
           method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
+          headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
           credentials: 'include',
           body: JSON.stringify({ productId: id }),
         })
       } else {
         await fetch('/api/wishlist', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
           credentials: 'include',
           body: JSON.stringify({ productId: id }),
         })
@@ -219,6 +220,7 @@ export default function ListingDetailPage() {
     try {
       const res = await fetch(`/api/listings/${listing._id}`, {
         method: 'DELETE',
+        headers: withCsrfHeader({}),
         credentials: 'include',
       })
       const data = await res.json()

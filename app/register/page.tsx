@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Mail, Lock, User, Phone, MapPin, UserPlus } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { withCsrfHeader } from '@/lib/utils'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -31,7 +32,7 @@ export default function RegisterPage() {
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
         body: JSON.stringify(formData),
       })
 

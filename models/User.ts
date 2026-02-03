@@ -13,6 +13,9 @@ export interface IUser extends Document {
   sellerVerified: boolean
   idDocumentUrl?: string
   banned: boolean
+  bannedAt?: Date
+  bannedReason?: string
+  bannedBy?: mongoose.Types.ObjectId
   resetPasswordToken?: string
   resetPasswordExpires?: Date
   blockedUsers?: mongoose.Types.ObjectId[]
@@ -63,6 +66,9 @@ const UserSchema = new Schema<IUser>(
     sellerVerified: { type: Boolean, default: false },
     idDocumentUrl: { type: String },
     banned: { type: Boolean, default: false },
+    bannedAt: { type: Date },
+    bannedReason: { type: String },
+    bannedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
     blockedUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }],

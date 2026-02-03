@@ -52,7 +52,7 @@ export async function saveImage(file: File, userId: string): Promise<string> {
   return `/uploads/${filename}`
 }
 
-const ID_UPLOAD_DIR = join(process.cwd(), 'public', 'uploads', 'ids')
+const ID_UPLOAD_DIR = join(process.cwd(), 'private', 'uploads', 'ids')
 
 export async function saveIdDocument(file: File, userId: string): Promise<string> {
   if (!existsSync(ID_UPLOAD_DIR)) {
@@ -75,7 +75,7 @@ export async function saveIdDocument(file: File, userId: string): Promise<string
   const filename = `id_${userId}_${timestamp}_${randomStr}.${extension}`
   const filepath = join(ID_UPLOAD_DIR, filename)
   await writeFile(filepath, buffer)
-  return `/uploads/ids/${filename}`
+  return `private/ids/${filename}`
 }
 
 export async function handleImageUpload(

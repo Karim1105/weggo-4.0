@@ -28,7 +28,7 @@ Navigate to [http://localhost:3000](http://localhost:3000)
 
 ## Features Overview
 
-### ✅ Completed Features
+### Completed Features
 
 #### 1. **AI Chatbot Assistant**
    - Location: Bottom-right floating button
@@ -291,7 +291,7 @@ MIT License - See LICENSE file
 
 ---
 
-**Happy Coding! 🚀**
+**Happy Coding!**
 
 
 

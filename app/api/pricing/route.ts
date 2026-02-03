@@ -4,12 +4,6 @@ export async function POST(request: NextRequest) {
   try {
     const { title, description, category, condition } = await request.json()
 
-    // In production, this would:
-    // 1. Use Puppeteer to scrape OLX, Facebook Marketplace, Dubizzle
-    // 2. Analyze pricing data with AI
-    // 3. Consider market trends and seasonality
-    // 4. Return confident pricing suggestions
-
     // Mock implementation
     const pricingData = await analyzePricing(title, description, category, condition)
 
@@ -64,7 +58,7 @@ async function analyzePricing(
   const sources = platforms.slice(0, 3).map(platform => ({
     platform,
     price: suggestedPrice + Math.floor(Math.random() * 1000 - 500),
-    url: getplatformURL(platform)
+    url: getPlatformURL(platform)
   }))
 
   return {
@@ -87,7 +81,7 @@ function getPlatformURL(platform: string): string {
     'Dubizzle Egypt': 'https://egypt.dubizzle.com',
     'El-Menus': 'https://el-menus.com'
   }
-  return urls[platform] || '#'
+  return urls[platform] || 'https://weggo.com'
 }
 
 

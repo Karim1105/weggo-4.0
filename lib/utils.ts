@@ -164,6 +164,26 @@ export function generateId(): string {
   return Math.random().toString(36).substring(2) + Date.now().toString(36)
 }
 
+export function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null
+  const match = document.cookie.match(new RegExp(`(?:^|; )${name.replace(/([.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1')}=([^;]*)`))
+  return match ? decodeURIComponent(match[1]) : null
+}
+
+export function withCsrfHeader(headers: HeadersInit = {}): HeadersInit {
+  const token = getCookie('csrfToken')
+  if (!token) return headers
+
+  if (headers instanceof Headers) {
+    headers.set('X-CSRF-Token', token)
+    return headers
+  }
+  if (Array.isArray(headers)) {
+    return [...headers, ['X-CSRF-Token', token]]
+  }
+  return { ...headers, 'X-CSRF-Token': token }
+}
+
 /** Build full image URL for listing (API may return path like /uploads/xxx) */
 export function listingImageUrl(path: string | undefined): string {
   if (!path) return 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500'

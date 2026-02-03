@@ -48,7 +48,8 @@ export default function PersonalizedFeed() {
       ])
       const ids = new Set<string>(storeFavorites)
       const listingsData = await listingsRes.json()
-      let listings: any[] = listingsData.success && listingsData.listings ? listingsData.listings : []
+      const rawListings = listingsData.data?.listings ?? listingsData.listings
+      let listings: any[] = listingsData.success && Array.isArray(rawListings) ? rawListings : []
       if (wishlistRes?.ok) {
         const wData = await wishlistRes.json()
         if (wData?.success && Array.isArray(wData.wishlist)) {

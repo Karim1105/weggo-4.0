@@ -1,8 +1,8 @@
 # Weggo Features Documentation
 
-## 🎯 Core Features
+## Core Features
 
-### 1. AI-Powered Chatbot 🤖
+### 1. AI-Powered Chatbot
 
 **Location**: Bottom-right corner floating button
 
@@ -27,7 +27,7 @@
 
 ---
 
-### 2. AI Price Suggestion System 💰
+### 2. AI Price Suggestion System
 
 **Location**: Sell page (`/sell`)
 
@@ -56,7 +56,7 @@
 
 ---
 
-### 3. Personalized Feed 📱
+### 3. Personalized Feed
 
 **Location**: Home page
 
@@ -81,7 +81,7 @@
 
 ---
 
-### 4. Innovative Design 🎨
+### 4. Innovative Design
 
 #### Glassmorphism UI
 - Frosted glass effects on cards and modals
@@ -110,7 +110,7 @@
 
 ---
 
-### 5. Egyptian Market Features 🇪🇬
+### 5. Egyptian Market Features
 
 #### Localization
 - **Currency**: Egyptian Pounds (EGP)
@@ -216,7 +216,7 @@
 
 ---
 
-## 🚀 Technical Features
+## Technical Features
 
 ### State Management
 - Zustand for global state

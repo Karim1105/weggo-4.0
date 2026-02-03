@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db'
 import User from '@/models/User'
 import { rateLimit } from '@/lib/rateLimit'
+import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
   const rateLimitResponse = rateLimit(5, 15 * 60 * 1000)(request)
@@ -24,8 +25,9 @@ export async function POST(request: NextRequest) {
     }
 
     await connectDB()
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex')
     const user = await User.findOne({
-      resetPasswordToken: token,
+      resetPasswordToken: tokenHash,
       resetPasswordExpires: { $gt: new Date() },
     })
     if (!user) {

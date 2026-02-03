@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { User, MapPin, Star, Package, Heart, Settings, LogOut, ShieldCheck, FileUp } from 'lucide-react'
-import { mapApiListingToProduct } from '@/lib/utils'
+import { mapApiListingToProduct, withCsrfHeader } from '@/lib/utils'
 import ProductCard from '@/components/ProductCard'
 import { useAppStore } from '@/lib/store'
 
@@ -65,8 +65,9 @@ export default function ProfilePage() {
           return
         }
         const listData = await listingsRes.json()
-        if (listData.success && listData.listings) {
-          setListings(listData.listings)
+        const listings = listData.data?.listings ?? listData.listings
+        if (listData.success && Array.isArray(listings)) {
+          setListings(listings)
         }
         if (wishlistRes?.ok) {
           const wData = await wishlistRes.json()
@@ -90,12 +91,12 @@ export default function ProfilePage() {
   }, [router])
 
   const deleteSavedSearch = async (id: string) => {
-    await fetch(`/api/saved-searches?id=${encodeURIComponent(id)}`, { method: 'DELETE', credentials: 'include' }).catch(() => null)
+    await fetch(`/api/saved-searches?id=${encodeURIComponent(id)}`, { method: 'DELETE', headers: withCsrfHeader({}), credentials: 'include' }).catch(() => null)
     setSavedSearches((prev) => prev.filter((s) => s._id !== id))
   }
 
   const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
+    await fetch('/api/auth/logout', { method: 'POST', headers: withCsrfHeader({}), credentials: 'include' })
     setUser(null)
     router.push('/')
     router.refresh()
@@ -108,7 +109,7 @@ export default function ProfilePage() {
     try {
       const formData = new FormData()
       formData.append('idDocument', idFile)
-      const res = await fetch('/api/auth/upload-id', { method: 'POST', credentials: 'include', body: formData })
+      const res = await fetch('/api/auth/upload-id', { method: 'POST', headers: withCsrfHeader({}), credentials: 'include', body: formData })
       const data = await res.json()
       if (data.success) {
         setUser((prev) => (prev ? { ...prev, sellerVerified: true } : null))
@@ -124,11 +125,11 @@ export default function ProfilePage() {
     if (!product) return
     if (favorites.includes(id)) {
       removeFavorite(id)
-      fetch('/api/wishlist', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ productId: id }) }).catch(() => {})
+      fetch('/api/wishlist', { method: 'DELETE', headers: withCsrfHeader({ 'Content-Type': 'application/json' }), credentials: 'include', body: JSON.stringify({ productId: id }) }).catch(() => {})
       setWishlistCount((c) => Math.max(0, c - 1))
     } else {
       addFavorite(id)
-      fetch('/api/wishlist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ productId: id }) }).catch(() => {})
+      fetch('/api/wishlist', { method: 'POST', headers: withCsrfHeader({ 'Content-Type': 'application/json' }), credentials: 'include', body: JSON.stringify({ productId: id }) }).catch(() => {})
       setWishlistCount((c) => c + 1)
     }
   }

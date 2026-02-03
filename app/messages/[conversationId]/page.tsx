@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowLeft, MessageCircle, User, Clock, Shield } from 'lucide-react'
+import { withCsrfHeader } from '@/lib/utils'
 
 interface UserLite {
   _id: string
@@ -41,6 +42,7 @@ export default function ConversationPage() {
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [replyText, setReplyText] = useState('')
   const [sending, setSending] = useState(false)
+  const [sendError, setSendError] = useState<string | null>(null)
   const [blocking, setBlocking] = useState(false)
   const bottomRef = useRef<HTMLDivElement | null>(null)
 
@@ -93,10 +95,11 @@ export default function ConversationPage() {
     const product = first.product
 
     setSending(true)
+    setSendError(null)
     try {
       const res = await fetch('/api/messages', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
         credentials: 'include',
         body: JSON.stringify({
           receiverId: otherUser._id,
@@ -106,12 +109,14 @@ export default function ConversationPage() {
       })
       const data = await res.json()
       if (!data.success) {
+        setSendError(data.error || 'Failed to send message')
         return
       }
       setMessages((prev) => [...prev, data.message])
       setReplyText('')
-    } catch {
-      // Ignore for now; could add toast
+    } catch (err) {
+      setSendError('Failed to send message. Please check your connection.')
+      console.error('Send message error:', err)
     } finally {
       setSending(false)
     }
@@ -131,7 +136,7 @@ export default function ConversationPage() {
     try {
       const res = await fetch('/api/blocks', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
         credentials: 'include',
         body: JSON.stringify({ userId: otherUser._id }),
       })
@@ -246,25 +251,32 @@ export default function ConversationPage() {
 
           <form
             onSubmit={handleSend}
-            className="border-t border-gray-200 p-3 bg-white flex items-center gap-2"
+            className="border-t border-gray-200 p-3 bg-white flex flex-col gap-2"
           >
-            <textarea
-              value={replyText}
-              onChange={(e) => setReplyText(e.target.value)}
-              rows={1}
-              placeholder="Type a message..."
-              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
-            />
-            <motion.button
-              type="submit"
-              disabled={sending || !replyText.trim()}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.96 }}
-              className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary-600 text-white font-medium disabled:opacity-60"
-            >
-              <MessageCircle className="w-5 h-5 mr-1" />
-              Send
-            </motion.button>
+            {sendError && (
+              <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+                {sendError}
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <textarea
+                value={replyText}
+                onChange={(e) => setReplyText(e.target.value)}
+                rows={1}
+                placeholder="Type a message..."
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+              />
+              <motion.button
+                type="submit"
+                disabled={sending || !replyText.trim()}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.96 }}
+                className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary-600 text-white font-medium disabled:opacity-60"
+              >
+                <MessageCircle className="w-5 h-5 mr-1" />
+                {sending ? 'Sending...' : 'Send'}
+              </motion.button>
+            </div>
           </form>
         </div>
       </div>

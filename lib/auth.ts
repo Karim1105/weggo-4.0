@@ -4,10 +4,16 @@ import User, { IUser } from '@/models/User'
 import connectDB from './db'
 
 const JWT_SECRET = process.env.JWT_SECRET
-if (process.env.NODE_ENV === 'production' && !JWT_SECRET) {
-  throw new Error('JWT_SECRET must be set in production')
+
+if (!JWT_SECRET) {
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET environment variable is required in production')
+  }
+  // Only use fallback in development
+  console.warn('[AUTH] Using development JWT secret. Set JWT_SECRET in .env.local for security.')
 }
-const JWT_SECRET_OR_FALLBACK = JWT_SECRET || 'dev-secret-change-in-production'
+
+const JWT_SECRET_FINAL = JWT_SECRET || 'dev-secret-do-not-use-in-production'
 
 export interface JWTPayload {
   userId: string
@@ -21,12 +27,12 @@ export function generateToken(user: IUser): string {
     email: user.email,
     role: user.role,
   }
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '7d' })
+  return jwt.sign(payload, JWT_SECRET_FINAL, { expiresIn: '7d' })
 }
 
 export function verifyToken(token: string): JWTPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET_OR_FALLBACK) as JWTPayload
+    return jwt.verify(token, JWT_SECRET_FINAL) as JWTPayload
   } catch (error) {
     return null
   }

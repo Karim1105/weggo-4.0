@@ -8,6 +8,7 @@ interface RateLimitStore {
 }
 
 const store: RateLimitStore = {}
+let cleanupInterval: NodeJS.Timeout | null = null
 
 export function rateLimit(
   maxRequests: number = 100,
@@ -42,14 +43,42 @@ export function rateLimit(
   }
 }
 
-// Clean up old entries periodically
-setInterval(() => {
-  const now = Date.now()
-  Object.keys(store).forEach(key => {
-    if (store[key].resetTime < now) {
-      delete store[key]
+/**
+ * Initialize cleanup of expired rate limit entries
+ * Call this once on application startup
+ */
+export function initializeRateLimitCleanup() {
+  if (cleanupInterval) return // Already initialized
+  
+  cleanupInterval = setInterval(() => {
+    const now = Date.now()
+    let cleaned = 0
+    
+    Object.keys(store).forEach(key => {
+      if (store[key].resetTime < now) {
+        delete store[key]
+        cleaned++
+      }
+    })
+    
+    // Log cleanup if store is getting large
+    const storeSize = Object.keys(store).length
+    if (storeSize > 10000) {
+      console.warn(`[RateLimit] Store size: ${storeSize}. Consider using Redis for distributed rate limiting.`)
     }
-  })
-}, 60000) // Clean every minute
+  }, 30000) // Cleanup every 30 seconds instead of 60
+  
+  // Prevent Node from hanging if this is the only active interval
+  if (cleanupInterval.unref) {
+    cleanupInterval.unref()
+  }
+}
+
+/**
+ * Get current store size for monitoring
+ */
+export function getRateLimitStoreSize(): number {
+  return Object.keys(store).length
+}
 
 

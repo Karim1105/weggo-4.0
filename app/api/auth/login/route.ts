@@ -1,49 +1,57 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
 import connectDB from '@/lib/db'
 import User from '@/models/User'
 import { generateToken } from '@/lib/auth'
 import { rateLimit } from '@/lib/rateLimit'
+import { successResponse, ApiErrors } from '@/lib/api-response'
+import { setCsrfTokenCookie } from '@/lib/csrf'
+import { validateEmail } from '@/lib/validators'
+import { logger, getRequestId } from '@/lib/logger'
 
 export async function POST(request: NextRequest) {
-  // Rate limiting
+  const requestId = getRequestId(request)
+
+  // Rate limiting - stricter for login
   const rateLimitResponse = rateLimit(10, 15 * 60 * 1000)(request)
-  if (rateLimitResponse) return rateLimitResponse
+  if (rateLimitResponse) {
+    logger.warn('Rate limit exceeded on login', {}, requestId)
+    return rateLimitResponse
+  }
 
   try {
     await connectDB()
     const body = await request.json()
     const { email, password } = body
 
-    if (!email || !password) {
-      return NextResponse.json(
-        { success: false, error: 'Email and password are required' },
-        { status: 400 }
-      )
+    logger.debug('Login attempt', { email }, requestId)
+
+    // Validation
+    if (!email || !validateEmail(email)) {
+      return ApiErrors.badRequest('Please provide a valid email address')
+    }
+
+    if (!password) {
+      return ApiErrors.badRequest('Password is required')
     }
 
     // Find user
     const user = await User.findOne({ email: email.toLowerCase() })
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid credentials' },
-        { status: 401 }
-      )
+      logger.info('Login failed - user not found', { email }, requestId)
+      return ApiErrors.badRequest('Invalid email or password')
     }
 
     // Check password
     const isMatch = await user.comparePassword(password)
     if (!isMatch) {
-      return NextResponse.json(
-        { success: false, error: 'Invalid credentials' },
-        { status: 401 }
-      )
+      logger.info('Login failed - invalid password', { email }, requestId)
+      return ApiErrors.badRequest('Invalid email or password')
     }
 
     const token = generateToken(user)
 
-    const response = NextResponse.json({
-      success: true,
-      user: {
+    const response = successResponse(
+      {
         id: user._id,
         name: user.name,
         email: user.email,
@@ -52,22 +60,24 @@ export async function POST(request: NextRequest) {
         role: user.role,
         avatar: user.avatar,
       },
-      token,
-    })
+      'Login successful'
+    )
 
     response.cookies.set('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
+      path: '/',
       maxAge: 60 * 60 * 24 * 7, // 7 days
     })
+    setCsrfTokenCookie(response)
+
+    logger.info('User logged in successfully', { email, userId: user._id }, requestId)
 
     return response
   } catch (error: any) {
-    return NextResponse.json(
-      { success: false, error: error.message || 'Login failed' },
-      { status: 500 }
-    )
+    logger.error('Login error', error, { endpoint: '/api/auth/login' }, requestId)
+    return ApiErrors.serverError()
   }
 }
 
