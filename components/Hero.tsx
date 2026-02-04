@@ -22,12 +22,40 @@ interface FeaturedProduct {
   }
 }
 
+const CACHE_KEY = 'weggo_featured_listings'
+const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+
 export default function Hero() {
   const { handleVerificationFlow } = useUserVerification()
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([])
   const [favorites, setFavorites] = useState<string[]>([])
 
   useEffect(() => {
+    // Try to load from cache first
+    const cached = localStorage.getItem(CACHE_KEY)
+    if (cached) {
+      try {
+        const { data, timestamp } = JSON.parse(cached)
+        const isExpired = Date.now() - timestamp > CACHE_DURATION
+        
+        if (!isExpired && Array.isArray(data) && data.length > 0) {
+          // Use cached data immediately
+          setFeaturedProducts(data)
+          // Still fetch fresh data in background
+          fetchListings(true)
+          return
+        }
+      } catch (e) {
+        // Invalid cache, clear it
+        localStorage.removeItem(CACHE_KEY)
+      }
+    }
+
+    // No valid cache, fetch normally
+    fetchListings(false)
+  }, [])
+
+  const fetchListings = (isBackgroundUpdate: boolean) => {
     fetch('/api/listings?limit=8&sortBy=newest', { credentials: 'include' })
       .then((r) => r.json())
       .then((data) => {
@@ -44,11 +72,19 @@ export default function Hero() {
             category: p.category,
             seller: { name: p.seller?.name || 'Seller', rating: 4.5, verified: p.seller?.isVerified },
           }))
+          
+          // Update state
           setFeaturedProducts(mapped)
+          
+          // Update cache
+          localStorage.setItem(CACHE_KEY, JSON.stringify({
+            data: mapped,
+            timestamp: Date.now()
+          }))
         }
       })
       .catch(() => {})
-  }, [])
+  }
 
   const toggleFavorite = (id: string) => {
     setFavorites(prev => 
