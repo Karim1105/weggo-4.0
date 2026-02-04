@@ -50,7 +50,7 @@ export default function UploadIdPage() {
 
     try {
       const formData = new FormData()
-      formData.append('id', file)
+      formData.append('idDocument', file)
 
       const headers = withCsrfHeader({}) as Record<string, string>
 
