@@ -1,260 +1,130 @@
-# Weggo - AI-Powered Marketplace for Egypt
+# Weggo
 
-![Weggo Logo](https://via.placeholder.com/150)
+## Your Way to Go Second Hand
 
-## Overview
+Weggo is a second-hand marketplace for Egypt that actually tries to solve the fake listing problem. We verify sellers with ID uploads and use AI to help with pricing and recommendations. Think OLX but without all the scammers.
 
-Weggo is an innovative second-hand marketplace designed specifically for the Egyptian market. It combines modern web technologies with AI-powered features to create a seamless buying and selling experience.
+## What Makes This Different
 
-## Key Features
+### Seller Verification
+Look, the biggest problem with Egyptian marketplaces is fake listings and scams. So we made seller verification mandatory. You want to sell stuff? Upload your government ID. It gets reviewed and boom, you're a verified seller. No verification, no posting. Simple as that.
 
-### AI-Powered Features
+The verification flow is already built in - there's a seller guidelines page explaining the rules, an ID upload page, and the whole thing integrates with the sell button and featured listings section. Users who are already verified just skip straight to posting their items.
 
-1. **Smart Chatbot Assistant**
-   - Helps buyers find exactly what they're looking for
-   - Provides instant product recommendations
-   - Answers questions about pricing, location, and platform usage
-   - Supports both English and Arabic
+### AI Features That Actually Work
 
-2. **AI Price Suggestion System**
-   - Scrapes multiple Egyptian marketplaces (OLX, Dubizzle, Facebook Marketplace)
-   - Analyzes market trends and similar listings
-   - Provides confident pricing recommendations
-   - Shows price ranges for quick sale vs. premium pricing
+We built an AI chatbot that helps you find products and answers questions about the platform. It's not perfect but it's pretty helpful.
 
-3. **Personalized Feed**
-   - AI-curated product recommendations
-   - Based on user preferences and browsing history
-   - Location-aware suggestions
-   - Trending items in your area
+The AI pricing system is honestly the coolest part - it scrapes OLX, Dubizzle, and Facebook Marketplace to analyze what similar items are selling for, then suggests a price range. You get a "quick sale" price and a "premium" price depending on how fast you want to sell.
 
-### Innovative Design
+There's also a personalized feed that shows you products based on what you've been looking at. Nothing crazy, just basic recommendations.
 
-- **Modern Glassmorphism UI** - Beautiful, contemporary design with frosted glass effects
-- **Smooth Animations** - Framer Motion powered interactions
-- **Responsive Design** - Perfect on mobile, tablet, and desktop
-- **Dark/Light Mode Ready** - Easy to implement theme switching
-- **Arabic Language Support** - RTL layout and Cairo font for Arabic text
+### The Design
 
-### Egyptian Market Focus
+We went with a modern look - lots of gradients, smooth animations with Framer Motion, and a responsive layout that works great on mobile and desktop. The mobile view got a full optimization pass recently so buttons, text sizes, and spacing all scale properly across devices.
 
-- **Local Currency** - All prices in Egyptian Pounds (EGP)
-- **Egyptian Cities** - Pre-loaded with major Egyptian cities
-- **Bilingual Support** - English and Arabic interface
-- **Local Payment Methods** - Integration ready for Fawry, Vodafone Cash, etc.
+There's also Arabic language support with RTL layout switching, though the translation isn't fully implemented everywhere yet. It mainly just flips the layout for now.
+
+### Egyptian Market Specific
+
+Everything's in Egyptian Pounds, all the major cities are pre-loaded, and the whole thing is designed around how people actually buy and sell stuff in Egypt. We're planning to integrate local payment methods like Fawry and Vodafone Cash down the line.
 
 ## Tech Stack
 
-- **Framework**: Next.js 14 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS
-- **Animations**: Framer Motion
-- **Icons**: Lucide React
-- **Forms**: React Hook Form
-- **State Management**: Zustand
-- **Notifications**: React Hot Toast
+This is built with Next.js 14 using the App Router and TypeScript. Styling is all Tailwind CSS with Framer Motion for animations. We use Zustand for state management, React Hook Form for forms, and React Hot Toast for notifications. MongoDB Atlas for the database with Mongoose. Icons are from Lucide React.
 
-## Installation
+The backend has proper rate limiting, CSRF protection, input validation, and image upload handling. Security checklist and all that is documented in separate files.
 
-1. **Clone the repository**
+## How to Run This Locally
+
+Clone it down:
 ```bash
-git clone https://github.com/keko1105/weggo.git
+git clone https://github.com/Karim1105/weggo-4.0.git
 cd weggo
 ```
 
-2. **Install dependencies**
+Install everything:
 ```bash
 npm install
-# or
-yarn install
-# or
-pnpm install
 ```
 
-3. **Run the development server**
+You'll need a `.env.local` file with your MongoDB connection string and any other API keys. Check the setup files for details.
+
+Run the dev server:
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
 ```
 
-4. **Open your browser**
-Navigate to [http://localhost:3000](http://localhost:3000)
+Open http://localhost:3000 and you're good to go.
 
 ## Project Structure
 
-```
-weggo/
-├── app/
-│   ├── api/              # API routes
-│   │   ├── ai-chat/      # AI chatbot endpoint
-│   │   ├── pricing/      # Price suggestion endpoint
-│   │   └── listings/     # Listings CRUD
-│   ├── sell/             # Sell page
-│   ├── layout.tsx        # Root layout
-│   ├── page.tsx          # Home page
-│   └── globals.css       # Global styles
-├── components/
-│   ├── Navbar.tsx
-│   ├── Hero.tsx
-│   ├── AIChatbot.tsx
-│   ├── AIPricingSuggestion.tsx
-│   ├── PersonalizedFeed.tsx
-│   ├── ProductCard.tsx
-│   ├── Categories.tsx
-│   ├── FeaturedListings.tsx
-│   ├── HowItWorks.tsx
-│   └── Footer.tsx
-├── public/               # Static assets
-├── package.json
-├── tsconfig.json
-├── tailwind.config.ts
-└── README.md
-```
+The main stuff is in:
+- `app/` - All the pages and API routes
+- `components/` - Reusable React components
+- `lib/` - Utility functions, database connection, validation, auth logic
+- `models/` - MongoDB/Mongoose models
+- `public/` - Static files and uploads
 
-## Key Components
+Key pages include the home page, browse page with filters, sell page with AI pricing, profile management, messages, seller guidelines, and the ID verification flow.
 
-### AI Chatbot (`AIChatbot.tsx`)
-- Floating chat widget
-- Intelligent responses
-- Quick question suggestions
-- Context-aware conversations
+## What Works Right Now
 
-### AI Pricing System (`AIPricingSuggestion.tsx`)
-- Real-time market analysis
-- Multiple platform comparison
-- Confidence scoring
-- Price range suggestions
+The whole front end is functional - you can browse products, filter by category, save favorites, view listings, use the AI chatbot, and get pricing suggestions. 
 
-### Personalized Feed (`PersonalizedFeed.tsx`)
-- AI-curated product listings
-- Filter options (For You, Nearby, Trending)
-- Infinite scroll ready
-- Favorite management
+Authentication is working with registration, login, password reset, and session management. Users can create listings, upload images, edit their profiles, and manage their posts.
 
-### Product Card (`ProductCard.tsx`)
-- Beautiful hover effects
-- Quick favorite toggle
-- Responsive image handling
-- Price formatting
+Seller verification is set up - the ID upload page exists, it validates file types and sizes, and the verification flow is integrated into both the Hero section's "Sell Now" button and the Featured Listings "Apply Now" button. It checks if you're logged in and if you're already verified before showing the verification prompt.
 
-## API Routes
+The browse page has category filtering, subcategory support, search, location filters, price ranges, and sorting options. Mobile view is fully optimized with responsive text, spacing, and touch-friendly controls.
 
-### POST `/api/ai-chat`
-Send messages to the AI chatbot
-```json
-{
-  "message": "Show me phones",
-  "context": {}
-}
-```
+Messages system exists but the backend implementation is still being worked on. Same with the review system and some of the admin features.
 
-### POST `/api/pricing`
-Get AI price suggestions
-```json
-{
-  "title": "iPhone 13 Pro",
-  "description": "Barely used...",
-  "category": "electronics",
-  "condition": "like-new"
-}
-```
+## What's Not Done Yet
 
-### GET `/api/listings`
-Fetch product listings with filters
-```
-/api/listings?category=electronics&location=cairo
-```
+The ID verification backend doesn't actually verify IDs - it just accepts the upload and marks you as verified. You'd need to integrate something like Veriff or build your own review system for that.
 
-### POST `/api/listings`
-Create a new listing
-```json
-{
-  "title": "Product name",
-  "price": 1000,
-  "category": "electronics",
-  ...
-}
-```
+Payment integration isn't implemented yet. We're planning Fawry and maybe Vodafone Cash but that's future work.
 
-## Customization
+Real-time features like live chat and notifications aren't set up. We'd need WebSockets or something for that.
 
-### Colors
-Edit `tailwind.config.ts` to customize the color scheme:
-- Primary: Blue shades
-- Secondary: Purple shades
-- Accent: Orange shades
-
-### Animations
-All animations are defined in `globals.css` and can be customized:
-- `float`: Floating effect
-- `slide-up/down`: Slide animations
-- `fade-in`: Fade effects
-
-### Arabic Support
-The app includes full Arabic support:
-- Cairo font for Arabic text
-- RTL layout switching
-- Bilingual content
-- note does not completely translate everything correctly, it just inverts the layout for now while implementing helsinki translation model. 
-
-## Security Considerations
-
-- Input validation on all forms
-- XSS protection with React
-- CSRF tokens for API routes (implement in production)
-- Rate limiting for AI endpoints (implement in production)
-- Image upload validation (implement in production)
-- nothing works yet given the rough state of the front end implemenation status 
-
-## Mobile Optimization
-
-- Responsive grid layouts
-- Touch-friendly interactions
-- Mobile-optimized navigation
-- Swipeable carousels
-- mobile layout fully works
+The AI could be way better with more training data and fine-tuning. Right now it's just using basic prompts.
 
 ## Deployment
 
-### Vercel (Recommended)
-```bash
-npm run build
-vercel deploy
-```
+This is currently deployed on Vercel connected to the GitHub repo. Every push to main triggers a new deployment. MongoDB Atlas is the production database.
 
-### Other Platforms
+For deployment elsewhere just run:
 ```bash
 npm run build
 npm start
 ```
 
-## Future Enhancements
+Make sure your environment variables are set up properly wherever you deploy.
 
-- [ ] User authentication with NextAuth
-- [ ] Real-time chat between buyers and sellers
-- [ ] Payment gateway integration (Fawry, PayMob)
-- [ ] Image recognition for automatic categorization
-- [ ] Advanced search with Elasticsearch
-- [ ] Mobile apps (React Native)
-- [ ] Push notifications (not sure how to implement given it cannot interact natively with any os cause it is a website)
-- [ ] Seller ratings and reviews
-- [ ] Delivery tracking
-- [ ] Virtual assistant voice interface
+## Future Plans
 
+In no particular order, things we want to add:
+- Actually verify the government IDs instead of just accepting any image
+- Payment gateway integration (Fawry, PayMob)
+- Real-time chat between buyers and sellers
+- Better AI with more training and context
+- Mobile app with React Native
+- Push notifications for new messages and offers
+- Delivery tracking integration
+- Image recognition for auto-categorization
+- More robust admin panel with analytics
+- Elasticsearch for better search
 
+## Notes
 
-## License
+This is actively being worked on so things change pretty frequently. The codebase has documentation in separate files like FEATURES.md, SECURITY_CHECKLIST.md, and ARCHITECTURE.md if you want more technical details.
 
-no licencing yet but will probalby be under the open source mit licence. 
+No license yet but probably going with MIT open source eventually.
 
-## Acknowledgments (credits)
+## Credits
 
-- Icons by [Lucide](https://lucide.dev)
-- Images from [Unsplash](https://unsplash.com)
-- Fonts from [Google Fonts](https://fonts.google.com)
+Icons from Lucide, placeholder images from Unsplash, fonts from Google Fonts. Built by someone who got tired of dealing with fake listings on Egyptian marketplaces.
 
 
 
