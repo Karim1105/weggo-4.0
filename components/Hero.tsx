@@ -109,12 +109,12 @@ export default function Hero() {
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 md:gap-6">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 lg:gap-6">
               <Link href="/browse" className="w-full sm:w-auto">
                 <motion.span
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  className="group relative overflow-hidden flex items-center justify-center bg-gradient-to-r from-blue-600 via-blue-700 to-purple-700 text-white px-6 sm:px-8 md:px-10 py-3 sm:py-4 md:py-5 rounded-2xl font-bold text-base md:text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 border-2 border-blue-500/20 cursor-pointer w-full"
+                  className="group relative overflow-hidden flex items-center justify-center bg-gradient-to-r from-blue-600 via-blue-700 to-purple-700 text-white px-6 sm:px-8 lg:px-10 py-3 sm:py-4 lg:py-5 rounded-2xl font-bold text-base lg:text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 border-2 border-blue-500/20 cursor-pointer w-full sm:w-auto"
                 >
                   <span className="relative z-10 flex items-center space-x-3">
                     <Search className="w-5 h-5" />
@@ -128,7 +128,7 @@ export default function Hero() {
                 onClick={() => handleVerificationFlow('/sell')}
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
-                className="group relative overflow-hidden flex items-center justify-center border-2 border-blue-500 text-blue-600 px-6 sm:px-8 md:px-10 py-3 sm:py-4 md:py-5 rounded-2xl font-bold text-base md:text-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 shadow-lg hover:shadow-xl bg-white/80 backdrop-blur-sm cursor-pointer w-full"
+                className="group relative overflow-hidden flex items-center justify-center border-2 border-blue-500 text-blue-600 px-6 sm:px-8 lg:px-10 py-3 sm:py-4 lg:py-5 rounded-2xl font-bold text-base lg:text-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 shadow-lg hover:shadow-xl bg-white/80 backdrop-blur-sm cursor-pointer w-full sm:w-auto"
               >
                 <span className="relative z-10 flex items-center space-x-3">
                   <Sparkles className="w-5 h-5" />
