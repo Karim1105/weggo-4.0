@@ -70,13 +70,13 @@ Key pages include the home page, browse page with filters, sell page with AI pri
 
 ## What Works Right Now
 
-The whole front end is functional - you can browse products, filter by category, save favorites, view listings, use the AI chatbot, and get pricing suggestions. 
+The whole front end is functional - you can browse products, filter by category, save favorites, view listings.
 
-Authentication is working with registration, login, password reset, and session management. Users can create listings, upload images, edit their profiles, and manage their posts.
+Authentication is working with registration, login, and session management. Users can create listings, upload images, edit their profiles, and manage their posts.
 
-Seller verification is set up - the ID upload page exists, it validates file types and sizes, and the verification flow is integrated into both the Hero section's "Sell Now" button and the Featured Listings "Apply Now" button. It checks if you're logged in and if you're already verified before showing the verification prompt.
+Seller verification is set up - the ID upload page exists, it validates file types and sizes, and the verification flow is integrated into both the Hero section's "Sell Now" button and the Featured Listings "Apply Now" button. It checks if you're logged in and if you're already verified before showing the verification prompt, but and this is a massive but the verfication system it self is not working right now, any image uploaded will me accepted still working on making that functional. 
 
-The browse page has category filtering, subcategory support, search, location filters, price ranges, and sorting options. Mobile view is fully optimized with responsive text, spacing, and touch-friendly controls.
+The browse page has category filtering, subcategory support, search, location filters, price ranges, and sorting options. Mobile view is partially optimized with responsive text, spacing, and touch-friendly controls, but no where near done. 
 
 Messages system exists but the backend implementation is still being worked on. Same with the review system and some of the admin features.
 
@@ -84,11 +84,11 @@ Messages system exists but the backend implementation is still being worked on. 
 
 The ID verification backend doesn't actually verify IDs - it just accepts the upload and marks you as verified. You'd need to integrate something like Veriff or build your own review system for that.
 
-Payment integration isn't implemented yet. We're planning Fawry and maybe Vodafone Cash but that's future work.
+Payment integration isn't implemented, because we will not implement it weggo is just a middleman we do not plan on handling this kind of responsibility.
 
 Real-time features like live chat and notifications aren't set up. We'd need WebSockets or something for that.
 
-The AI could be way better with more training data and fine-tuning. Right now it's just using basic prompts.
+The "AI" could be way better with more training data and fine-tuning. Right now it's just using basic prompts, i mean go figure we do not have that many recourses.
 
 ## Deployment
 
@@ -105,8 +105,7 @@ Make sure your environment variables are set up properly wherever you deploy.
 ## Future Plans
 
 In no particular order, things we want to add:
-- Actually verify the government IDs instead of just accepting any image
-- Payment gateway integration (Fawry, PayMob)
+- Actually accept government IDs instead of just accepting any image, p.s we will not verify goverment ids with the goverment this is just to link to your profile so if you get banned you get permabanned
 - Real-time chat between buyers and sellers
 - Better AI with more training and context
 - Mobile app with React Native
@@ -120,11 +119,11 @@ In no particular order, things we want to add:
 
 This is actively being worked on so things change pretty frequently. The codebase has documentation in separate files like FEATURES.md, SECURITY_CHECKLIST.md, and ARCHITECTURE.md if you want more technical details.
 
-No license yet but probably going with MIT open source eventually.
+No license yet but probably going with MIT open source eventually. i said probably so do not get too excited.
 
 ## Credits
 
-Icons from Lucide, placeholder images from Unsplash, fonts from Google Fonts. Built by someone who got tired of dealing with fake listings on Egyptian marketplaces.
+Icons from Lucide, placeholder images from Unsplash, fonts from Google Fonts. Built by someone who got tired of dealing with fake listings on Egyptian marketplaces, and screwed over by their teammates
 
 
 
