@@ -63,7 +63,7 @@ export default function Categories() {
   }
 
   return (
-    <section className="py-20 px-4 relative overflow-hidden">
+    <section className="py-12 md:py-20 px-4 relative overflow-hidden">
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5 pointer-events-none">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary-100 via-transparent to-secondary-100" />
@@ -77,14 +77,14 @@ export default function Categories() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           layout="position"
-          className="text-center mb-20"
+          className="text-center mb-12 md:mb-20"
         >
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             whileInView={{ scale: 1, opacity: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="inline-flex items-center space-x-3 bg-gradient-to-r from-primary-500/10 to-accent-500/10 backdrop-blur-sm border border-primary-200/30 text-primary-700 px-8 py-4 rounded-full text-sm font-bold mb-8 shadow-lg"
+            className="inline-flex items-center space-x-2 md:space-x-3 bg-gradient-to-r from-primary-500/10 to-accent-500/10 backdrop-blur-sm border border-primary-200/30 text-primary-700 px-5 md:px-8 py-2 md:py-4 rounded-full text-xs md:text-sm font-bold mb-6 md:mb-8 shadow-lg"
           >
             <motion.div
               animate={{ rotate: 360 }}
@@ -99,7 +99,7 @@ export default function Categories() {
             />
           </motion.div>
           
-          <h2 className="text-6xl lg:text-8xl font-black mb-8 leading-tight">
+          <h2 className="text-3xl sm:text-4xl md:text-6xl lg:text-8xl font-black mb-4 md:mb-8 leading-tight">
             <span className="text-gray-900">Discover by{' '}</span>
             <motion.span
               animate={{ 
@@ -115,16 +115,16 @@ export default function Categories() {
               Category
             </motion.span>
           </h2>
-          <p className="text-xl lg:text-2xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-base md:text-xl lg:text-2xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
             Find exactly what you're looking for with our smart categorization system
           </p>
         </motion.div>
 
         {/* Popular Categories */}
-        <div className="mb-12">
-          <div className="flex items-center space-x-2 mb-8">
-            <TrendingUp className="w-5 h-5 text-accent-600" />
-            <h3 className="text-xl font-semibold text-gray-900">Popular This Week</h3>
+        <div className="mb-8 md:mb-12">
+          <div className="flex items-center space-x-2 mb-4 md:mb-8">
+            <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-accent-600" />
+            <h3 className="text-base md:text-xl font-semibold text-gray-900">Popular This Week</h3>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

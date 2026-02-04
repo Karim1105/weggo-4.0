@@ -63,27 +63,27 @@ export default function Hero() {
   }
 
   return (
-    <section className="relative pt-36 pb-20 px-4 overflow-visible">
+    <section className="relative pt-24 md:pt-36 pb-12 md:pb-20 px-4 overflow-visible">
       {/* Warm Intense Gradient Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-amber-100/60 via-orange-100/50 to-red-100/40" />
       <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-yellow-100/40 to-transparent" />
       <div className="absolute inset-0 bg-gradient-to-bl from-orange-50/30 via-transparent to-amber-50/30" />
       
       <div className="max-w-7xl mx-auto relative">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 md:gap-12 items-center">
           {/* Left Content */}
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6 }}
-            className="space-y-12"
+            className="space-y-6 md:space-y-12"
           >
-            <div className="space-y-8">
+            <div className="space-y-4 md:space-y-8">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="inline-flex items-center space-x-3 bg-gradient-to-r from-primary-500/10 to-accent-500/10 backdrop-blur-sm border border-primary-200/30 text-primary-700 px-6 py-3 rounded-full text-sm font-semibold shadow-lg"
+                className="inline-flex items-center space-x-2 md:space-x-3 bg-gradient-to-r from-primary-500/10 to-accent-500/10 backdrop-blur-sm border border-primary-200/30 text-primary-700 px-4 md:px-6 py-2 md:py-3 rounded-full text-xs md:text-sm font-semibold shadow-lg"
               >
                 <motion.div
                   animate={{ rotate: 360 }}
@@ -94,7 +94,7 @@ export default function Hero() {
                 <span>AI-Powered Marketplace</span>
               </motion.div>
 
-              <h1 className="text-5xl lg:text-7xl font-black leading-[0.9] tracking-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black leading-tight md:leading-[0.9] tracking-tight">
                 <span className="block text-gray-900">Your Way to Go</span>
                 <span className="block">
                   <span className="gradient-primary bg-clip-text text-transparent">
@@ -103,18 +103,18 @@ export default function Hero() {
                 </span>
               </h1>
 
-              <p className="text-lg lg:text-xl text-gray-700 leading-relaxed max-w-2xl">
+              <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-700 leading-relaxed max-w-2xl">
                 <span className="text-primary-600 font-semibold">اشتري وبيع بسهولة</span> - 
                 Your AI assistant helps you find perfect deals and price items intelligently
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-6">
-              <Link href="/browse">
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 md:gap-6">
+              <Link href="/browse" className="w-full sm:w-auto">
                 <motion.span
                   whileHover={{ scale: 1.05, y: -2 }}
                   whileTap={{ scale: 0.95 }}
-                  className="group relative overflow-hidden flex items-center justify-center bg-gradient-to-r from-blue-600 via-blue-700 to-purple-700 text-white px-10 py-5 rounded-2xl font-bold text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 border-2 border-blue-500/20 cursor-pointer inline-flex"
+                  className="group relative overflow-hidden flex items-center justify-center bg-gradient-to-r from-blue-600 via-blue-700 to-purple-700 text-white px-6 sm:px-8 md:px-10 py-3 sm:py-4 md:py-5 rounded-2xl font-bold text-base md:text-lg shadow-2xl hover:shadow-3xl transition-all duration-300 border-2 border-blue-500/20 cursor-pointer w-full"
                 >
                   <span className="relative z-10 flex items-center space-x-3">
                     <Search className="w-5 h-5" />
@@ -128,7 +128,7 @@ export default function Hero() {
                 onClick={() => handleVerificationFlow('/sell')}
                 whileHover={{ scale: 1.05, y: -2 }}
                 whileTap={{ scale: 0.95 }}
-                className="group relative overflow-hidden flex items-center justify-center border-2 border-blue-500 text-blue-600 px-10 py-5 rounded-2xl font-bold text-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 shadow-lg hover:shadow-xl bg-white/80 backdrop-blur-sm cursor-pointer inline-flex"
+                className="group relative overflow-hidden flex items-center justify-center border-2 border-blue-500 text-blue-600 px-6 sm:px-8 md:px-10 py-3 sm:py-4 md:py-5 rounded-2xl font-bold text-base md:text-lg hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 transition-all duration-300 shadow-lg hover:shadow-xl bg-white/80 backdrop-blur-sm cursor-pointer w-full"
               >
                 <span className="relative z-10 flex items-center space-x-3">
                   <Sparkles className="w-5 h-5" />
@@ -138,7 +138,7 @@ export default function Hero() {
             </div>
 
             {/* Features */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pt-16">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8 pt-8 md:pt-16">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -152,8 +152,8 @@ export default function Hero() {
                   <Sparkles className="w-8 h-8 text-white" />
                 </motion.div>
                 <div className="space-y-2">
-                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors">AI Assistant</h3>
-                  <p className="text-gray-600 leading-relaxed">Smart recommendations tailored to your preferences</p>
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors">AI Assistant</h3>
+                  <p className="text-sm md:text-base text-gray-600 leading-relaxed">Smart recommendations tailored to your preferences</p>
                 </div>
               </motion.div>
 
@@ -170,8 +170,8 @@ export default function Hero() {
                   <TrendingUp className="w-8 h-8 text-white" />
                 </motion.div>
                 <div className="space-y-2">
-                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-accent-600 transition-colors">Smart Pricing</h3>
-                  <p className="text-gray-600 leading-relaxed">AI-powered pricing suggestions for optimal deals</p>
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900 group-hover:text-accent-600 transition-colors">Smart Pricing</h3>
+                  <p className="text-sm md:text-base text-gray-600 leading-relaxed">AI-powered pricing suggestions for optimal deals</p>
                 </div>
               </motion.div>
 
@@ -188,8 +188,8 @@ export default function Hero() {
                   <Shield className="w-8 h-8 text-white" />
                 </motion.div>
                 <div className="space-y-2">
-                  <h3 className="text-xl font-bold text-gray-900 group-hover:text-secondary-600 transition-colors">Safe & Secure</h3>
-                  <p className="text-gray-600 leading-relaxed">Protected transactions with verified sellers</p>
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900 group-hover:text-secondary-600 transition-colors">Safe & Secure</h3>
+                  <p className="text-sm md:text-base text-gray-600 leading-relaxed">Protected transactions with verified sellers</p>
                 </div>
               </motion.div>
             </div>

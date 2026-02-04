@@ -274,15 +274,14 @@ function BrowsePageInner() {
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40">
       {/* Header - positioned below main navbar */}
       <div className="bg-white/80 backdrop-blur-sm border-b border-gray-200 sticky top-16 z-30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 md:py-6">
+          <div className="flex flex-col lg:flex-row gap-3 md:gap-4 items-center justify-between">
             {/* Controls */}
-            <div className="flex items-center space-x-4 w-full lg:w-auto justify-center lg:justify-start flex-wrap">
+            <div className="flex items-center space-x-2 sm:space-x-4 w-full lg:w-auto justify-center lg:justify-start flex-wrap gap-2">
               {/* Filter Button */}
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center space-x-2 px-4 py-2 border border-gray-200 rounded-full hover:bg-gray-50 transition-colors"
-              >
+                className="flex items-center space-x-2 px-3 sm:px-4 py-2 border border-gray-200 rounded-full hover:bg-gray-50 transition-colors text-sm">
                 <Filter className="w-4 h-4" />
                 <span>Filters</span>
               </button>
@@ -291,7 +290,7 @@ function BrowsePageInner() {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="px-4 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white"
+                className="px-3 sm:px-4 py-2 border border-gray-200 rounded-full focus:outline-none focus:ring-2 focus:ring-primary-500 bg-white text-sm"
               >
                 {sortOptions.map(option => (
                   <option key={option.value} value={option.value}>

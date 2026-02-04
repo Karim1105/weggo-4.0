@@ -93,7 +93,7 @@ export default function FeaturedListings() {
   }
 
   return (
-    <section className="py-20 px-4 relative overflow-visible">
+    <section className="py-12 md:py-20 px-4 relative overflow-visible">
       {/* Revolutionary Background */}
       <div className="absolute inset-0">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-accent-50/40 via-transparent to-primary-50/40" />
@@ -132,14 +132,14 @@ export default function FeaturedListings() {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="text-center mb-20"
+          className="text-center mb-12 md:mb-20"
         >
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             whileInView={{ scale: 1, opacity: 1 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="inline-flex items-center space-x-3 bg-gradient-to-r from-accent-500 to-primary-500 text-white px-8 py-4 rounded-full text-sm font-medium mb-8 shadow-2xl"
+            className="inline-flex items-center space-x-2 md:space-x-3 bg-gradient-to-r from-accent-500 to-primary-500 text-white px-5 md:px-8 py-2 md:py-4 rounded-full text-xs md:text-sm font-medium mb-6 md:mb-8 shadow-2xl"
           >
             <motion.div
               animate={{ rotate: 360 }}
@@ -159,7 +159,7 @@ export default function FeaturedListings() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.3 }}
-            className="text-6xl lg:text-7xl font-bold mb-8"
+            className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold mb-4 md:mb-8"
           >
             <motion.span
               animate={{ 
@@ -183,7 +183,7 @@ export default function FeaturedListings() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.4 }}
-            className="text-xl text-gray-600 max-w-3xl mx-auto mb-12"
+            className="text-base md:text-xl text-gray-600 max-w-3xl mx-auto mb-8 md:mb-12"
           >
             Handpicked by our AI from verified sellers with 4.5+ ratings - the best of the best
           </motion.p>
@@ -193,30 +193,30 @@ export default function FeaturedListings() {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16"
+            className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-16"
           >
-            <div className="text-center p-6 bg-gradient-to-br from-primary-50 to-primary-100 rounded-2xl">
-              <div className="w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center mx-auto mb-3">
-                <Star className="w-6 h-6 text-white fill-white" />
+            <div className="text-center p-4 md:p-6 bg-gradient-to-br from-primary-50 to-primary-100 rounded-2xl">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-primary-500 rounded-xl flex items-center justify-center mx-auto mb-2 md:mb-3">
+                <Star className="w-5 h-5 md:w-6 md:h-6 text-white fill-white" />
               </div>
-              <h3 className="text-2xl font-bold text-primary-600 mb-1">4.8+</h3>
-              <p className="text-gray-600">Average Rating</p>
+              <h3 className="text-xl md:text-2xl font-bold text-primary-600 mb-1">4.8+</h3>
+              <p className="text-sm md:text-base text-gray-600">Average Rating</p>
             </div>
             
-            <div className="text-center p-6 bg-gradient-to-br from-accent-50 to-accent-100 rounded-2xl">
-              <div className="w-12 h-12 bg-accent-500 rounded-xl flex items-center justify-center mx-auto mb-3">
-                <TrendingUp className="w-6 h-6 text-white" />
+            <div className="text-center p-4 md:p-6 bg-gradient-to-br from-accent-50 to-accent-100 rounded-2xl">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-accent-500 rounded-xl flex items-center justify-center mx-auto mb-2 md:mb-3">
+                <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-accent-600 mb-1">100%</h3>
-              <p className="text-gray-600">Verified Sellers</p>
+              <h3 className="text-xl md:text-2xl font-bold text-accent-600 mb-1">100%</h3>
+              <p className="text-sm md:text-base text-gray-600">Verified Sellers</p>
             </div>
             
-            <div className="text-center p-6 bg-gradient-to-br from-secondary-50 to-secondary-100 rounded-2xl">
-              <div className="w-12 h-12 bg-secondary-500 rounded-xl flex items-center justify-center mx-auto mb-3">
-                <Award className="w-6 h-6 text-white" />
+            <div className="text-center p-4 md:p-6 bg-gradient-to-br from-secondary-50 to-secondary-100 rounded-2xl">
+              <div className="w-10 h-10 md:w-12 md:h-12 bg-secondary-500 rounded-xl flex items-center justify-center mx-auto mb-2 md:mb-3">
+                <Award className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-secondary-600 mb-1">Premium</h3>
-              <p className="text-gray-600">Quality Items</p>
+              <h3 className="text-xl md:text-2xl font-bold text-secondary-600 mb-1">Premium</h3>
+              <p className="text-sm md:text-base text-gray-600">Quality Items</p>
             </div>
           </motion.div>
         </motion.div>
