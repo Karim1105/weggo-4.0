@@ -80,6 +80,8 @@ The browse page has category filtering, subcategory support, search, location fi
 
 Messages system exists but the backend implementation is still being worked on. Same with the review system and some of the admin features.
 
+**Performance is actually good now** - the wishlist API used to get hammered with 50+ requests per second because of a React useCallback circular dependency that would make any dev want to flip a table. That's fixed. Homepage loads clean, API calls happen once per page load like they should. No more DDoS-ing ourselves.
+
 ## What's Not Done Yet
 
 The ID verification backend doesn't actually verify IDs - it just accepts the upload and marks you as verified. You'd need to integrate something like Veriff or build your own review system for that.
