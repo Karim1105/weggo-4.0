@@ -1,9 +1,5 @@
-import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
-import { existsSync } from 'fs'
-
-const UPLOAD_DIR = join(process.cwd(), 'public', 'uploads')
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+const MAX_LISTING_IMAGES = 10
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 
 const MAGIC: Record<string, number[]> = {
@@ -23,10 +19,7 @@ function isAllowedImage(type: string, buffer: Buffer): boolean {
   return true
 }
 
-export async function saveImage(file: File, userId: string): Promise<string> {
-  if (!existsSync(UPLOAD_DIR)) {
-    await mkdir(UPLOAD_DIR, { recursive: true })
-  }
+async function readAndValidateImage(file: File): Promise<Buffer> {
   if (!ALLOWED_TYPES.includes(file.type)) {
     throw new Error('Invalid file type. Only JPEG, PNG, and WebP are allowed.')
   }
@@ -40,42 +33,21 @@ export async function saveImage(file: File, userId: string): Promise<string> {
     throw new Error('File content does not match its type. Only real images are allowed.')
   }
 
-  // Generate unique filename
-  const timestamp = Date.now()
-  const randomStr = Math.random().toString(36).substring(2, 15)
-  const extension = file.name.split('.').pop() || 'jpg'
-  const filename = `${userId}_${timestamp}_${randomStr}.${extension}`
-  const filepath = join(UPLOAD_DIR, filename)
-
-  await writeFile(filepath, buffer)
-
-  return `/uploads/${filename}`
+  return buffer
 }
 
-const ID_UPLOAD_DIR = join(process.cwd(), 'private', 'uploads', 'ids')
+function toDataUri(type: string, buffer: Buffer): string {
+  return `data:${type};base64,${buffer.toString('base64')}`
+}
+
+export async function saveImage(file: File, userId: string): Promise<string> {
+  const buffer = await readAndValidateImage(file)
+  return toDataUri(file.type, buffer)
+}
 
 export async function saveIdDocument(file: File, userId: string): Promise<string> {
-  if (!existsSync(ID_UPLOAD_DIR)) {
-    await mkdir(ID_UPLOAD_DIR, { recursive: true })
-  }
-  if (!ALLOWED_TYPES.includes(file.type)) {
-    throw new Error('Invalid file type. Only JPEG, PNG, and WebP are allowed.')
-  }
-  if (file.size > MAX_FILE_SIZE) {
-    throw new Error('File size exceeds 5MB limit.')
-  }
-  const bytes = await file.arrayBuffer()
-  const buffer = Buffer.from(bytes)
-  if (!isAllowedImage(file.type, buffer)) {
-    throw new Error('File content does not match its type. Only real images are allowed.')
-  }
-  const timestamp = Date.now()
-  const randomStr = Math.random().toString(36).substring(2, 15)
-  const extension = file.name.split('.').pop() || 'jpg'
-  const filename = `id_${userId}_${timestamp}_${randomStr}.${extension}`
-  const filepath = join(ID_UPLOAD_DIR, filename)
-  await writeFile(filepath, buffer)
-  return `private/ids/${filename}`
+  const buffer = await readAndValidateImage(file)
+  return toDataUri(file.type, buffer)
 }
 
 export async function handleImageUpload(
@@ -84,6 +56,10 @@ export async function handleImageUpload(
 ): Promise<string[]> {
   const files = formData.getAll('images') as File[]
   const imagePaths: string[] = []
+
+  if (files.length > MAX_LISTING_IMAGES) {
+    throw new Error(`Maximum ${MAX_LISTING_IMAGES} images per listing allowed.`)
+  }
 
   for (const file of files) {
     if (file && file.size > 0) {

@@ -4,6 +4,8 @@ import User from '@/models/User'
 import { rateLimit } from '@/lib/rateLimit'
 import crypto from 'crypto'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   const rateLimitResponse = rateLimit(5, 15 * 60 * 1000)(request)
   if (rateLimitResponse) return rateLimitResponse

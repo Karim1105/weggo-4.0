@@ -4,6 +4,8 @@ import User from '@/models/User'
 import { getAuthUser } from '@/lib/auth'
 import { saveIdDocument } from '@/lib/imageUpload'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   try {
     const user = await getAuthUser(request)
@@ -45,6 +47,21 @@ export async function POST(request: NextRequest) {
       sellerVerified: true,
     })
   } catch (error: any) {
+    if (error instanceof Error) {
+      const message = error.message || 'Upload failed'
+      const uploadErrors = [
+        'Invalid file type',
+        'File size exceeds',
+        'File content does not match',
+      ]
+      if (uploadErrors.some((fragment) => message.includes(fragment))) {
+        return NextResponse.json(
+          { success: false, error: message },
+          { status: 400 }
+        )
+      }
+    }
+
     return NextResponse.json(
       { success: false, error: error.message || 'Upload failed' },
       { status: 500 }

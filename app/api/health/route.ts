@@ -3,6 +3,8 @@ import connectDB from '@/lib/db'
 import { getHealthStatus } from '@/lib/health'
 import { logger } from '@/lib/logger'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET() {
   try {
     const health = getHealthStatus()

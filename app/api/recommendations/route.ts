@@ -6,6 +6,8 @@ import Wishlist from '@/models/Wishlist'
 import { getAuthUser } from '@/lib/auth'
 import { getCache, setCache } from '@/lib/cache'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   try {
     await connectDB()

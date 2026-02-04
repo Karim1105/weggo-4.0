@@ -158,7 +158,7 @@ export default function MessagesPage() {
                     {image ? (
                       <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
                         <img
-                          src={image.startsWith('http') ? image : `${process.env.NEXT_PUBLIC_APP_URL || ''}${image}`}
+                          src={image.startsWith('http') || image.startsWith('data:') ? image : `${process.env.NEXT_PUBLIC_APP_URL || ''}${image}`}
                           alt={product?.title || 'Item'}
                           className="w-full h-full object-cover"
                         />

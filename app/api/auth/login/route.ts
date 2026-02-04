@@ -8,6 +8,8 @@ import { setCsrfTokenCookie } from '@/lib/csrf'
 import { validateEmail } from '@/lib/validators'
 import { logger, getRequestId } from '@/lib/logger'
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(request: NextRequest) {
   const requestId = getRequestId(request)
 

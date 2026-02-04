@@ -4,6 +4,8 @@ import Product from '@/models/Product'
 import { successResponse, ApiErrors } from '@/lib/api-response'
 import { logger, getRequestId } from '@/lib/logger'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   const requestId = getRequestId(request)
 

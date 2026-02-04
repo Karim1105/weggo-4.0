@@ -263,7 +263,9 @@ export default function ListingDetailPage() {
   }
 
   const imageUrl = listing.images?.[selectedImage] || listing.images?.[0] || ''
-  const fullImageUrl = imageUrl.startsWith('http') ? imageUrl : `${process.env.NEXT_PUBLIC_APP_URL || ''}${imageUrl}`
+  const fullImageUrl = imageUrl.startsWith('http') || imageUrl.startsWith('data:')
+    ? imageUrl
+    : `${process.env.NEXT_PUBLIC_APP_URL || ''}${imageUrl}`
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-4 bg-gray-50">
@@ -298,7 +300,7 @@ export default function ListingDetailPage() {
                       }`}
                     >
                       <img
-                        src={img.startsWith('http') ? img : `${process.env.NEXT_PUBLIC_APP_URL || ''}${img}`}
+                        src={img.startsWith('http') || img.startsWith('data:') ? img : `${process.env.NEXT_PUBLIC_APP_URL || ''}${img}`}
                         alt=""
                         className="w-full h-full object-cover"
                       />

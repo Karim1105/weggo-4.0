@@ -22,15 +22,9 @@ interface FeaturedProduct {
   }
 }
 
-const FALLBACK_PRODUCTS: FeaturedProduct[] = [
-  { id: '1', title: 'iPhone 13 Pro Max 256GB', price: 15000, location: 'Cairo', condition: 'Like New', image: 'https://images.unsplash.com/photo-1632661674596-df8be070a5c5?w=400&h=400&fit=crop&crop=center', category: 'Electronics', seller: { name: 'Seller', rating: 4.8, verified: true } },
-  { id: '2', title: 'MacBook Pro M2 16"', price: 42000, location: 'Giza', condition: 'Excellent', image: 'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=400&h=400&fit=crop&crop=center', category: 'Electronics', seller: { name: 'Seller', rating: 4.9, verified: true } },
-  { id: '3', title: 'Sony PlayStation 5', price: 9500, location: 'Cairo', condition: 'Like New', image: 'https://images.unsplash.com/photo-1606813907291-d86efa9b94db?w=400&h=400&fit=crop&crop=center', category: 'Gaming', seller: { name: 'Seller', rating: 4.7, verified: true } },
-]
-
 export default function Hero() {
   const { handleVerificationFlow } = useUserVerification()
-  const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>(FALLBACK_PRODUCTS)
+  const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([])
   const [favorites, setFavorites] = useState<string[]>([])
 
   useEffect(() => {

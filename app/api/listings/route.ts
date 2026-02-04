@@ -9,6 +9,8 @@ import { successResponse, errorResponse, ApiErrors } from '@/lib/api-response'
 import { normalizeCondition, validateCreateListingForm } from '@/lib/validators'
 import { logger, getRequestId } from '@/lib/logger'
 
+export const dynamic = 'force-dynamic'
+
 export async function GET(request: NextRequest) {
   const requestId = getRequestId(request)
 
@@ -397,6 +399,20 @@ export async function POST(request: NextRequest) {
         errors[field] = error.errors[field].message
       })
       return ApiErrors.validationError(errors)
+    }
+
+    if (error instanceof Error) {
+      const message = error.message || ''
+      const uploadErrors = [
+        'Invalid file type',
+        'File size exceeds',
+        'File content does not match',
+        'You can upload up to',
+        'Total image size is too large',
+      ]
+      if (uploadErrors.some((fragment) => message.includes(fragment))) {
+        return ApiErrors.badRequest(message)
+      }
     }
 
     return ApiErrors.serverError()

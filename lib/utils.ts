@@ -187,7 +187,7 @@ export function withCsrfHeader(headers: HeadersInit = {}): HeadersInit {
 /** Build full image URL for listing (API may return path like /uploads/xxx) */
 export function listingImageUrl(path: string | undefined): string {
   if (!path) return 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500'
-  if (path.startsWith('http')) return path
+  if (path.startsWith('http') || path.startsWith('data:')) return path
   const base = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_APP_URL || '')
   return `${base}${path}`
 }
