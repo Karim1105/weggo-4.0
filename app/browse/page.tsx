@@ -46,6 +46,7 @@ function BrowsePageInner() {
   const [showFilters, setShowFilters] = useState(false)
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [isInitialMount, setIsInitialMount] = useState(true)
   const storeFavorites = useAppStore((s) => s.favorites)
   const addFavorite = useAppStore((s) => s.addFavorite)
   const removeFavorite = useAppStore((s) => s.removeFavorite)
@@ -159,6 +160,12 @@ function BrowsePageInner() {
   useEffect(() => {
     fetchListings()
   }, [fetchListings])
+
+  // Mark initial mount complete after first render
+  useEffect(() => {
+    const timer = setTimeout(() => setIsInitialMount(false), 100)
+    return () => clearTimeout(timer)
+  }, [])
 
   const toggleFavorite = (id: string) => {
     const product = products.find((p) => p.id === id)
@@ -471,8 +478,14 @@ function BrowsePageInner() {
       {/* Results - added extra top padding to prevent sticky header from hiding content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 pt-24">
         {/* Subcategory chips when a category with subcategories is selected */}
-        {subcategories.length > 0 && (
-          <div className="mb-6">
+        {!loading && subcategories.length > 0 && (
+          <motion.div
+            initial={isInitialMount ? { opacity: 1, height: 'auto' } : { opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            transition={{ duration: isInitialMount ? 0 : 0.3, delay: isInitialMount ? 0 : 0.15 }}
+            layout={false}
+            className="mb-6 overflow-hidden"
+          >
             <p className="text-sm font-medium text-gray-600 mb-2">
               {categoryLabels[selectedCategory] || selectedCategory} &rarr; choose subcategory
             </p>
@@ -503,18 +516,18 @@ function BrowsePageInner() {
                 </button>
               ))}
             </div>
-          </div>
+          </motion.div>
         )}
 
         {/* Results Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-8 min-h-[80px]">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">
               {loading ? 'Loading...' : `${displayedProducts.length} items found`}
             </h1>
-            <p className="text-gray-600">
-              {searchQuery && `Search results for "${searchQuery}"`}
-              {selectedCategory !== 'all' && !searchQuery && (
+            <p className="text-gray-600 min-h-[24px]">
+              {!loading && searchQuery && `Search results for "${searchQuery}"`}
+              {!loading && selectedCategory !== 'all' && !searchQuery && (
                 <span>
                   in {categoryLabels[selectedCategory] || selectedCategory}
                   {selectedSubcategory !== 'all' && subcategories.find(s => s.id === selectedSubcategory) && (
@@ -527,23 +540,23 @@ function BrowsePageInner() {
         </div>
 
         {/* Loading */}
-        {loading && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {loading && displayedProducts.length === 0 && (
+          <div key="loading-skeleton" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 min-h-[400px]">
             {[1, 2, 3, 4, 5, 6].map((i) => (
-              <div key={i} className="animate-pulse bg-gray-200 rounded-2xl h-80" />
+              <div key={i} className="bg-gray-200 rounded-2xl h-80" />
             ))}
           </div>
         )}
 
         {/* Products Grid/List */}
-        {!loading && viewMode === 'grid' ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {viewMode === 'grid' ? (
+          <div className={`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 ${loading && displayedProducts.length > 0 ? 'opacity-50 pointer-events-none' : ''}`}>
             {displayedProducts.map((product, index) => (
               <motion.div
                 key={product.id}
-                initial={{ opacity: 0, y: 20 }}
+                initial={isInitialMount ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
+                transition={{ delay: isInitialMount ? 0 : 0.15 + index * 0.05 }}
                 layout="position"
               >
                 <ProductCard
@@ -554,14 +567,14 @@ function BrowsePageInner() {
               </motion.div>
             ))}
           </div>
-        ) : !loading ? (
-          <div className="space-y-4">
+        ) : viewMode === 'list' ? (
+          <div className={`space-y-4 ${loading && displayedProducts.length > 0 ? 'opacity-50 pointer-events-none' : ''}`}>
             {displayedProducts.map((product, index) => (
               <motion.div
                 key={product.id}
-                initial={{ opacity: 0, x: -20 }}
+                initial={isInitialMount ? { opacity: 1, x: 0 } : { opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.05 }}
+                transition={{ delay: isInitialMount ? 0 : 0.15 + index * 0.05 }}
                 layout="position"
                 className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
               >

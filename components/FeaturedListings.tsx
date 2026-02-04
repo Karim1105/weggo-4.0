@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Star, TrendingUp, Award } from 'lucide-react'
 import ProductCard from './ProductCard'
 import { mapApiListingToProduct } from '@/lib/utils'
 import { useAppStore } from '@/lib/store'
+import toast from 'react-hot-toast'
 
 interface Product {
   id: string
@@ -21,11 +23,29 @@ interface Product {
 }
 
 export default function FeaturedListings() {
+  const router = useRouter()
   const [products, setProducts] = useState<Product[]>([])
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
   const storeFavorites = useAppStore((s) => s.favorites)
   const addFavorite = useAppStore((s) => s.addFavorite)
   const removeFavorite = useAppStore((s) => s.removeFavorite)
+  const user = useAppStore((s) => s.user)
+
+  const handleApplyNow = async () => {
+    // Check if user is logged in
+    if (!user) {
+      toast.error('Please log in to apply for featured seller status')
+      router.push('/login?redirect=/auth/upload-id')
+      return
+    }
+
+    // Redirect to ID upload
+    router.push('/auth/upload-id')
+  }
+
+  const handleLearnMore = () => {
+    router.push('/seller-guidelines')
+  }
 
   const fetchFeatured = useCallback(async () => {
     try {
@@ -242,10 +262,16 @@ export default function FeaturedListings() {
                 Join our premium seller program and get your items featured to thousands of buyers
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button className="px-8 py-3 bg-white text-primary-600 rounded-full font-semibold hover:shadow-lg transition-all">
+                <button 
+                  onClick={handleApplyNow}
+                  className="px-8 py-3 bg-white text-primary-600 rounded-full font-semibold hover:shadow-lg transition-all"
+                >
                   Apply Now
                 </button>
-                <button className="px-8 py-3 border-2 border-white text-white rounded-full font-semibold hover:bg-white/10 transition-all">
+                <button 
+                  onClick={handleLearnMore}
+                  className="px-8 py-3 border-2 border-white text-white rounded-full font-semibold hover:bg-white/10 transition-all"
+                >
                   Learn More
                 </button>
               </div>
