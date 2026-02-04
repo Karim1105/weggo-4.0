@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -8,7 +8,7 @@ import { Mail, Lock, User, Phone, MapPin, UserPlus } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { withCsrfHeader } from '@/lib/utils'
 
-export default function RegisterPage() {
+function RegisterPageInner() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -174,6 +174,14 @@ export default function RegisterPage() {
         </div>
       </motion.div>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={null}>
+      <RegisterPageInner />
+    </Suspense>
   )
 }
 

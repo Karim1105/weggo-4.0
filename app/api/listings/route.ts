@@ -145,7 +145,7 @@ export async function GET(request: NextRequest) {
 
       scored.sort((a, b) => {
         if (b._relevance !== a._relevance) return b._relevance - a._relevance
-        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        return new Date((b as any).createdAt ?? 0).getTime() - new Date((a as any).createdAt ?? 0).getTime()
       })
 
       products = scored.slice(skip, skip + limit)

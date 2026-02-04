@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Search, Filter, Grid, List, Package, Heart, MapPin, Clock } from 'lucide-react'
@@ -28,7 +28,7 @@ interface Product {
   }
 }
 
-export default function BrowsePage() {
+function BrowsePageInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
@@ -631,6 +631,14 @@ export default function BrowsePage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function BrowsePage() {
+  return (
+    <Suspense fallback={null}>
+      <BrowsePageInner />
+    </Suspense>
   )
 }
 

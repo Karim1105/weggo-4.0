@@ -35,7 +35,7 @@ export default function FavoritesPage() {
       const data = await res.json()
       if (res.status === 401) return
       if (data.success && Array.isArray(data.wishlist)) {
-        const ids = new Set(data.wishlist.map((p: { _id: string }) => p._id))
+        const ids = new Set<string>(data.wishlist.map((p: { _id: string }) => p._id))
         const mapped = data.wishlist.map((l: any) => mapApiListingToProduct(l, ids))
         setProducts(mapped)
       } else {

@@ -13,7 +13,7 @@ export async function GET(
     await connectDB()
     const product = await Product.findById(params.id)
       .populate('seller', 'name email avatar isVerified phone location')
-      .lean()
+      .lean() as { status?: string; seller?: { _id?: unknown } } | null
 
     if (!product || product.status !== 'active') {
       return NextResponse.json(
@@ -27,7 +27,7 @@ export async function GET(
 
     // Track view history if user is logged in
     const user = await getAuthUser(request)
-    if (user && user._id.toString() !== product.seller._id.toString()) {
+    if (user && product?.seller?._id && user._id.toString() !== product.seller._id.toString()) {
       await ViewHistory.findOneAndUpdate(
         { user: user._id, product: params.id },
         { viewedAt: new Date() },

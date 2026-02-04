@@ -8,6 +8,7 @@ import ProductCard from './ProductCard'
 interface Product {
   id: string
   title: string
+  description?: string
   price: number
   location: string
   condition: string
@@ -17,9 +18,9 @@ interface Product {
   isFavorite: boolean
   seller?: {
     name: string
-    rating: number
-    totalSales: number
-    verified: boolean
+    rating?: number
+    totalSales?: number
+    verified?: boolean
   }
 }
 

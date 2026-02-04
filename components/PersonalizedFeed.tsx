@@ -22,7 +22,7 @@ interface Product {
     name: string
     rating?: number
     totalSales?: number
-    verified: boolean
+    verified?: boolean
   }
 }
 
