@@ -173,7 +173,12 @@ export async function GET(request: NextRequest) {
 
     logger.debug('Listings fetched', { count: products.length, page, limit }, requestId)
 
-    return successResponse(resultData)
+    const response = successResponse(resultData)
+    
+    // Add caching headers for better performance
+    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300')
+    
+    return response
   } catch (error: any) {
     logger.error('Error fetching listings', error, { endpoint: '/api/listings' }, requestId)
     return ApiErrors.serverError()

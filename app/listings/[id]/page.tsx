@@ -58,6 +58,7 @@ export default function ListingDetailPage() {
   const [isFavorite, setIsFavorite] = useState(false)
   const [currentUser, setCurrentUser] = useState<{ _id: string; role?: string } | null>(null)
   const [similar, setSimilar] = useState<any[]>([])
+  const [imageError, setImageError] = useState(false)
 
   useEffect(() => {
     fetchListing()
@@ -263,9 +264,11 @@ export default function ListingDetailPage() {
   }
 
   const imageUrl = listing.images?.[selectedImage] || listing.images?.[0] || ''
-  const fullImageUrl = imageUrl.startsWith('http') || imageUrl.startsWith('data:')
-    ? imageUrl
-    : `${process.env.NEXT_PUBLIC_APP_URL || ''}${imageUrl}`
+  const fullImageUrl = imageUrl
+    ? (imageUrl.startsWith('http') || imageUrl.startsWith('data:')
+        ? imageUrl
+        : `${process.env.NEXT_PUBLIC_APP_URL || ''}${imageUrl}`)
+    : 'https://via.placeholder.com/800x800?text=No+Image'
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-4 bg-gray-50">
@@ -286,26 +289,42 @@ export default function ListingDetailPage() {
                   src={fullImageUrl}
                   alt={listing.title}
                   className="w-full h-full object-cover"
+                  onError={(e) => {
+                    if (!imageError) {
+                      e.currentTarget.src = 'https://via.placeholder.com/800x800?text=Image+Not+Available'
+                      setImageError(true)
+                    }
+                  }}
                 />
               </div>
               {listing.images && listing.images.length > 1 && (
                 <div className="flex gap-2 overflow-x-auto pb-2">
-                  {listing.images.map((img, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      onClick={() => setSelectedImage(i)}
-                      className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
-                        selectedImage === i ? 'border-primary-500' : 'border-gray-200'
-                      }`}
-                    >
-                      <img
-                        src={img.startsWith('http') || img.startsWith('data:') ? img : `${process.env.NEXT_PUBLIC_APP_URL || ''}${img}`}
-                        alt=""
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
+                  {listing.images.map((img, i) => {
+                    const thumbUrl = img
+                      ? (img.startsWith('http') || img.startsWith('data:')
+                          ? img
+                          : `${process.env.NEXT_PUBLIC_APP_URL || ''}${img}`)
+                      : 'https://via.placeholder.com/80x80?text=No+Image'
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setSelectedImage(i)}
+                        className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
+                          selectedImage === i ? 'border-primary-500' : 'border-gray-200'
+                        }`}
+                      >
+                        <img
+                          src={thumbUrl}
+                          alt=""
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.currentTarget.src = 'https://via.placeholder.com/80x80?text=Error'
+                          }}
+                        />
+                      </button>
+                    )
+                  })}
                 </div>
               )}
             </div>

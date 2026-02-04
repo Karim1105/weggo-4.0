@@ -4,6 +4,7 @@ import './globals.css'
 import { Toaster } from 'react-hot-toast'
 import Navbar from '@/components/Navbar'
 import AIChatbot from '@/components/AIChatbot'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const cairo = Cairo({ subsets: ['arabic', 'latin'], variable: '--font-cairo' })
@@ -21,12 +22,14 @@ export default function RootLayout({
   return (
     <html lang="en" dir="ltr">
       <body className={`${inter.variable} ${cairo.variable} font-sans antialiased bg-gray-50`}>
-        <Navbar />
-        <main className="min-h-screen">
-          {children}
-        </main>
-        <AIChatbot />
-        <Toaster position="top-center" />
+        <ErrorBoundary>
+          <Navbar />
+          <main className="min-h-screen">
+            {children}
+          </main>
+          <AIChatbot />
+          <Toaster position="top-center" />
+        </ErrorBoundary>
       </body>
     </html>
   )
