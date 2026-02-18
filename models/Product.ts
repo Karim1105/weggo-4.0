@@ -113,6 +113,10 @@ ProductSchema.index({ title: 'text', description: 'text' })
 ProductSchema.index({ category: 1, location: 1, price: 1 })
 ProductSchema.index({ seller: 1 })
 ProductSchema.index({ createdAt: -1 })
+ProductSchema.index({ status: 1 })
+ProductSchema.index({ isBoosted: -1 })
+ProductSchema.index({ condition: 1 })
+ProductSchema.index({ subcategory: 1 })
 
 export default mongoose.models.Product || mongoose.model<IProduct>('Product', ProductSchema)
 
