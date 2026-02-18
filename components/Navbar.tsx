@@ -381,6 +381,21 @@ export default function Navbar() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {user && (
+        <Link
+          href="/messages"
+          className="md:hidden fixed bottom-24 right-6 z-50 flex items-center justify-center w-14 h-14 rounded-full shadow-xl bg-primary-600 text-white hover:bg-primary-700 transition-colors"
+          aria-label="Open messages"
+        >
+          <MessageCircle className="w-6 h-6" />
+          {unreadMessages > 0 && (
+            <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-semibold flex items-center justify-center">
+              {unreadMessages > 9 ? '9+' : unreadMessages}
+            </span>
+          )}
+        </Link>
+      )}
     </motion.nav>
   )
 }
