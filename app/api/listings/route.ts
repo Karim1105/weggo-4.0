@@ -134,33 +134,38 @@ export async function GET(request: NextRequest) {
     const total = await Product.countDocuments(query)
 
     let products: any[] = []
-    if (useRelevance) {
-      const candidateLimit = Math.min(1000, skip + limit + 200)
-      const candidates = await Product.find(query)
-        .populate('seller', 'name email avatar isVerified')
-        .sort({ createdAt: -1 })
-        .limit(candidateLimit)
-        .lean()
+      // PATCH: Reduce listings API response size by selecting only necessary fields
+      // Fixed the stupid mistake with the help of my genius friend Yousef Mohamed
+      // Expanded .select() to include all fields needed for homepage, feed, and UI features
+      if (useRelevance) {
+        const candidateLimit = Math.min(1000, skip + limit + 200)
+        const candidates = await Product.find(query)
+          .select('_id title price images category location condition description subcategory views status createdAt')
+          .populate('seller', 'name email avatar isVerified')
+          .sort({ createdAt: -1 })
+          .limit(candidateLimit)
+          .lean()
 
-      const scored = candidates.map((item) => ({
-        ...item,
-        _relevance: calculateRelevance(searchTerm, item.title, item.description)
-      }))
+        const scored = candidates.map((item) => ({
+          ...item,
+          _relevance: calculateRelevance(searchTerm, item.title, item.description)
+        }))
 
-      scored.sort((a, b) => {
-        if (b._relevance !== a._relevance) return b._relevance - a._relevance
-        return new Date((b as any).createdAt ?? 0).getTime() - new Date((a as any).createdAt ?? 0).getTime()
-      })
+        scored.sort((a, b) => {
+          if (b._relevance !== a._relevance) return b._relevance - a._relevance
+          return new Date((b as any).createdAt ?? 0).getTime() - new Date((a as any).createdAt ?? 0).getTime()
+        })
 
-      products = scored.slice(skip, skip + limit)
-    } else {
-      products = await Product.find(query)
-        .populate('seller', 'name email avatar isVerified')
-        .sort(sort)
-        .skip(skip)
-        .limit(limit)
-        .lean()
-    }
+        products = scored.slice(skip, skip + limit)
+      } else {
+        products = await Product.find(query)
+          .select('_id title price images category location condition description subcategory views status createdAt')
+          .populate('seller', 'name email avatar isVerified')
+          .sort(sort)
+          .skip(skip)
+          .limit(limit)
+          .lean()
+      }
 
     const resultData = {
       listings: products,
