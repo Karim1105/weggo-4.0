@@ -7,7 +7,6 @@ import { motion } from 'framer-motion'
 import {
   ArrowLeft,
   MapPin,
-  Clock,
   Heart,
   MessageCircle,
   Share2,
@@ -19,14 +18,12 @@ import toast from 'react-hot-toast'
 import ProductCard from '@/components/ProductCard'
 import ReviewSubmit from '@/components/ReviewSubmit'
 import ReviewsList from '@/components/ReviewsList'
-import { mapApiListingToProduct, withCsrfHeader } from '@/lib/utils'
+import { mapApiListingToProduct, listingImageUrl, withCsrfHeader } from '@/lib/utils'
 
 interface Seller {
   _id: string
   name: string
-  email?: string
   avatar?: string
-  isVerified?: boolean
   phone?: string
   location?: string
 }
@@ -40,8 +37,6 @@ interface Listing {
   condition: string
   category: string
   images: string[]
-  views: number
-  createdAt: string
   seller: Seller
 }
 
@@ -269,11 +264,7 @@ export default function ListingDetailPage() {
   }
 
   const imageUrl = listing.images?.[selectedImage] || listing.images?.[0] || ''
-  const fullImageUrl = imageUrl
-    ? (imageUrl.startsWith('http') || imageUrl.startsWith('data:')
-        ? imageUrl
-        : `${process.env.NEXT_PUBLIC_APP_URL || ''}${imageUrl}`)
-    : 'https://via.placeholder.com/800x800?text=No+Image'
+  const fullImageUrl = listingImageUrl(imageUrl || undefined)
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-4 bg-gray-50">
@@ -305,11 +296,7 @@ export default function ListingDetailPage() {
               {listing.images && listing.images.length > 1 && (
                 <div className="flex gap-2 overflow-x-auto pb-2">
                   {listing.images.map((img, i) => {
-                    const thumbUrl = img
-                      ? (img.startsWith('http') || img.startsWith('data:')
-                          ? img
-                          : `${process.env.NEXT_PUBLIC_APP_URL || ''}${img}`)
-                      : 'https://via.placeholder.com/80x80?text=No+Image'
+                    const thumbUrl = listingImageUrl(img || undefined)
                     return (
                       <button
                         key={i}
@@ -397,10 +384,6 @@ export default function ListingDetailPage() {
                   <MapPin className="w-4 h-4" />
                   {listing.location}
                 </div>
-                <div className="flex items-center gap-1 text-gray-500 text-sm">
-                  <Clock className="w-4 h-4" />
-                  {listing.views} views
-                </div>
               </div>
 
               <p className="text-gray-700 whitespace-pre-wrap mb-6">{listing.description}</p>
@@ -413,9 +396,6 @@ export default function ListingDetailPage() {
                   </div>
                   <div>
                     <p className="font-semibold text-gray-900">{listing.seller?.name}</p>
-                    {listing.seller?.isVerified && (
-                      <span className="text-xs text-green-600 font-medium">Verified seller</span>
-                    )}
                   </div>
                 </div>
               </div>

@@ -9,7 +9,7 @@ import {
 } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import toast from 'react-hot-toast'
-import { withCsrfHeader } from '@/lib/utils'
+import { withCsrfHeader, listingImageUrl } from '@/lib/utils'
 
 type Tab = 'analytics' | 'users' | 'reports' | 'listings'
 
@@ -602,7 +602,7 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-4">
                   {listing.images?.[0] && (
                     <img
-                      src={listing.images[0]}
+                      src={listingImageUrl(listing.images[0])}
                       alt={listing.title}
                       className="w-16 h-16 object-cover rounded-lg"
                     />

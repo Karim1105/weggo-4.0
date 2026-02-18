@@ -41,6 +41,14 @@ export function clearCache(): void {
   metrics.evictions += evictedKeys
 }
 
+export function clearCacheByPrefix(prefix: string): void {
+  const keys = cache.keys().filter((k) => k.startsWith(prefix))
+  if (keys.length > 0) {
+    cache.del(keys)
+    metrics.deletes += keys.length
+  }
+}
+
 export function getCacheStats() {
   return cache.getStats()
 }

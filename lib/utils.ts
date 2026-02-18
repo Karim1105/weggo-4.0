@@ -188,8 +188,12 @@ export function withCsrfHeader(headers: HeadersInit = {}): HeadersInit {
 export function listingImageUrl(path: string | undefined): string {
   if (!path) return 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?w=500'
   if (path.startsWith('http') || path.startsWith('data:')) return path
-  const base = typeof window !== 'undefined' ? '' : (process.env.NEXT_PUBLIC_APP_URL || '')
-  return `${base}${path}`
+  // Serve uploaded files through the API route so they work even after
+  // a production build (Next.js only pre-bakes public/ assets at build time).
+  if (path.startsWith('/uploads/')) {
+    return `/api${path}`
+  }
+  return path
 }
 
 /** Map API listing to ProductCard shape */
@@ -218,14 +222,14 @@ export function mapApiListingToProduct(
     category: listing.category,
     // Keep subcategory available for client-side filtering, even if not always used in UI
     subcategory: listing.subcategory,
-    postedAt: formatDate(listing.createdAt),
+    postedAt: formatDate(listing.createdAt || new Date().toString()),
     isFavorite: favoriteIds.has(listing._id),
     seller: listing.seller
-      ? {
+        ? {
           name: listing.seller.name || 'Seller',
           rating: listing.seller.rating,
           totalSales: listing.seller.totalSales,
-          verified: listing.seller.isVerified,
+          verified: listing.seller?.isVerified,
         }
       : undefined,
   }

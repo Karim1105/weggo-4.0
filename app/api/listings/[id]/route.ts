@@ -4,6 +4,7 @@ import Product from '@/models/Product'
 import ViewHistory from '@/models/ViewHistory'
 import { getAuthUser } from '@/lib/auth'
 import { normalizeCondition } from '@/lib/validators'
+import { clearCacheByPrefix } from '@/lib/cache'
 
 export async function GET(
   request: NextRequest,
@@ -12,8 +13,8 @@ export async function GET(
   try {
     await connectDB()
     const product = await Product.findById(params.id)
-      .populate('seller', 'name email avatar isVerified phone location')
-      .lean() as { status?: string; seller?: { _id?: unknown } } | null
+      .populate('seller', 'name avatar phone location')
+      .lean() as any
 
     if (!product || product.status !== 'active') {
       return NextResponse.json(
@@ -27,7 +28,7 @@ export async function GET(
 
     // Track view history if user is logged in
     const user = await getAuthUser(request)
-    if (user && product?.seller?._id && user._id.toString() !== product.seller._id.toString()) {
+    if (user && product?.seller?._id && String(user._id) !== String(product.seller._id)) {
       await ViewHistory.findOneAndUpdate(
         { user: user._id, product: params.id },
         { viewedAt: new Date() },
@@ -35,9 +36,30 @@ export async function GET(
       )
     }
 
+    // Sanitize product before returning to client - remove internal fields and any data URIs
+    const images = Array.isArray(product.images)
+      ? product.images.filter((img: string) => typeof img === 'string' && !img.startsWith('data:'))
+      : []
+
+    const sanitizedSeller = product.seller ? {
+      _id: product.seller._id,
+      name: (product.seller as any).name,
+      avatar: (product.seller as any).avatar,
+      phone: (product.seller as any).phone,
+      location: (product.seller as any).location,
+    } : undefined
+
+    const { status, views, createdAt, ...rest } = product as any
+
+    const sanitizedProduct = {
+      ...rest,
+      images,
+      seller: sanitizedSeller,
+    }
+
     return NextResponse.json({
       success: true,
-      product,
+      product: sanitizedProduct,
     }, {
       headers: {
         'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60'
@@ -83,6 +105,8 @@ export async function DELETE(
 
     product.status = 'deleted'
     await product.save()
+
+    clearCacheByPrefix('listings')
 
     return NextResponse.json({
       success: true,
@@ -207,6 +231,8 @@ export async function PUT(
     }
 
     await product.save()
+
+    clearCacheByPrefix('listings')
 
     return NextResponse.json({
       success: true,

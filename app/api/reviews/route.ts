@@ -69,7 +69,6 @@ async function handler(request: NextRequest, user: any) {
                   comment: 1,
                   createdAt: 1,
                   'reviewer.name': 1,
-                  'reviewer.email': 1,
                   'reviewer.avatar': 1,
                   'product.title': 1,
                   'product.images': 1,
@@ -88,9 +87,6 @@ async function handler(request: NextRequest, user: any) {
         reviews,
         averageRating: Math.round(stats.averageRating * 100) / 100,
         totalReviews: stats.totalReviews,
-        page,
-        limit,
-        totalPages: Math.ceil(stats.totalReviews / limit),
       })
     }
 
@@ -164,7 +160,7 @@ async function handler(request: NextRequest, user: any) {
     })
 
     await review.populate([
-      { path: 'reviewer', select: 'name email avatar' },
+      { path: 'reviewer', select: 'name avatar' },
       { path: 'product', select: 'title images' },
     ])
 

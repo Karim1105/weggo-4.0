@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
         { averageRating: { $gte: 4.5 }, ratingCount: { $gte: 3 } }
       ]
     })
-      .populate('seller', 'name email avatar isVerified rating totalSales')
+      .populate('seller', 'name avatar rating totalSales')
       .sort({ views: -1, createdAt: -1, averageRating: -1 })
       .limit(limit)
       .lean()
@@ -59,9 +59,7 @@ export async function GET(request: NextRequest) {
       seller: product.seller ? {
         _id: product.seller._id.toString(),
         name: product.seller.name,
-        email: product.seller.email,
         avatar: product.seller.avatar,
-        isVerified: product.seller.isVerified,
         rating: product.seller.rating,
         totalSales: product.seller.totalSales,
       } : null,

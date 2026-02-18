@@ -48,19 +48,20 @@ async function writeFilePublic(buffer: Buffer, destPath: string) {
   await fs.promises.writeFile(destPath, buffer)
 }
 
-export async function saveImage(file: File, userId: string): Promise<string> {
+export async function saveImage(file: File, userId: string, productId?: string): Promise<string> {
   const buffer = await readAndValidateImage(file)
 
-  try {
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'listings', userId)
-    const ext = (file.name && path.extname(file.name)) || ''
-    const filename = `${Date.now()}-${randomUUID()}${ext}`
-    const dest = path.join(uploadsDir, filename)
-    await writeFilePublic(buffer, dest)
-    return `/uploads/listings/${encodeURIComponent(userId)}/${encodeURIComponent(filename)}`
-  } catch (err) {
-    return toDataUri(file.type, buffer)
-  }
+  const uploadsBase = path.join(process.cwd(), 'public', 'uploads', 'listings', userId)
+  // If productId provided, save in subfolder for that product
+  const uploadsDir = productId ? path.join(uploadsBase, productId) : uploadsBase
+  const ext = (file.name && path.extname(file.name)) || ''
+  const imageId = randomUUID()
+  const filename = `${imageId}${ext}`
+  const dest = path.join(uploadsDir, filename)
+
+  // Write to filesystem; on any error throw so callers don't fallback to data URIs
+  await writeFilePublic(buffer, dest)
+  return `/uploads/listings/${encodeURIComponent(userId)}/${productId ? encodeURIComponent(productId) + '/' : ''}${encodeURIComponent(filename)}`
 }
 
 export async function saveIdDocument(file: File, userId: string): Promise<string> {
@@ -79,7 +80,8 @@ export async function saveIdDocument(file: File, userId: string): Promise<string
 
 export async function handleImageUpload(
   formData: FormData,
-  userId: string
+  userId: string,
+  productId?: string
 ): Promise<string[]> {
   const files = formData.getAll('images') as File[]
   const imagePaths: string[] = []
@@ -90,7 +92,12 @@ export async function handleImageUpload(
 
   for (const file of files) {
     if (file && file.size > 0) {
-      const p = await saveImage(file, userId)
+      // saveImage now requires productId if you want images grouped under product
+      const p = await saveImage(file, userId, productId)
+      // ensure we never return data URIs
+      if (p.startsWith('data:')) {
+        throw new Error('Invalid image save result')
+      }
       imagePaths.push(p)
     }
   }

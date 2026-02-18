@@ -3,7 +3,7 @@ import connectDB from '@/lib/db'
 import Product from '@/models/Product'
 import { getAuthUser } from '@/lib/auth'
 import { rateLimit } from '@/lib/rateLimit'
-import { getCache, setCache } from '@/lib/cache'
+import { getCache, setCache, clearCacheByPrefix } from '@/lib/cache'
 import { handleImageUpload } from '@/lib/imageUpload'
 import { successResponse, errorResponse, ApiErrors } from '@/lib/api-response'
 import { normalizeCondition, validateCreateListingForm } from '@/lib/validators'
@@ -140,8 +140,8 @@ export async function GET(request: NextRequest) {
       if (useRelevance) {
         const candidateLimit = Math.min(1000, skip + limit + 200)
         const candidates = await Product.find(query)
-          .select('_id title price images category location condition description subcategory views status createdAt')
-          .populate('seller', 'name email avatar isVerified')
+          .select('_id title price images category location condition description subcategory createdAt')
+          .populate('seller', 'name avatar')
           .sort({ createdAt: -1 })
           .limit(candidateLimit)
           .lean()
@@ -159,8 +159,8 @@ export async function GET(request: NextRequest) {
         products = scored.slice(skip, skip + limit)
       } else {
         products = await Product.find(query)
-          .select('_id title price images category location condition description subcategory views status createdAt')
-          .populate('seller', 'name email avatar isVerified')
+          .select('_id title price images category location condition description subcategory createdAt')
+          .populate('seller', 'name avatar')
           .sort(sort)
           .skip(skip)
           .limit(limit)
@@ -169,18 +169,18 @@ export async function GET(request: NextRequest) {
 
     // Sanitize payload: limit images to first image and shorten description
     const sanitizedListings = products.map((p: any) => {
-      const images = Array.isArray(p.images) && p.images.length ? [p.images[0]] : []
+      const imagesArr = Array.isArray(p.images) ? p.images.filter((img: string) => typeof img === 'string' && !img.startsWith('data:')) : []
+      const images = imagesArr.length ? [imagesArr[0]] : []
       const description = typeof p.description === 'string' && p.description.length > 200
         ? p.description.slice(0, 200) + '...'
         : p.description
-      return { ...p, images, description }
+      // strip internal fields
+      const { createdAt, status, views, ...rest } = p
+      return { ...rest, images, description }
     })
 
     const resultData = {
       listings: sanitizedListings,
-      total,
-      page,
-      totalPages: Math.ceil(total / limit),
     }
 
     if (cacheKey) {
@@ -387,13 +387,7 @@ export async function POST(request: NextRequest) {
       return ApiErrors.validationError(validation.errors)
     }
 
-    // Handle image upload
-    const images = await handleImageUpload(formData, user._id.toString())
-
-    if (images.length === 0) {
-      return ApiErrors.badRequest('At least one image is required')
-    }
-
+    // Create product first (no images yet) so we can save images under product id
     const product = await Product.create({
       title,
       description,
@@ -402,11 +396,26 @@ export async function POST(request: NextRequest) {
       condition: normalizedCondition,
       price,
       location,
-      images,
+      images: [],
       seller: user._id,
     })
 
-    await product.populate('seller', 'name email avatar isVerified')
+    // Save images to filesystem under user/productId and update product
+    const images = await handleImageUpload(formData, user._id.toString(), product._id.toString())
+
+    if (!Array.isArray(images) || images.length === 0) {
+      // remove the created product to avoid orphaned records
+      await Product.findByIdAndDelete(product._id)
+      return ApiErrors.badRequest('At least one image is required')
+    }
+
+    product.images = images
+    await product.save()
+
+    await product.populate('seller', 'name avatar')
+
+    // Invalidate all listings caches so browse pages show the new product immediately
+    clearCacheByPrefix('listings')
 
     logger.info('Listing created successfully', { listingId: product._id, userId: user._id }, requestId)
 

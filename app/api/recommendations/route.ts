@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
         { location: { $regex: user.location || '', $options: 'i' } },
       ],
     })
-      .populate('seller', 'name email avatar isVerified')
+      .populate('seller', 'name avatar')
       .sort({ views: -1, createdAt: -1 })
       .limit(12)
       .lean()
