@@ -39,15 +39,42 @@ async function readAndValidateImage(file: File): Promise<Buffer> {
 function toDataUri(type: string, buffer: Buffer): string {
   return `data:${type};base64,${buffer.toString('base64')}`
 }
+import fs from 'fs'
+import path from 'path'
+import { randomUUID } from 'crypto'
+
+async function writeFilePublic(buffer: Buffer, destPath: string) {
+  await fs.promises.mkdir(path.dirname(destPath), { recursive: true })
+  await fs.promises.writeFile(destPath, buffer)
+}
 
 export async function saveImage(file: File, userId: string): Promise<string> {
   const buffer = await readAndValidateImage(file)
-  return toDataUri(file.type, buffer)
+
+  try {
+    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'listings', userId)
+    const ext = (file.name && path.extname(file.name)) || ''
+    const filename = `${Date.now()}-${randomUUID()}${ext}`
+    const dest = path.join(uploadsDir, filename)
+    await writeFilePublic(buffer, dest)
+    return `/uploads/listings/${encodeURIComponent(userId)}/${encodeURIComponent(filename)}`
+  } catch (err) {
+    return toDataUri(file.type, buffer)
+  }
 }
 
 export async function saveIdDocument(file: File, userId: string): Promise<string> {
   const buffer = await readAndValidateImage(file)
-  return toDataUri(file.type, buffer)
+  try {
+    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'ids', userId)
+    const ext = (file.name && path.extname(file.name)) || ''
+    const filename = `${Date.now()}-${randomUUID()}${ext}`
+    const dest = path.join(uploadsDir, filename)
+    await writeFilePublic(buffer, dest)
+    return `/uploads/ids/${encodeURIComponent(userId)}/${encodeURIComponent(filename)}`
+  } catch (err) {
+    return toDataUri(file.type, buffer)
+  }
 }
 
 export async function handleImageUpload(
@@ -63,8 +90,8 @@ export async function handleImageUpload(
 
   for (const file of files) {
     if (file && file.size > 0) {
-      const path = await saveImage(file, userId)
-      imagePaths.push(path)
+      const p = await saveImage(file, userId)
+      imagePaths.push(p)
     }
   }
 
