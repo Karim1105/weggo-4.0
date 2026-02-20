@@ -173,7 +173,7 @@ async function handler(request: NextRequest, user: any) {
       const recentDuplicate = await Message.findOne({
         sender: user._id,
         receiver: receiverId,
-        product: productId || { $exists: false },
+        product: productId || null,
         content: content.trim(),
         createdAt: { $gte: new Date(Date.now() - 30 * 1000) },
       }).lean()
@@ -245,5 +245,4 @@ async function handler(request: NextRequest, user: any) {
 
 export const GET = requireAuthNotBanned(handler)
 export const POST = requireAuthNotBanned(handler)
-
 

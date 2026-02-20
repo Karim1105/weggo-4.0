@@ -24,9 +24,13 @@ async function handler(request: NextRequest, user: any) {
         Wishlist.countDocuments({ user: user._id }),
       ])
 
+      const products = wishlist
+        .map((w: any) => w.product)
+        .filter(Boolean)
+
       return NextResponse.json({
         success: true,
-        wishlist: wishlist.map((w: any) => w.product),
+        wishlist: products,
         page,
         limit,
         total,
@@ -60,20 +64,29 @@ async function handler(request: NextRequest, user: any) {
         )
       }
 
-      // Use atomic $addToSet to prevent duplicate entries on concurrent requests
-      const userWishlist = await Wishlist.findOne({ user: user._id })
-      if (userWishlist && userWishlist.product.includes(productId)) {
-        return NextResponse.json(
-          { success: false, error: 'Already in wishlist' },
-          { status: 400 }
+      try {
+        const result = await Wishlist.updateOne(
+          { user: user._id, product: productId },
+          { $setOnInsert: { user: user._id, product: productId } },
+          { upsert: true }
         )
-      }
 
-      await Wishlist.findOneAndUpdate(
-        { user: user._id },
-        { $addToSet: { product: productId } },
-        { upsert: true, new: true }
-      )
+        if (result.upsertedCount === 0) {
+          return NextResponse.json({
+            success: true,
+            message: 'Already in wishlist',
+          })
+        }
+      } catch (error: any) {
+        // Unique index race under concurrent requests => treat as already present.
+        if (error?.code === 11000) {
+          return NextResponse.json({
+            success: true,
+            message: 'Already in wishlist',
+          })
+        }
+        throw error
+      }
 
       return NextResponse.json({
         success: true,
@@ -99,12 +112,7 @@ async function handler(request: NextRequest, user: any) {
         )
       }
 
-      // Use atomic $pull to safely remove from concurrent requests
-      await Wishlist.findOneAndUpdate(
-        { user: user._id },
-        { $pull: { product: productId } },
-        { new: true }
-      )
+      await Wishlist.deleteOne({ user: user._id, product: productId })
 
       return NextResponse.json({
         success: true,
@@ -130,5 +138,4 @@ async function handler(request: NextRequest, user: any) {
 export const GET = requireAuthNotBanned(handler)
 export const POST = requireAuthNotBanned(handler)
 export const DELETE = requireAuthNotBanned(handler)
-
 

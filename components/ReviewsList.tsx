@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 
 interface Review {
   _id: string
@@ -154,12 +153,9 @@ export default function ReviewsList({
                     />
                   )}
                   <div>
-                    <Link
-                      href={`/profile/${review.reviewer._id}`}
-                      className="font-semibold text-gray-900 hover:text-blue-600"
-                    >
+                    <p className="font-semibold text-gray-900">
                       {review.reviewer.name}
-                    </Link>
+                    </p>
                     <p className="text-xs text-gray-500">
                       {new Date(review.createdAt).toLocaleDateString('en-US', {
                         month: 'short',

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Heart, MapPin, Clock, TrendingUp, Search, Grid, Layout, Sparkles, Star, Zap, ChevronLeft, ChevronRight } from 'lucide-react'
 import ProductCard from './ProductCard'
 import BrowseTransition from './BrowseTransition'
-import { mapApiListingToProduct } from '@/lib/utils'
+import { mapApiListingToProduct, withCsrfHeader } from '@/lib/utils'
 import { useAppStore } from '@/lib/store'
 
 interface Product {
@@ -259,8 +259,7 @@ export default function PersonalizedFeed() {
         fetchAllItems()
         break
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filter])
+  }, [filter, fetchAllItems, fetchNearby, fetchRecommendations, fetchTrending])
 
   const toggleFavorite = (id: string) => {
     const product = products.find((p) => p.id === id)
@@ -272,7 +271,12 @@ export default function PersonalizedFeed() {
     if (next) {
       setFavoriteIds((prev) => new Set([...prev, id]))
       addFavorite(id)
-      fetch('/api/wishlist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ productId: id }) }).catch(() => {})
+      fetch('/api/wishlist', {
+        method: 'POST',
+        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
+        body: JSON.stringify({ productId: id }),
+      }).catch(() => {})
     } else {
       setFavoriteIds((prev) => {
         const s = new Set(prev)
@@ -280,7 +284,12 @@ export default function PersonalizedFeed() {
         return s
       })
       removeFavorite(id)
-      fetch('/api/wishlist', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ productId: id }) }).catch(() => {})
+      fetch('/api/wishlist', {
+        method: 'DELETE',
+        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
+        body: JSON.stringify({ productId: id }),
+      }).catch(() => {})
     }
   }
 

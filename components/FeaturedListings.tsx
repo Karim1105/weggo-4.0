@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { Star, TrendingUp, Award } from 'lucide-react'
 import ProductCard from './ProductCard'
-import { mapApiListingToProduct } from '@/lib/utils'
+import { mapApiListingToProduct, withCsrfHeader } from '@/lib/utils'
 import { useAppStore } from '@/lib/store'
 import { useUserVerification } from '@/lib/useUserVerification'
 import toast from 'react-hot-toast'
@@ -68,7 +68,7 @@ export default function FeaturedListings() {
 
   useEffect(() => {
     fetchFeatured()
-  }, [])
+  }, [fetchFeatured])
 
   const toggleFavorite = (id: string) => {
     const product = products.find((p) => p.id === id)
@@ -80,7 +80,12 @@ export default function FeaturedListings() {
     if (next) {
       setFavoriteIds((prev) => new Set([...prev, id]))
       addFavorite(id)
-      fetch('/api/wishlist', { method: 'POST', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ productId: id }) }).catch(() => {})
+      fetch('/api/wishlist', {
+        method: 'POST',
+        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
+        body: JSON.stringify({ productId: id }),
+      }).catch(() => {})
     } else {
       setFavoriteIds((prev) => {
         const s = new Set(prev)
@@ -88,7 +93,12 @@ export default function FeaturedListings() {
         return s
       })
       removeFavorite(id)
-      fetch('/api/wishlist', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, credentials: 'include', body: JSON.stringify({ productId: id }) }).catch(() => {})
+      fetch('/api/wishlist', {
+        method: 'DELETE',
+        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
+        body: JSON.stringify({ productId: id }),
+      }).catch(() => {})
     }
   }
 

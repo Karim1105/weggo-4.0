@@ -1,3 +1,7 @@
+import fs from 'fs'
+import path from 'path'
+import { randomUUID } from 'crypto'
+
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
 const MAX_LISTING_IMAGES = 10
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
@@ -36,13 +40,6 @@ async function readAndValidateImage(file: File): Promise<Buffer> {
   return buffer
 }
 
-function toDataUri(type: string, buffer: Buffer): string {
-  return `data:${type};base64,${buffer.toString('base64')}`
-}
-import fs from 'fs'
-import path from 'path'
-import { randomUUID } from 'crypto'
-
 async function writeFilePublic(buffer: Buffer, destPath: string) {
   await fs.promises.mkdir(path.dirname(destPath), { recursive: true })
   await fs.promises.writeFile(destPath, buffer)
@@ -66,16 +63,12 @@ export async function saveImage(file: File, userId: string, productId?: string):
 
 export async function saveIdDocument(file: File, userId: string): Promise<string> {
   const buffer = await readAndValidateImage(file)
-  try {
-    const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'ids', userId)
-    const ext = (file.name && path.extname(file.name)) || ''
-    const filename = `${Date.now()}-${randomUUID()}${ext}`
-    const dest = path.join(uploadsDir, filename)
-    await writeFilePublic(buffer, dest)
-    return `/uploads/ids/${encodeURIComponent(userId)}/${encodeURIComponent(filename)}`
-  } catch (err) {
-    return toDataUri(file.type, buffer)
-  }
+  const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'ids', userId)
+  const ext = (file.name && path.extname(file.name)) || ''
+  const filename = `${Date.now()}-${randomUUID()}${ext}`
+  const dest = path.join(uploadsDir, filename)
+  await writeFilePublic(buffer, dest)
+  return `/uploads/ids/${encodeURIComponent(userId)}/${encodeURIComponent(filename)}`
 }
 
 export async function handleImageUpload(
@@ -104,5 +97,4 @@ export async function handleImageUpload(
 
   return imagePaths
 }
-
 
