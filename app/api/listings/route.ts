@@ -25,7 +25,8 @@ export async function GET(request: NextRequest) {
     const minPrice = searchParams.get('minPrice')
     const maxPrice = searchParams.get('maxPrice')
     const search = searchParams.get('search')
-    const sellerMe = searchParams.get('seller') === 'me'
+    const sellerParam = searchParams.get('seller')?.trim().toLowerCase()
+    const sellerMe = sellerParam === 'me'
     const sortBy = searchParams.get('sortBy') || 'newest'
     
     // Validate and sanitize pagination parameters to prevent DoS
@@ -54,8 +55,12 @@ export async function GET(request: NextRequest) {
       query.subcategory = subcategory
     }
 
-    if (location) {
-      query.location = { $regex: location, $options: 'i' }
+    const locationTerm = location?.trim() || ''
+    if (locationTerm) {
+      if (locationTerm.length > 100) {
+        return ApiErrors.badRequest('Location filter is too long (maximum 100 characters)')
+      }
+      query.location = { $regex: escapeRegex(locationTerm), $options: 'i' }
     }
 
     if (minPrice || maxPrice) {
@@ -103,7 +108,11 @@ export async function GET(request: NextRequest) {
     } else if (sortBy === 'oldest') {
       sort.createdAt = 1
     } else if (sortBy === 'rating-high') {
-      sort['seller.averageRating'] = -1
+      // Product documents persist rating aggregates; populated seller fields
+      // are not available for server-side sort in this query.
+      sort.averageRating = -1
+      sort.ratingCount = -1
+      sort.createdAt = -1
     } else {
       sort.createdAt = -1 // newest
     }
@@ -134,38 +143,35 @@ export async function GET(request: NextRequest) {
     const total = await Product.countDocuments(query)
 
     let products: any[] = []
-      // PATCH: Reduce listings API response size by selecting only necessary fields
-      // Fixed the stupid mistake with the help of my genius friend Yousef Mohamed
-      // Expanded .select() to include all fields needed for homepage, feed, and UI features
-      if (useRelevance) {
-        const candidateLimit = Math.min(1000, skip + limit + 200)
-        const candidates = await Product.find(query)
-          .select('_id title price images category location condition description subcategory createdAt')
-          .populate('seller', 'name avatar')
-          .sort({ createdAt: -1 })
-          .limit(candidateLimit)
-          .lean()
+    if (useRelevance) {
+      const candidateLimit = Math.min(1000, skip + limit + 200)
+      const candidates = await Product.find(query)
+        .select('_id title price images category location condition description subcategory createdAt')
+        .populate('seller', 'name avatar')
+        .sort({ createdAt: -1 })
+        .limit(candidateLimit)
+        .lean()
 
-        const scored = candidates.map((item) => ({
-          ...item,
-          _relevance: calculateRelevance(searchTerm, item.title, item.description)
-        }))
+      const scored = candidates.map((item) => ({
+        ...item,
+        _relevance: calculateRelevance(searchTerm, item.title, item.description)
+      }))
 
-        scored.sort((a, b) => {
-          if (b._relevance !== a._relevance) return b._relevance - a._relevance
-          return new Date((b as any).createdAt ?? 0).getTime() - new Date((a as any).createdAt ?? 0).getTime()
-        })
+      scored.sort((a, b) => {
+        if (b._relevance !== a._relevance) return b._relevance - a._relevance
+        return new Date((b as any).createdAt ?? 0).getTime() - new Date((a as any).createdAt ?? 0).getTime()
+      })
 
-        products = scored.slice(skip, skip + limit)
-      } else {
-        products = await Product.find(query)
-          .select('_id title price images category location condition description subcategory createdAt')
-          .populate('seller', 'name avatar')
-          .sort(sort)
-          .skip(skip)
-          .limit(limit)
-          .lean()
-      }
+      products = scored.slice(skip, skip + limit)
+    } else {
+      products = await Product.find(query)
+        .select('_id title price images category location condition description subcategory createdAt')
+        .populate('seller', 'name avatar')
+        .sort(sort)
+        .skip(skip)
+        .limit(limit)
+        .lean()
+    }
 
     // Sanitize payload: limit images to first image and shorten description
     const sanitizedListings = products.map((p: any) => {
@@ -174,13 +180,16 @@ export async function GET(request: NextRequest) {
       const description = typeof p.description === 'string' && p.description.length > 200
         ? p.description.slice(0, 200) + '...'
         : p.description
-      // strip internal fields
-      const { createdAt, status, views, ...rest } = p
+      const { status, views, ...rest } = p
       return { ...rest, images, description }
     })
 
     const resultData = {
       listings: sanitizedListings,
+      page,
+      limit,
+      total,
+      totalPages: Math.max(1, Math.ceil(total / limit)),
     }
 
     if (cacheKey) {
@@ -191,8 +200,13 @@ export async function GET(request: NextRequest) {
 
     const response = successResponse(resultData)
     
-    // Add caching headers for better performance
-    response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300')
+    // Never share personalized listing queries across users.
+    if (sellerMe) {
+      response.headers.set('Cache-Control', 'private, no-store')
+      response.headers.set('Vary', 'Cookie')
+    } else {
+      response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300')
+    }
     
     return response
   } catch (error: any) {

@@ -44,6 +44,9 @@ export default function AdminDashboard() {
       if (activeTab === 'reports') fetchReports()
       if (activeTab === 'listings') fetchListings()
     }
+    // Intentionally refetch only on auth/tab changes. Search/filter-driven reloads
+    // are triggered by explicit UI actions below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, activeTab])
 
   const checkAuth = async () => {

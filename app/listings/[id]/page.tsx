@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -37,7 +37,7 @@ interface Listing {
   condition: string
   category: string
   images: string[]
-  seller: Seller
+  seller?: Seller | null
 }
 
 export default function ListingDetailPage() {
@@ -58,9 +58,29 @@ export default function ListingDetailPage() {
   const [imageError, setImageError] = useState(false)
   const wishlistFetchedFor = useRef<string | null>(null)
 
+  const fetchListing = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/listings/${id}`, { credentials: 'include' })
+      const data = await res.json()
+      if (res.status === 401) {
+        router.push(`/login?redirect=/listings/${id}`)
+        return
+      }
+      if (!data.success) {
+        setError(data.error || 'Failed to load listing')
+        return
+      }
+      setListing(data.product)
+    } catch (err) {
+      setError('Failed to load listing')
+    } finally {
+      setLoading(false)
+    }
+  }, [id, router])
+
   useEffect(() => {
     fetchListing()
-  }, [id])
+  }, [fetchListing])
 
   useEffect(() => {
     if (!listing) return
@@ -109,29 +129,13 @@ export default function ListingDetailPage() {
     loadUser()
   }, [])
 
-  const fetchListing = async () => {
-    try {
-      const res = await fetch(`/api/listings/${id}`, { credentials: 'include' })
-      const data = await res.json()
-      if (res.status === 401) {
-        router.push(`/login?redirect=/listings/${id}`)
-        return
-      }
-      if (!data.success) {
-        setError(data.error || 'Failed to load listing')
-        return
-      }
-      setListing(data.product)
-    } catch (err) {
-      setError('Failed to load listing')
-    } finally {
-      setLoading(false)
-    }
-  }
-
   const handleContactSeller = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!messageText.trim() || !listing) return
+    if (!listing.seller?._id) {
+      toast.error('Seller information is unavailable for this listing')
+      return
+    }
     setSendingMessage(true)
     try {
       const res = await fetch('/api/messages', {
@@ -212,8 +216,9 @@ export default function ListingDetailPage() {
     }
   }
 
+  const sellerId = listing?.seller?._id || null
   const canManageListing =
-    currentUser && listing && (currentUser._id === listing.seller._id || currentUser.role === 'admin')
+    Boolean(currentUser && listing && sellerId && (currentUser._id === sellerId || currentUser.role === 'admin'))
 
   const handleDelete = async () => {
     if (!listing || !canManageListing) return
@@ -395,7 +400,7 @@ export default function ListingDetailPage() {
                     <User className="w-6 h-6 text-primary-600" />
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">{listing.seller?.name}</p>
+                    <p className="font-semibold text-gray-900">{listing.seller?.name || 'Unknown seller'}</p>
                   </div>
                 </div>
               </div>
@@ -409,32 +414,39 @@ export default function ListingDetailPage() {
                 <textarea
                   value={messageText}
                   onChange={(e) => setMessageText(e.target.value)}
-                  placeholder="Message the seller..."
+                  placeholder={sellerId ? 'Message the seller...' : 'Seller information unavailable'}
                   rows={3}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  disabled={!sellerId}
                   required
                 />
                 <motion.button
                   type="submit"
-                  disabled={sendingMessage}
+                  disabled={sendingMessage || !sellerId}
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 disabled:opacity-50"
                 >
                   <MessageCircle className="w-5 h-5" />
-                  {sendingMessage ? 'Sending...' : 'Contact seller'}
+                  {sendingMessage ? 'Sending...' : sellerId ? 'Contact seller' : 'Seller unavailable'}
                 </motion.button>
               </form>
 
               {/* Reviews Section */}
               <div className="mt-10 border-t pt-10">
                 <h2 className="text-2xl font-bold text-gray-900 mb-6">Seller Reviews</h2>
-                <ReviewSubmit
-                  sellerId={listing.seller._id}
-                  productId={listing._id}
-                  onReviewSubmitted={() => window.location.reload()}
-                />
-                <ReviewsList sellerId={listing.seller._id} productId={listing._id} />
+                {sellerId ? (
+                  <>
+                    <ReviewSubmit
+                      sellerId={sellerId}
+                      productId={listing._id}
+                      onReviewSubmitted={() => window.location.reload()}
+                    />
+                    <ReviewsList sellerId={sellerId} productId={listing._id} />
+                  </>
+                ) : (
+                  <p className="text-sm text-gray-500">Reviews are unavailable because seller information is missing.</p>
+                )}
               </div>
             </div>
           </div>

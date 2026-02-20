@@ -17,7 +17,8 @@ export async function GET(request: NextRequest) {
     await connectDB()
 
     const { searchParams } = new URL(request.url)
-    const limit = parseInt(searchParams.get('limit') || '12')
+    const rawLimit = parseInt(searchParams.get('limit') || '12', 10)
+    const limit = Math.min(Math.max(Number.isNaN(rawLimit) ? 12 : rawLimit, 1), 50)
 
     // Get user if authenticated (for wishlist)
     const user = await getAuthUser(request).catch(() => null)
@@ -40,7 +41,7 @@ export async function GET(request: NextRequest) {
         { averageRating: { $gte: 4.5 }, ratingCount: { $gte: 3 } }
       ]
     })
-      .populate('seller', 'name avatar rating totalSales')
+      .populate('seller', 'name avatar averageRating totalSales')
       .sort({ views: -1, createdAt: -1, averageRating: -1 })
       .limit(limit)
       .lean()
@@ -60,17 +61,17 @@ export async function GET(request: NextRequest) {
         _id: product.seller._id.toString(),
         name: product.seller.name,
         avatar: product.seller.avatar,
-        rating: product.seller.rating,
+        rating: product.seller.averageRating,
         totalSales: product.seller.totalSales,
       } : null,
       isFavorite: wishlistIds.has(product._id.toString())
     }))
 
-    return NextResponse.json(successResponse({
+    return successResponse({
       listings,
       total: listings.length,
       algorithm: 'trending'
-    }))
+    })
   } catch (error: any) {
     logger.error('Get trending listings error:', error)
     return ApiErrors.serverError()

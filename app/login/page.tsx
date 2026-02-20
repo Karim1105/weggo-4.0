@@ -25,7 +25,7 @@ function LoginPageInner() {
         method: 'POST',
         headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
         credentials: 'include',
-        body: JSON.stringify({ email, password }),// that will make the login send a clear password, try to hash it in the client side
+        body: JSON.stringify({ email, password }),
       })
 
       const data = await res.json()
@@ -126,5 +126,4 @@ export default function LoginPage() {
     </Suspense>
   )
 }
-
 

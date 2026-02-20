@@ -21,7 +21,7 @@ describe('utils', () => {
 
   it('builds listing image urls', () => {
     process.env.NEXT_PUBLIC_APP_URL = 'http://localhost:3000'
-    expect(listingImageUrl('/uploads/test.jpg')).toBe('http://localhost:3000/uploads/test.jpg')
+    expect(listingImageUrl('/uploads/test.jpg')).toBe('/api/uploads/test.jpg')
     expect(listingImageUrl('http://example.com/x.jpg')).toBe('http://example.com/x.jpg')
     expect(listingImageUrl('data:image/png;base64,abc123')).toBe('data:image/png;base64,abc123')
   })

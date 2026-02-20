@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import ProductCard from '@/components/ProductCard'
-import { mapApiListingToProduct } from '@/lib/utils'
+import { mapApiListingToProduct, withCsrfHeader } from '@/lib/utils'
 import { useAppStore } from '@/lib/store'
 
 interface ProductCardShape {
@@ -68,7 +68,7 @@ export default function RecentlyViewed() {
 
   useEffect(() => {
     fetchData()
-  }, [])
+  }, [fetchData])
 
   const toggleFavorite = (id: string) => {
     const isFav = storeFavorites.includes(id)
@@ -76,7 +76,7 @@ export default function RecentlyViewed() {
       removeFavorite(id)
       fetch('/api/wishlist', {
         method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
         credentials: 'include',
         body: JSON.stringify({ productId: id }),
       }).catch(() => {})
@@ -84,7 +84,7 @@ export default function RecentlyViewed() {
       addFavorite(id)
       fetch('/api/wishlist', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
         credentials: 'include',
         body: JSON.stringify({ productId: id }),
       }).catch(() => {})
@@ -127,4 +127,3 @@ export default function RecentlyViewed() {
     </section>
   )
 }
-

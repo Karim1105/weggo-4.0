@@ -68,14 +68,23 @@ export async function GET(request: NextRequest) {
     await connectDB()
 
     const { searchParams } = new URL(request.url)
-    const userLat = parseFloat(searchParams.get('lat') || '0')
-    const userLon = parseFloat(searchParams.get('lon') || '0')
-    const radius = parseFloat(searchParams.get('radius') || '100') // default 100km
-    const limit = parseInt(searchParams.get('limit') || '12')
+    const userLat = parseFloat(searchParams.get('lat') || '')
+    const userLon = parseFloat(searchParams.get('lon') || '')
+    const rawRadius = parseFloat(searchParams.get('radius') || '100')
+    const rawLimit = parseInt(searchParams.get('limit') || '12', 10)
+    const radius = Math.min(Math.max(Number.isNaN(rawRadius) ? 100 : rawRadius, 1), 500)
+    const limit = Math.min(Math.max(Number.isNaN(rawLimit) ? 12 : rawLimit, 1), 50)
 
-    if (!userLat || !userLon) {
+    if (
+      !Number.isFinite(userLat) ||
+      !Number.isFinite(userLon) ||
+      userLat < -90 ||
+      userLat > 90 ||
+      userLon < -180 ||
+      userLon > 180
+    ) {
       return NextResponse.json(
-        { success: false, error: 'Location coordinates required (lat, lon)' },
+        { success: false, error: 'Valid location coordinates are required (lat, lon)' },
         { status: 400 }
       )
     }
@@ -85,7 +94,7 @@ export async function GET(request: NextRequest) {
 
     // Get all active products
     const allProducts = await Product.find({ status: 'active' })
-      .populate('seller', 'name email avatar isVerified rating totalSales')
+      .populate('seller', 'name avatar isVerified averageRating totalSales')
       .lean()
 
     // Filter products by distance and calculate distance for each
@@ -138,22 +147,21 @@ export async function GET(request: NextRequest) {
       seller: product.seller ? {
         _id: product.seller._id.toString(),
         name: product.seller.name,
-        email: product.seller.email,
         avatar: product.seller.avatar,
         isVerified: product.seller.isVerified,
-        rating: product.seller.rating,
+        rating: product.seller.averageRating,
         totalSales: product.seller.totalSales,
       } : null,
       isFavorite: wishlistIds.has(product._id.toString())
     }))
 
-    return NextResponse.json(successResponse({
+    return successResponse({
       listings,
       total: listings.length,
       userLocation: { lat: userLat, lon: userLon },
       searchRadius: radius,
       algorithm: 'nearby'
-    }))
+    })
   } catch (error: any) {
     logger.error('Get nearby listings error:', error)
     return ApiErrors.serverError()
