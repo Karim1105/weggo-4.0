@@ -99,7 +99,7 @@ RESULT="$(mongosh "$MONGODB_URI" --quiet --eval "
       db.users.updateOne(
         { _id: existing._id },
         {
-          \\\$set: {
+          \$set: {
             name: '$ADMIN_NAME',
             password: '$HASHED_PASS',
             role: 'admin',
@@ -107,7 +107,7 @@ RESULT="$(mongosh "$MONGODB_URI" --quiet --eval "
             sellerVerified: true,
             banned: false
           },
-          \\\$unset: {
+          \$unset: {
             bannedAt: '',
             bannedReason: '',
             bannedBy: ''
