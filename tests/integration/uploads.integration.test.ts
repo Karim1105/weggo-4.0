@@ -53,7 +53,7 @@ describe('uploads integration', () => {
 
     const { GET } = await loadUploadsRoute()
     const req = new NextRequest('http://localhost/api/uploads/listings/public-listing.jpg')
-    const res = await GET(req, { params: { path: ['listings', folder, filename] } })
+    const res = await GET(req, { params: Promise.resolve({ path: ['listings', folder, filename] }) })
 
     expect(res.status).toBe(200)
     expect(res.headers.get('Cache-Control')).toContain('public')
@@ -77,7 +77,7 @@ describe('uploads integration', () => {
 
     const { GET } = await loadUploadsRoute()
     const req = new NextRequest('http://localhost/api/uploads/ids/private.jpg')
-    const res = await GET(req, { params: { path: ['ids', owner._id.toString(), filename] } })
+    const res = await GET(req, { params: Promise.resolve({ path: ['ids', owner._id.toString(), filename] }) })
 
     expect(res.status).toBe(401)
   }, 15000)
@@ -113,7 +113,7 @@ describe('uploads integration', () => {
     const ownerReq = new NextRequest('http://localhost/api/uploads/ids/owner.jpg', {
       headers: new Headers({ cookie: `token=${ownerToken}` }),
     })
-    const ownerRes = await GET(ownerReq, { params: { path: ['ids', owner._id.toString(), filename] } })
+    const ownerRes = await GET(ownerReq, { params: Promise.resolve({ path: ['ids', owner._id.toString(), filename] }) })
     expect(ownerRes.status).toBe(200)
     expect(ownerRes.headers.get('Cache-Control')).toBe('private, no-store')
     expect(ownerRes.headers.get('Vary')).toBe('Cookie')
@@ -121,7 +121,7 @@ describe('uploads integration', () => {
     const otherReq = new NextRequest('http://localhost/api/uploads/ids/owner.jpg', {
       headers: new Headers({ cookie: `token=${otherToken}` }),
     })
-    const otherRes = await GET(otherReq, { params: { path: ['ids', owner._id.toString(), filename] } })
+    const otherRes = await GET(otherReq, { params: Promise.resolve({ path: ['ids', owner._id.toString(), filename] }) })
     expect(otherRes.status).toBe(403)
   }, 15000)
 })

@@ -139,7 +139,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen pt-20 pb-12 px-4 bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen pt-24 md:pt-32 pb-12 px-4 bg-gray-50 flex items-center justify-center">
         <div className="animate-pulse w-full max-w-2xl h-64 bg-gray-200 rounded-2xl" />
       </div>
     )
@@ -161,7 +161,7 @@ export default function ProfilePage() {
   )
 
   return (
-    <div className="min-h-screen pt-20 pb-12 px-4 bg-gray-50">
+    <div className="min-h-screen pt-24 md:pt-32 pb-12 px-4 bg-gray-50">
       <div className="max-w-6xl mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 20 }}

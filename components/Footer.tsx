@@ -10,8 +10,12 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 md:gap-12 mb-8 md:mb-12">
           {/* Brand */}
           <div>
-            <h2 className="text-2xl md:text-3xl font-bold gradient-primary bg-clip-text text-transparent mb-3 md:mb-4">
-              Weggo
+            <h2 className="-mb-3 md:-mb-4">
+              <img
+                src="/weggo-logo.png"
+                alt="Weggo logo"
+                className="h-28 md:h-32 w-auto object-contain"
+              />
             </h2>
             <p className="text-sm md:text-base text-gray-400 mb-4 md:mb-6">
               Egypt's smartest marketplace for buying and selling second-hand goods. Powered by AI.
@@ -96,6 +100,3 @@ export default function Footer() {
     </footer>
   )
 }
-
-
-
