@@ -18,8 +18,8 @@ export function middleware(request: NextRequest) {
   const csrfHeader = request.headers.get('x-csrf-token')
 
   // CSRF protection for state-changing API requests
-  // Exempt logout endpoint since it's clearing the session anyway
-  if (isApiRequest && isStateChanging && token && pathname !== '/api/auth/logout') {
+  // Exempt logout and login endpoints
+  if (isApiRequest && isStateChanging && token && pathname !== '/api/auth/logout' && pathname !== '/api/auth/login') {
 	if (!csrfToken || !csrfHeader || csrfToken !== csrfHeader) {
 	  return NextResponse.json(
 		{ success: false, error: 'CSRF token missing or invalid' },
