@@ -84,6 +84,8 @@ export const config = {
     '/profile/:path*',
     '/favorites',
     '/favorites/:path*',
+    '/admin',
+    '/admin/:path*',
     '/api/:path*',
   ],
 }

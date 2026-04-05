@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { 
-  Lock, TrendingUp, Users, Package, Flag, BarChart3, 
+  TrendingUp, Users, Package, Flag, BarChart3, 
   Ban, Check, X, Eye, Star, Zap, AlertTriangle, Search, ChevronDown
 } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
@@ -14,10 +14,6 @@ import { withCsrfHeader, listingImageUrl } from '@/lib/utils'
 type Tab = 'analytics' | 'users' | 'reports' | 'listings'
 
 export default function AdminDashboard() {
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [loading, setLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<Tab>('analytics')
   
   // Data states
@@ -34,59 +30,14 @@ export default function AdminDashboard() {
   const router = useRouter()
 
   useEffect(() => {
-    checkAuth()
-  }, [])
-
-  useEffect(() => {
-    if (isAuthenticated) {
-      if (activeTab === 'analytics') fetchAnalytics()
-      if (activeTab === 'users') fetchUsers()
-      if (activeTab === 'reports') fetchReports()
-      if (activeTab === 'listings') fetchListings()
-    }
-    // Intentionally refetch only on auth/tab changes. Search/filter-driven reloads
+    if (activeTab === 'analytics') fetchAnalytics()
+    if (activeTab === 'users') fetchUsers()
+    if (activeTab === 'reports') fetchReports()
+    if (activeTab === 'listings') fetchListings()
+    // Intentionally refetch only on tab changes. Search/filter-driven reloads
     // are triggered by explicit UI actions below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isAuthenticated, activeTab])
-
-  const checkAuth = async () => {
-    try {
-      const res = await fetch('/api/auth/me', { credentials: 'include' })
-      const data = await res.json()
-      if (data.success && data.user?.role === 'admin') {
-        setIsAuthenticated(true)
-      }
-    } catch (error) {
-      setIsAuthenticated(false)
-    }
-  }
-
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-
-    try {
-      const res = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
-        credentials: 'include',
-        body: JSON.stringify({ username, password }),
-      })
-
-      const data = await res.json()
-
-      if (data.success) {
-        setIsAuthenticated(true)
-        toast.success('Admin access granted')
-      } else {
-        toast.error(data.error || 'Invalid credentials')
-      }
-    } catch (error) {
-      toast.error('Login failed')
-    } finally {
-      setLoading(false)
-    }
-  }
+  }, [activeTab])
 
   const fetchAnalytics = async () => {
     try {
@@ -224,57 +175,6 @@ export default function AdminDashboard() {
     } finally {
       setLoadingAction(null)
     }
-  }
-
-  // Login screen
-  if (!isAuthenticated) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md"
-        >
-          <div className="flex items-center justify-center mb-6">
-            <Lock className="w-12 h-12 text-purple-600" />
-          </div>
-          <h1 className="text-3xl font-bold text-center mb-2">Admin Dashboard</h1>
-          <p className="text-gray-600 text-center mb-6">Enter your credentials to continue</p>
-          
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Username</label>
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="Enter admin username"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                placeholder="Enter password"
-                required
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-purple-600 text-white py-3 rounded-lg font-semibold hover:bg-purple-700 transition disabled:opacity-50"
-            >
-              {loading ? 'Authenticating...' : 'Login'}
-            </button>
-          </form>
-        </motion.div>
-      </div>
-    )
   }
 
   // Prepare chart data

@@ -69,10 +69,12 @@ export function requireAdmin(handler: (req: NextRequest, user: IUser, context?: 
   return async (req: NextRequest, context?: any) => {
     const user = await getAuthUser(req)
     if (!user) {
-      return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+      // For admin-only APIs, behave as if the route does not exist when unauthenticated
+      return Response.json({ success: false, error: 'Not found' }, { status: 404 })
     }
     if (user.role !== 'admin') {
-      return Response.json({ success: false, error: 'Forbidden' }, { status: 403 })
+      // Hide the existence of admin APIs from non-admin users
+      return Response.json({ success: false, error: 'Not found' }, { status: 404 })
     }
     return handler(req, user, context)
   }
