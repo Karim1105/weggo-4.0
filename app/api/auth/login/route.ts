@@ -135,8 +135,9 @@ export async function POST(request: NextRequest) {
         ? redirectParam
         : baseRedirect
 
-    const redirectUrl = new URL(safeRedirect, request.url)
-    const response = NextResponse.redirect(redirectUrl, 303)
+    // Use a relative redirect so the browser stays on the public origin
+    // instead of any internal host (like localhost:3000).
+    const response = NextResponse.redirect(safeRedirect, 303)
 
     response.cookies.set('token', token, {
       httpOnly: true,
