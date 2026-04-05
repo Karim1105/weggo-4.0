@@ -5,6 +5,9 @@ const protectedPaths = ['/sell', '/profile', '/favorites']
 
 export function middleware(request: NextRequest) {
 	const { pathname } = request.nextUrl
+	const origin =
+		process.env.NEXT_PUBLIC_SITE_URL ||
+		request.nextUrl.origin
   const token = request.cookies.get('token')?.value
   const csrfToken = request.cookies.get('csrfToken')?.value
 
@@ -17,18 +20,18 @@ export function middleware(request: NextRequest) {
   // CSRF protection for state-changing API requests
   // Exempt logout endpoint since it's clearing the session anyway
   if (isApiRequest && isStateChanging && token && pathname !== '/api/auth/logout') {
-    if (!csrfToken || !csrfHeader || csrfToken !== csrfHeader) {
-      return NextResponse.json(
-        { success: false, error: 'CSRF token missing or invalid' },
-        { status: 403 }
-      )
-    }
+	if (!csrfToken || !csrfHeader || csrfToken !== csrfHeader) {
+	  return NextResponse.json(
+		{ success: false, error: 'CSRF token missing or invalid' },
+		{ status: 403 }
+	  )
+	}
   }
 
   if (isProtected && !token) {
-		const loginUrl = new URL('/login', request.nextUrl.origin)
-    loginUrl.searchParams.set('redirect', pathname)
-    return NextResponse.redirect(loginUrl)
+		const loginUrl = new URL('/login', origin)
+	loginUrl.searchParams.set('redirect', pathname)
+	return NextResponse.redirect(loginUrl)
   }
 
   // Add security headers

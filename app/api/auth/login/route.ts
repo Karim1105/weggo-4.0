@@ -22,6 +22,12 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB()
 
+    // Derive the public origin for redirects. Prefer the configured
+    // NEXT_PUBLIC_SITE_URL to avoid localhost redirects behind proxies.
+    const origin =
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      request.nextUrl.origin
+
     // Form login only (browser POST from /login page)
     const formData = await request.formData()
     const email = String(formData.get('email') || '').trim()
@@ -32,27 +38,27 @@ export async function POST(request: NextRequest) {
 
     if (!email || !validateEmail(email)) {
       logger.info('Login failed - invalid email (form)', { email }, requestId)
-      const errorUrl = new URL('/login?error=1', request.nextUrl.origin)
+      const errorUrl = new URL('/login?error=1', origin)
       return NextResponse.redirect(errorUrl, 303)
     }
 
     if (!password) {
       logger.info('Login failed - missing password (form)', { email }, requestId)
-      const errorUrl = new URL('/login?error=1', request.nextUrl.origin)
+      const errorUrl = new URL('/login?error=1', origin)
       return NextResponse.redirect(errorUrl, 303)
     }
 
     const user = await User.findOne({ email: email.toLowerCase() })
     if (!user) {
       logger.info('Login failed - user not found (form)', { email }, requestId)
-      const errorUrl = new URL('/login?error=1', request.nextUrl.origin)
+      const errorUrl = new URL('/login?error=1', origin)
       return NextResponse.redirect(errorUrl, 303)
     }
 
     const isMatch = await user.comparePassword(password)
     if (!isMatch) {
       logger.info('Login failed - invalid password (form)', { email }, requestId)
-      const errorUrl = new URL('/login?error=1', request.nextUrl.origin)
+      const errorUrl = new URL('/login?error=1', origin)
       return NextResponse.redirect(errorUrl, 303)
     }
 
@@ -70,8 +76,8 @@ export async function POST(request: NextRequest) {
         ? redirectParam
         : baseRedirect
 
-    // Use an absolute redirect based on the request origin.
-    const redirectUrl = new URL(safeRedirect, request.nextUrl.origin)
+    // Use an absolute redirect based on the public origin.
+    const redirectUrl = new URL(safeRedirect, origin)
     const response = NextResponse.redirect(redirectUrl, 303)
 
     response.cookies.set('token', token, {
@@ -90,7 +96,10 @@ export async function POST(request: NextRequest) {
     logger.error('Login error', error, { endpoint: '/api/auth/login' }, requestId)
     // On any server error, send the user back to the login page without
     // exposing internal details.
-    const errorUrl = new URL('/login?error=1', request.nextUrl.origin)
+    const origin =
+      process.env.NEXT_PUBLIC_SITE_URL ||
+      request.nextUrl.origin
+    const errorUrl = new URL('/login?error=1', origin)
     return NextResponse.redirect(errorUrl, 303)
   }
 }
