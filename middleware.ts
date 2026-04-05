@@ -4,7 +4,7 @@ import type { NextRequest } from 'next/server'
 const protectedPaths = ['/sell', '/profile', '/favorites']
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl
+	const { pathname } = request.nextUrl
   const token = request.cookies.get('token')?.value
   const csrfToken = request.cookies.get('csrfToken')?.value
 
@@ -26,7 +26,7 @@ export function middleware(request: NextRequest) {
   }
 
   if (isProtected && !token) {
-    const loginUrl = new URL('/login', request.url)
+		const loginUrl = new URL('/login', request.nextUrl.origin)
     loginUrl.searchParams.set('redirect', pathname)
     return NextResponse.redirect(loginUrl)
   }

@@ -21,6 +21,7 @@ export async function POST(request: NextRequest) {
 
   try {
     await connectDB()
+
     // Form login only (browser POST from /login page)
     const formData = await request.formData()
     const email = String(formData.get('email') || '').trim()
@@ -69,8 +70,7 @@ export async function POST(request: NextRequest) {
         ? redirectParam
         : baseRedirect
 
-    // Use an absolute redirect based on the external origin so the browser
-    // stays on the public host rather than any internal host.
+    // Use an absolute redirect based on the request origin.
     const redirectUrl = new URL(safeRedirect, request.nextUrl.origin)
     const response = NextResponse.redirect(redirectUrl, 303)
 
