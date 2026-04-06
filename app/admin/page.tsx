@@ -11,7 +11,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, L
 import toast from 'react-hot-toast'
 import { withCsrfHeader, listingImageUrl } from '@/lib/utils'
 
-type Tab = 'analytics' | 'users' | 'reports' | 'listings'
+type Tab = 'analytics' | 'users' | 'reports' | 'appeals' | 'listings'
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>('analytics')
@@ -20,8 +20,9 @@ export default function AdminDashboard() {
   const [analytics, setAnalytics] = useState<any>(null)
   const [users, setUsers] = useState<any[]>([])
   const [reports, setReports] = useState<any[]>([])
+  const [appeals, setAppeals] = useState<any[]>([])
   const [listings, setListings] = useState<any[]>([])
-  
+
   // UI states
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -34,6 +35,7 @@ export default function AdminDashboard() {
     if (activeTab === 'analytics') fetchAnalytics()
     if (activeTab === 'users') fetchUsers()
     if (activeTab === 'reports') fetchReports()
+    if (activeTab === 'appeals') fetchAppeals()
     if (activeTab === 'listings') fetchListings()
     // Intentionally refetch only on tab changes. Search/filter-driven reloads
     // are triggered by explicit UI actions below.
@@ -62,6 +64,7 @@ export default function AdminDashboard() {
       if (activeTab === 'analytics') await fetchAnalytics(true)
       else if (activeTab === 'users') await fetchUsers(true)
       else if (activeTab === 'reports') await fetchReports(true)
+      else if (activeTab === 'appeals') await fetchAppeals(true)
       else if (activeTab === 'listings') await fetchListings(true)
       toast.success('Data refreshed successfully')
     } catch (error) {
@@ -107,6 +110,26 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       toast.error('Failed to load reports')
+    }
+  }
+
+  const fetchAppeals = async (bypassCache = false, status?: string) => {
+    try {
+      const params = new URLSearchParams()
+      const filterStatus = status !== undefined ? status : statusFilter
+      if (filterStatus !== 'all') params.set('status', filterStatus)
+      if (bypassCache) params.set('t', Date.now().toString())
+
+      const res = await fetch(`/api/admin/ban-appeals?${params}`, { 
+        credentials: 'include',
+        headers: bypassCache ? { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } : undefined
+      })
+      const data = await res.json()
+      if (data.success) {
+        setAppeals(data.data.appeals)
+      }
+    } catch (error) {
+      toast.error('Failed to load appeals')
     }
   }
 
@@ -192,6 +215,40 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleAppealAction = async (appealId: string, action: 'approve' | 'reject') => {
+    let rejectionReason = ''
+
+    if (action === 'reject') {
+      rejectionReason = prompt('Provide a reason for rejecting this appeal:') || ''
+      if (!rejectionReason.trim()) {
+        toast.error('Rejection reason is required')
+        return
+      }
+    }
+
+    setLoadingAction(appealId)
+    try {
+      const res = await fetch(`/api/admin/ban-appeals/${appealId}`, {
+        method: 'POST',
+        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
+        body: JSON.stringify({ action, rejectionReason }),
+      })
+
+      const data = await res.json()
+      if (data.success) {
+        toast.success(`Appeal ${action}ed successfully`)
+        fetchAppeals()
+      } else {
+        toast.error(data.error || 'Action failed')
+      }
+    } catch (error) {
+      toast.error('Failed to process appeal')
+    } finally {
+      setLoadingAction(null)
+    }
+  }
+
   const handleBoostListing = async (listingId: string, action: 'boost' | 'unboost') => {
     setLoadingAction(listingId)
     try {
@@ -263,6 +320,7 @@ export default function AdminDashboard() {
               { id: 'analytics', label: 'Analytics', icon: BarChart3 },
               { id: 'users', label: 'Users', icon: Users },
               { id: 'reports', label: 'Reports', icon: Flag },
+              { id: 'appeals', label: 'Appeals', icon: AlertTriangle },
               { id: 'listings', label: 'Listings', icon: Package },
             ] as const).map((tab) => (
               <button
@@ -500,9 +558,9 @@ export default function AdminDashboard() {
                       {report.status}
                     </span>
                   </div>
-                  
+
                   <p className="text-gray-700 mb-4">{report.reason}</p>
-                  
+
                   {report.status === 'pending' && (
                     <div className="flex gap-2">
                       <button
@@ -540,6 +598,112 @@ export default function AdminDashboard() {
               {reports.length === 0 && (
                 <div className="text-center py-12 text-gray-500">
                   No reports found
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Appeals Tab */}
+        {activeTab === 'appeals' && (
+          <div className="space-y-4">
+            {/* Status Filter */}
+            <div className="bg-white p-4 rounded-xl shadow-sm">
+              <select
+                value={statusFilter}
+                onChange={(e) => {
+                  const newStatus = e.target.value
+                  setStatusFilter(newStatus)
+                  fetchAppeals(false, newStatus)
+                }}
+                className="px-4 py-2 border rounded-lg"
+              >
+                <option value="pending">Pending</option>
+                <option value="all">All Appeals</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+
+            {/* Appeals List */}
+            <div className="grid gap-4">
+              {appeals.map((appeal) => (
+                <motion.div
+                  key={appeal._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white p-6 rounded-xl shadow-sm"
+                >
+                  <div className="flex justify-between items-start mb-4">
+                    <div>
+                      <h3 className="font-semibold text-lg">{appeal.userId?.name || 'Unknown User'}</h3>
+                      <p className="text-sm text-gray-600 mt-1">{appeal.userId?.email || 'Unknown Email'}</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Submitted {new Date(appeal.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <span className={`px-3 py-1 text-xs font-medium rounded-full ${
+                      appeal.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                      appeal.status === 'approved' ? 'bg-green-100 text-green-800' :
+                      'bg-red-100 text-red-800'
+                    }`}>
+                      {appeal.status?.charAt(0).toUpperCase() + appeal.status?.slice(1)}
+                    </span>
+                  </div>
+
+                  <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                    <p className="text-sm font-semibold text-gray-700 mb-2">Ban Reason:</p>
+                    <p className="text-sm text-gray-600">{appeal.reason}</p>
+                  </div>
+
+                  <div className="bg-blue-50 rounded-lg p-4 mb-4">
+                    <p className="text-sm font-semibold text-gray-700 mb-2">Appeal Message:</p>
+                    <p className="text-sm text-gray-700">{appeal.appealMessage}</p>
+                  </div>
+
+                  {appeal.status === 'rejected' && appeal.rejectionReason && (
+                    <div className="bg-red-50 rounded-lg p-4 mb-4">
+                      <p className="text-sm font-semibold text-red-700 mb-2">Rejection Reason:</p>
+                      <p className="text-sm text-red-700">{appeal.rejectionReason}</p>
+                    </div>
+                  )}
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => {
+                        if (typeof window !== 'undefined') {
+                          localStorage.setItem(`appeal_${appeal._id}`, JSON.stringify(appeal))
+                        }
+                        router.push(`/appeal-review/${appeal._id}`)
+                      }}
+                      className="flex-1 px-4 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 text-sm font-medium"
+                    >
+                      View Details
+                    </button>
+                    {appeal.status === 'pending' && (
+                      <>
+                        <button
+                          onClick={() => handleAppealAction(appeal._id, 'approve')}
+                          disabled={loadingAction === appeal._id}
+                          className="flex-1 px-4 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 font-medium disabled:opacity-50"
+                        >
+                          Approve
+                        </button>
+                        <button
+                          onClick={() => handleAppealAction(appeal._id, 'reject')}
+                          disabled={loadingAction === appeal._id}
+                          className="flex-1 px-4 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 font-medium disabled:opacity-50"
+                        >
+                          Reject
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+              {appeals.length === 0 && (
+                <div className="text-center py-12 text-gray-500">
+                  No appeals found
                 </div>
               )}
             </div>
