@@ -5,7 +5,8 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { 
   TrendingUp, Users, Package, Flag, BarChart3, 
-  Ban, Check, X, Eye, Star, Zap, AlertTriangle, Search, ChevronDown, RotateCw
+  Ban, Check, X, Eye, Star, Zap, AlertTriangle, Search, ChevronDown, RotateCw,
+  Trash2
 } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import toast from 'react-hot-toast'
@@ -21,7 +22,7 @@ export default function AdminDashboard() {
   const [users, setUsers] = useState<any[]>([])
   const [reports, setReports] = useState<any[]>([])
   const [appeals, setAppeals] = useState<any[]>([])
-  const [listings, setListings] = useState<any[]>([])
+  const [sellers, setSellers] = useState<any[]>([])
 
   // UI states
   const [searchTerm, setSearchTerm] = useState('')
@@ -36,7 +37,7 @@ export default function AdminDashboard() {
     if (activeTab === 'users') fetchUsers()
     if (activeTab === 'reports') fetchReports()
     if (activeTab === 'appeals') fetchAppeals()
-    if (activeTab === 'listings') fetchListings()
+    if (activeTab === 'listings') fetchSellers()
     // Intentionally refetch only on tab changes. Search/filter-driven reloads
     // are triggered by explicit UI actions below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -65,7 +66,7 @@ export default function AdminDashboard() {
       else if (activeTab === 'users') await fetchUsers(true)
       else if (activeTab === 'reports') await fetchReports(true)
       else if (activeTab === 'appeals') await fetchAppeals(true)
-      else if (activeTab === 'listings') await fetchListings(true)
+      else if (activeTab === 'listings') await fetchSellers(true)
       toast.success('Data refreshed successfully')
     } catch (error) {
       toast.error('Failed to refresh data')
@@ -133,19 +134,19 @@ export default function AdminDashboard() {
     }
   }
 
-  const fetchListings = async (bypassCache = false) => {
+  const fetchSellers = async (bypassCache = false) => {
     try {
-      const url = bypassCache ? `/api/listings?limit=100&t=${Date.now()}` : '/api/listings?limit=100'
+      const url = bypassCache ? `/api/admin/sellers?t=${Date.now()}` : '/api/admin/sellers'
       const res = await fetch(url, { 
         credentials: 'include',
         headers: bypassCache ? { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } : undefined
       })
       const data = await res.json()
       if (data.success) {
-        setListings(data.data.listings)
+        setSellers(data.data?.sellers || [])
       }
     } catch (error) {
-      toast.error('Failed to load listings')
+      toast.error('Failed to load sellers')
     }
   }
 
@@ -262,7 +263,7 @@ export default function AdminDashboard() {
       const data = await res.json()
       if (data.success) {
         toast.success(`Listing ${action}ed successfully`)
-        fetchListings()
+        fetchSellers()
       } else {
         toast.error(data.error || 'Action failed')
       }
@@ -321,7 +322,7 @@ export default function AdminDashboard() {
               { id: 'users', label: 'Users', icon: Users },
               { id: 'reports', label: 'Reports', icon: Flag },
               { id: 'appeals', label: 'Appeals', icon: AlertTriangle },
-              { id: 'listings', label: 'Listings', icon: Package },
+              { id: 'listings', label: 'Sellers', icon: Package },
             ] as const).map((tab) => (
               <button
                 key={tab.id}
@@ -712,47 +713,58 @@ export default function AdminDashboard() {
 
         {/* Listings Tab */}
         {activeTab === 'listings' && (
-          <div className="grid gap-4">
-            {listings.map((listing) => (
-              <div key={listing._id} className="bg-white p-6 rounded-xl shadow-sm flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  {listing.images?.[0] && (
-                    <img
-                      src={listingImageUrl(listing.images[0])}
-                      alt={listing.title}
-                      className="w-16 h-16 object-cover rounded-lg"
-                    />
-                  )}
-                  <div>
-                    <h3 className="font-semibold text-lg flex items-center gap-2">
-                      {listing.title}
-                      {listing.isBoosted && <Zap className="w-4 h-4 text-yellow-500" />}
-                    </h3>
-                    <p className="text-sm text-gray-600">${listing.price}</p>
-                    {listing.averageRating > 0 && (
-                      <div className="flex items-center gap-1 mt-1">
-                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                        <span className="text-sm text-gray-600">
-                          {listing.averageRating} ({listing.ratingCount} reviews)
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleBoostListing(listing._id, listing.isBoosted ? 'unboost' : 'boost')}
-                  disabled={loadingAction === listing._id}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 ${
-                    listing.isBoosted
-                      ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      : 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-                  } disabled:opacity-50`}
+          <div className="space-y-6">
+            {/* Sellers Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {sellers.map((seller) => (
+                <motion.div
+                  key={seller._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-xl shadow-sm overflow-hidden"
                 >
-                  <Zap className="w-4 h-4" />
-                  {listing.isBoosted ? 'Unboost' : 'Boost'}
-                </button>
+                  {/* Seller Card Header */}
+                  <div className="p-6 border-b">
+                    <div className="mb-4">
+                      <h3 className="font-semibold text-lg text-gray-900">{seller.name}</h3>
+                      <p className="text-sm text-gray-600">{seller.email}</p>
+                      <p className="text-xs text-gray-500 mt-1">ID: {seller._id}</p>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => {
+                          if (typeof window !== 'undefined') {
+                            localStorage.setItem(`seller_${seller._id}`, JSON.stringify(seller))
+                          }
+                          router.push(`/seller-listings/${seller._id}`)
+                        }}
+                        className="flex-1 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 text-sm font-medium transition"
+                      >
+                        View All
+                      </button>
+                      <button
+                        onClick={() => handleBanUser(seller._id, seller.banned ? 'unban' : 'ban')}
+                        disabled={loadingAction === seller._id}
+                        className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium transition ${
+                          seller.banned
+                            ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                            : 'bg-red-100 text-red-700 hover:bg-red-200'
+                        } disabled:opacity-50`}
+                      >
+                        {seller.banned ? 'Unban' : 'Ban'}
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {sellers.length === 0 && (
+              <div className="text-center py-12 text-gray-500">
+                No sellers found
               </div>
-            ))}
+            )}
           </div>
         )}
       </div>
