@@ -7,6 +7,8 @@ export interface ValidationErrors {
   [field: string]: string
 }
 
+export const NATIONAL_ID_GENERIC_ERROR = 'Please enter a valid National ID number.'
+
 /**
  * Email validation
  */
@@ -23,6 +25,17 @@ export function validatePassword(password: string): { valid: boolean; message?: 
   if (password.length < 8) {
     return { valid: false, message: 'Password must be at least 8 characters' }
   }
+  return { valid: true }
+}
+
+export function validateEgyptianNationalId(nationalId: string): { valid: boolean; message?: string } {
+  const cleaned = (nationalId || '').trim()
+  const nationalIdRegex = /^[23]\d{13}$/
+
+  if (!nationalIdRegex.test(cleaned)) {
+    return { valid: false, message: NATIONAL_ID_GENERIC_ERROR }
+  }
+
   return { valid: true }
 }
 

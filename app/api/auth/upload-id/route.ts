@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db'
 import User from '@/models/User'
 import { getAuthUser } from '@/lib/auth'
-import { saveIdDocument } from '@/lib/imageUpload'
+import { NATIONAL_ID_GENERIC_ERROR, validateEgyptianNationalId } from '@/lib/validators'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,46 +24,39 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const formData = await request.formData()
-    const file = formData.get('idDocument') as File
-    if (!file || file.size === 0) {
+    const body = await request.json().catch(() => null)
+    const nationalIdNumber = body?.nationalIdNumber
+
+    if (typeof nationalIdNumber !== 'string') {
       return NextResponse.json(
-        { success: false, error: 'Please upload your government-issued ID' },
+        { success: false, error: NATIONAL_ID_GENERIC_ERROR },
         { status: 400 }
       )
     }
 
-    const url = await saveIdDocument(file, user._id.toString())
+    const validation = validateEgyptianNationalId(nationalIdNumber)
+    if (!validation.valid) {
+      return NextResponse.json(
+        { success: false, error: NATIONAL_ID_GENERIC_ERROR },
+        { status: 400 }
+      )
+    }
 
     await connectDB()
     await User.findByIdAndUpdate(user._id, {
-      idDocumentUrl: url,
+      nationalIdNumber: nationalIdNumber.trim(),
+      idDocumentUrl: null,
       sellerVerified: true,
     })
 
     return NextResponse.json({
       success: true,
-      message: 'ID uploaded. You are now a verified seller.',
+      message: 'National ID submitted. You are now a verified seller.',
       sellerVerified: true,
     })
   } catch (error: any) {
-    if (error instanceof Error) {
-      const message = error.message || 'Upload failed'
-      const uploadErrors = [
-        'Invalid file type',
-        'File size exceeds',
-        'File content does not match',
-      ]
-      if (uploadErrors.some((fragment) => message.includes(fragment))) {
-        return NextResponse.json(
-          { success: false, error: message },
-          { status: 400 }
-        )
-      }
-    }
-
     return NextResponse.json(
-      { success: false, error: error.message || 'Upload failed' },
+      { success: false, error: error?.message || 'Failed to submit National ID' },
       { status: 500 }
     )
   }

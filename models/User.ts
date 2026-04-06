@@ -12,6 +12,7 @@ export interface IUser extends Document {
   role: 'user' | 'admin'
   sellerVerified: boolean
   idDocumentUrl?: string
+  nationalIdNumber?: string
   averageRating: number
   ratingCount: number
   totalSales: number
@@ -68,6 +69,7 @@ const UserSchema = new Schema<IUser>(
     },
     sellerVerified: { type: Boolean, default: false },
     idDocumentUrl: { type: String },
+    nationalIdNumber: { type: String, match: /^[23]\d{13}$/ },
     averageRating: { type: Number, default: 0, min: 0, max: 5 },
     ratingCount: { type: Number, default: 0 },
     totalSales: { type: Number, default: 0 },

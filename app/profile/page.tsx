@@ -4,10 +4,12 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { User, MapPin, Star, Package, Heart, Settings, LogOut, ShieldCheck, FileUp } from 'lucide-react'
+import { User, MapPin, Star, Package, Heart, Settings, LogOut, ShieldCheck } from 'lucide-react'
 import { mapApiListingToProduct, withCsrfHeader } from '@/lib/utils'
 import ProductCard from '@/components/ProductCard'
 import { useAppStore } from '@/lib/store'
+import { NATIONAL_ID_GENERIC_ERROR, validateEgyptianNationalId } from '@/lib/validators'
+import toast from 'react-hot-toast'
 
 interface UserData {
   id: string
@@ -38,7 +40,7 @@ export default function ProfilePage() {
   const [wishlistCount, setWishlistCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [uploadingId, setUploadingId] = useState(false)
-  const [idFile, setIdFile] = useState<File | null>(null)
+  const [nationalIdNumber, setNationalIdNumber] = useState('')
   const [savedSearches, setSavedSearches] = useState<any[]>([])
   const addFavorite = useAppStore((s) => s.addFavorite)
   const removeFavorite = useAppStore((s) => s.removeFavorite)
@@ -104,17 +106,29 @@ export default function ProfilePage() {
 
   const handleUploadId = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!idFile) return
+    const validation = validateEgyptianNationalId(nationalIdNumber)
+    if (!validation.valid) {
+      toast.error(NATIONAL_ID_GENERIC_ERROR)
+      return
+    }
     setUploadingId(true)
     try {
-      const formData = new FormData()
-      formData.append('idDocument', idFile)
-      const res = await fetch('/api/auth/upload-id', { method: 'POST', headers: withCsrfHeader({}), credentials: 'include', body: formData })
+      const res = await fetch('/api/auth/upload-id', {
+        method: 'POST',
+        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
+        body: JSON.stringify({ nationalIdNumber: nationalIdNumber.trim() }),
+      })
       const data = await res.json()
       if (data.success) {
         setUser((prev) => (prev ? { ...prev, sellerVerified: true } : null))
-        setIdFile(null)
+        setNationalIdNumber('')
+        toast.success('You are now a verified seller!')
+      } else {
+        toast.error(data.error || NATIONAL_ID_GENERIC_ERROR)
       }
+    } catch {
+      toast.error(NATIONAL_ID_GENERIC_ERROR)
     } finally {
       setUploadingId(false)
     }
@@ -203,25 +217,28 @@ export default function ProfilePage() {
               Seller verification
             </h2>
             <p className="text-gray-700 mb-4 text-sm">
-              To sell on Weggo you must upload your government-issued ID. Verified sellers who break rules may be permanently banned.
+              To sell on Weggo you must submit your National ID number. Verified sellers who break rules may be permanently banned.
             </p>
             <form onSubmit={handleUploadId} className="flex flex-wrap items-end gap-4">
               <label className="flex-1 min-w-[200px]">
-                <span className="block text-sm font-medium text-gray-700 mb-1">Government-issued ID (photo)</span>
+                <span className="block text-sm font-medium text-gray-700 mb-1">National ID Number</span>
                 <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => setIdFile(e.target.files?.[0] || null)}
-                  className="block w-full text-sm text-gray-500 file:mr-2 file:py-2 file:px-3 file:rounded-lg file:border-0 file:bg-primary-100 file:text-primary-700"
+                  type="text"
+                  inputMode="numeric"
+                  autoComplete="off"
+                  maxLength={14}
+                  value={nationalIdNumber}
+                  onChange={(e) => setNationalIdNumber(e.target.value.replace(/\D/g, '').slice(0, 14))}
+                  placeholder="Enter your 14-digit ID number"
+                  className="block w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                 />
               </label>
               <button
                 type="submit"
-                disabled={uploadingId || !idFile}
+                disabled={uploadingId || nationalIdNumber.length === 0}
                 className="flex items-center gap-2 py-2.5 px-4 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 disabled:opacity-50"
               >
-                <FileUp className="w-4 h-4" />
-                {uploadingId ? 'Uploading...' : 'Upload ID'}
+                {uploadingId ? 'Submitting...' : 'Submit National ID'}
               </button>
             </form>
           </motion.div>
