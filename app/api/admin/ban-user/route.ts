@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db'
 import User from '@/models/User'
+import Product from '@/models/Product'
 import { requireAdmin } from '@/lib/auth'
 import { logger, getRequestId } from '@/lib/logger'
 
@@ -57,20 +58,34 @@ async function handler(request: NextRequest, admin: any) {
       )
     }
 
+    // Prevent banning admin users
+    if (user.role === 'admin') {
+      return NextResponse.json(
+        { success: false, error: 'Cannot ban admin users' },
+        { status: 403 }
+      )
+    }
+
     // Ban the user
     user.banned = true
     user.bannedAt = new Date()
     user.bannedReason = trimmedReason
     user.bannedBy = (admin as any)._id
 
+    // Mark all user's listings as deleted (soft delete)
+    const listingResult = await Product.updateMany(
+      { seller: user._id, status: { $ne: 'deleted' } },
+      { status: 'deleted' }
+    )
+
     await user.save()
 
-    logger.info('User banned successfully', { userId: user._id, email: user.email, adminId: admin._id }, requestId)
+    logger.info('User banned successfully with listings deleted', { userId: user._id, email: user.email, adminId: admin._id, listingsDeleted: listingResult.modifiedCount }, requestId)
 
     return NextResponse.json(
       {
         success: true,
-        message: 'User banned successfully',
+        message: `User banned successfully and ${listingResult.modifiedCount} listings marked as deleted`,
         data: {
           userId: user._id,
           email: user.email,
@@ -79,6 +94,7 @@ async function handler(request: NextRequest, admin: any) {
           bannedAt: user.bannedAt,
           bannedReason: user.bannedReason,
           bannedBy: user.bannedBy,
+          listingsDeleted: listingResult.modifiedCount,
         },
       },
       { status: 200 }

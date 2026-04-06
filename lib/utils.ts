@@ -208,7 +208,7 @@ export function mapApiListingToProduct(
     subcategory?: string
     images?: string[]
     createdAt: string
-    seller?: { name?: string; isVerified?: boolean; rating?: number; totalSales?: number }
+    seller?: { _id?: string; name?: string; isVerified?: boolean; rating?: number; totalSales?: number }
   },
   favoriteIds: Set<string>
 ) {
@@ -226,6 +226,7 @@ export function mapApiListingToProduct(
     isFavorite: favoriteIds.has(listing._id),
     seller: listing.seller
         ? {
+          id: listing.seller._id,
           name: listing.seller.name || 'Seller',
           rating: listing.seller.rating,
           totalSales: listing.seller.totalSales,

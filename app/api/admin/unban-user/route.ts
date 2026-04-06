@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db'
 import User from '@/models/User'
+import Product from '@/models/Product'
 import { requireAdmin } from '@/lib/auth'
 import { logger, getRequestId } from '@/lib/logger'
 
@@ -48,19 +49,26 @@ async function handler(request: NextRequest, admin: any) {
     user.bannedReason = undefined
     user.bannedBy = undefined
 
+    // Restore all user's listings that were deleted (set back to active)
+    const listingResult = await Product.updateMany(
+      { seller: user._id, status: 'deleted' },
+      { status: 'active' }
+    )
+
     await user.save()
 
-    logger.info('User unbanned successfully', { userId: user._id, email: user.email, adminId: admin._id }, requestId)
+    logger.info('User unbanned successfully with listings restored', { userId: user._id, email: user.email, adminId: admin._id, listingsRestored: listingResult.modifiedCount }, requestId)
 
     return NextResponse.json(
       {
         success: true,
-        message: 'User unbanned successfully',
+        message: `User unbanned successfully and ${listingResult.modifiedCount} listings restored`,
         data: {
           userId: user._id,
           email: user.email,
           name: user.name,
           banned: user.banned,
+          listingsRestored: listingResult.modifiedCount,
         },
       },
       { status: 200 }
