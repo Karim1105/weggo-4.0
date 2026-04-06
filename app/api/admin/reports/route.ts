@@ -3,6 +3,9 @@ import connectDB from '@/lib/db'
 import Report from '@/models/Report'
 import { requireAdmin } from '@/lib/auth'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 // GET /api/admin/reports - Get all reports with filters
 async function handler(request: NextRequest) {
   try {
@@ -32,7 +35,7 @@ async function handler(request: NextRequest) {
       Report.countDocuments(query),
     ])
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: {
         reports,
@@ -50,6 +53,13 @@ async function handler(request: NextRequest) {
         },
       },
     })
+
+    // Add cache control headers to prevent browser caching
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
+
+    return response
   } catch (error: any) {
     console.error('Get reports error:', error)
     return NextResponse.json(

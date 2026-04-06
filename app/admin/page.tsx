@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { motion } from 'framer-motion'
 import { 
   TrendingUp, Users, Package, Flag, BarChart3, 
-  Ban, Check, X, Eye, Star, Zap, AlertTriangle, Search, ChevronDown
+  Ban, Check, X, Eye, Star, Zap, AlertTriangle, Search, ChevronDown, RotateCw
 } from 'lucide-react'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import toast from 'react-hot-toast'
@@ -26,6 +26,7 @@ export default function AdminDashboard() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [loadingAction, setLoadingAction] = useState<string | null>(null)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   const router = useRouter()
 
@@ -39,9 +40,13 @@ export default function AdminDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab])
 
-  const fetchAnalytics = async () => {
+  const fetchAnalytics = async (bypassCache = false) => {
     try {
-      const res = await fetch('/api/admin/analytics', { credentials: 'include' })
+      const url = bypassCache ? `/api/admin/analytics?t=${Date.now()}` : '/api/admin/analytics'
+      const res = await fetch(url, { 
+        credentials: 'include',
+        headers: bypassCache ? { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } : undefined
+      })
       const data = await res.json()
       if (data.success) {
         setAnalytics(data.analytics)
@@ -51,13 +56,32 @@ export default function AdminDashboard() {
     }
   }
 
-  const fetchUsers = async () => {
+  const handleRefresh = async () => {
+    setIsRefreshing(true)
+    try {
+      if (activeTab === 'analytics') await fetchAnalytics(true)
+      else if (activeTab === 'users') await fetchUsers(true)
+      else if (activeTab === 'reports') await fetchReports(true)
+      else if (activeTab === 'listings') await fetchListings(true)
+      toast.success('Data refreshed successfully')
+    } catch (error) {
+      toast.error('Failed to refresh data')
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
+
+  const fetchUsers = async (bypassCache = false) => {
     try {
       const params = new URLSearchParams()
       if (searchTerm) params.set('search', searchTerm)
       if (statusFilter !== 'all') params.set('status', statusFilter)
-      
-      const res = await fetch(`/api/admin/users?${params}`, { credentials: 'include' })
+      if (bypassCache) params.set('t', Date.now().toString())
+
+      const res = await fetch(`/api/admin/users?${params}`, { 
+        credentials: 'include',
+        headers: bypassCache ? { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } : undefined
+      })
       const data = await res.json()
       if (data.success) {
         setUsers(data.data.users)
@@ -67,12 +91,16 @@ export default function AdminDashboard() {
     }
   }
 
-  const fetchReports = async () => {
+  const fetchReports = async (bypassCache = false) => {
     try {
       const params = new URLSearchParams()
       if (statusFilter !== 'all') params.set('status', statusFilter)
-      
-      const res = await fetch(`/api/admin/reports?${params}`, { credentials: 'include' })
+      if (bypassCache) params.set('t', Date.now().toString())
+
+      const res = await fetch(`/api/admin/reports?${params}`, { 
+        credentials: 'include',
+        headers: bypassCache ? { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } : undefined
+      })
       const data = await res.json()
       if (data.success) {
         setReports(data.data.reports)
@@ -82,9 +110,13 @@ export default function AdminDashboard() {
     }
   }
 
-  const fetchListings = async () => {
+  const fetchListings = async (bypassCache = false) => {
     try {
-      const res = await fetch('/api/listings?limit=100', { credentials: 'include' })
+      const url = bypassCache ? `/api/listings?limit=100&t=${Date.now()}` : '/api/listings?limit=100'
+      const res = await fetch(url, { 
+        credentials: 'include',
+        headers: bypassCache ? { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' } : undefined
+      })
       const data = await res.json()
       if (data.success) {
         setListings(data.data.listings)
@@ -103,11 +135,18 @@ export default function AdminDashboard() {
 
     setLoadingAction(userId)
     try {
-      const res = await fetch(`/api/admin/users/${userId}/ban`, {
+      const endpoint = action === 'ban' ? '/api/admin/ban-user' : '/api/admin/unban-user'
+      const body: { userId: string; reason?: string } = { userId }
+
+      if (action === 'ban' && reason) {
+        body.reason = reason
+      }
+
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
         credentials: 'include',
-        body: JSON.stringify({ action, reason }),
+        body: JSON.stringify(body),
       })
 
       const data = await res.json()
@@ -200,12 +239,22 @@ export default function AdminDashboard() {
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold text-gray-900">Admin Dashboard</h1>
-            <button
-              onClick={() => router.push('/')}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              Back to Site
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={handleRefresh}
+                disabled={isRefreshing}
+                className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 transition"
+              >
+                <RotateCw className={`w-5 h-5 ${isRefreshing ? 'animate-spin' : ''}`} />
+                Refresh
+              </button>
+              <button
+                onClick={() => router.push('/')}
+                className="text-gray-600 hover:text-gray-900"
+              >
+                Back to Site
+              </button>
+            </div>
           </div>
 
           {/* Tabs */}
@@ -332,7 +381,7 @@ export default function AdminDashboard() {
                 <option value="verified">Verified Sellers</option>
               </select>
               <button
-                onClick={fetchUsers}
+                onClick={() => fetchUsers()}
                 className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
               >
                 <Search className="w-5 h-5" />
@@ -421,7 +470,7 @@ export default function AdminDashboard() {
                 <option value="dismissed">Dismissed</option>
               </select>
               <button
-                onClick={fetchReports}
+                onClick={() => fetchReports()}
                 className="ml-2 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700"
               >
                 Refresh

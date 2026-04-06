@@ -3,6 +3,9 @@ import connectDB from '@/lib/db'
 import User from '@/models/User'
 import { requireAdmin } from '@/lib/auth'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 async function handler(request: NextRequest) {
   try {
     await connectDB()
@@ -42,7 +45,7 @@ async function handler(request: NextRequest) {
       User.countDocuments(query),
     ])
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       data: {
         users: users.map((u: any) => ({
@@ -68,6 +71,13 @@ async function handler(request: NextRequest) {
         },
       },
     })
+
+    // Add cache control headers to prevent browser caching
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
+
+    return response
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to get users' },

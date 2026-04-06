@@ -9,15 +9,24 @@ import Wishlist from '@/models/Wishlist'
 import { requireAdmin } from '@/lib/auth'
 import { getCache, setCache } from '@/lib/cache'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 async function handler(request: NextRequest, user: any) {
   try {
     await connectDB()
 
-    // Check cache
+    // Check if cache should be bypassed
+    const { searchParams } = new URL(request.url)
+    const bypassCache = searchParams.has('t') // If timestamp parameter exists, bypass cache
+
+    // Check cache only if not bypassed
     const cacheKey = 'admin_analytics'
-    const cached = getCache(cacheKey)
-    if (cached) {
-      return NextResponse.json(cached)
+    if (!bypassCache) {
+      const cached = getCache(cacheKey)
+      if (cached) {
+        return NextResponse.json(cached)
+      }
     }
 
     // Get all stats
@@ -175,7 +184,14 @@ async function handler(request: NextRequest, user: any) {
 
     setCache(cacheKey, result, 300) // Cache for 5 minutes
 
-    return NextResponse.json(result)
+    const response = NextResponse.json(result)
+
+    // Add cache control headers to prevent browser caching
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+    response.headers.set('Pragma', 'no-cache')
+    response.headers.set('Expires', '0')
+
+    return response
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message || 'Failed to get analytics' },
