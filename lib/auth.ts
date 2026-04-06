@@ -26,7 +26,9 @@ export function generateToken(user: IUser): string {
     email: user.email,
     role: user.role,
   }
-  return jwt.sign(payload, JWT_SECRET_FINAL, { expiresIn: '7d' })
+  // 7 days for regular users, 8 hours for admins
+  const expiresIn = user.role === 'admin' ? '8h' : '7d'
+  return jwt.sign(payload, JWT_SECRET_FINAL, { expiresIn })
 }
 
 export function verifyToken(token: string): JWTPayload | null {

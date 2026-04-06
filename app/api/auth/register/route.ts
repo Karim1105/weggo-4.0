@@ -62,12 +62,15 @@ export async function POST(request: NextRequest) {
       201
     )
 
+    // Set token expiration: 8 hours for admins, 7 days for regular users
+    const maxAge = user.role === 'admin' ? 60 * 60 * 8 : 60 * 60 * 24 * 7
+
     response.cookies.set('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: maxAge,
     })
     setCsrfTokenCookie(response)
 

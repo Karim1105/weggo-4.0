@@ -62,6 +62,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.redirect(errorUrl, 303)
     }
 
+    // Check if user is banned
+    if (user.banned) {
+      logger.info('Login failed - user is banned ', { email, userId: user._id }, requestId)
+      const errorUrl = new URL(
+        `/login?error=banned&reason=${encodeURIComponent(user.bannedReason || 'Your account has been banned')}`,
+        origin
+      )
+      return NextResponse.redirect(errorUrl, 303)
+    }
+
     const token = generateToken(user)
 
     // Base redirect: admins go to /admin, others to /
@@ -80,12 +90,15 @@ export async function POST(request: NextRequest) {
     const redirectUrl = new URL(safeRedirect, origin)
     const response = NextResponse.redirect(redirectUrl, 303)
 
+    // Set token expiration: 8 hours for admins, 7 days for regular users
+    const maxAge = user.role === 'admin' ? 60 * 60 * 8 : 60 * 60 * 24 * 7
+
     response.cookies.set('token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
       path: '/',
-      maxAge: 60 * 60 * 24 * 7, // 7 days
+      maxAge: maxAge,
     })
     setCsrfTokenCookie(response)
 
