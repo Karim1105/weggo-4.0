@@ -80,7 +80,22 @@ async function handler(request: NextRequest, user: any) {
       ])
 
       const stats = result?.stats?.[0] || { averageRating: 0, totalReviews: 0 }
-      const reviews = result?.reviews || []
+      const reviewsRaw = result?.reviews || []
+      const reviews = reviewsRaw.map((review: any) => {
+        const images = Array.isArray(review?.product?.images)
+          ? review.product.images.filter((img: string) => typeof img === 'string' && !img.startsWith('data:')).slice(0, 1)
+          : []
+
+        return {
+          ...review,
+          product: review.product
+            ? {
+                ...review.product,
+                images,
+              }
+            : review.product,
+        }
+      })
 
       return NextResponse.json({
         success: true,
@@ -173,9 +188,16 @@ async function handler(request: NextRequest, user: any) {
       // Continue even if rating update fails
     }
 
+    const reviewPayload = review.toObject()
+    if (Array.isArray(reviewPayload?.product?.images)) {
+      reviewPayload.product.images = reviewPayload.product.images
+        .filter((img: string) => typeof img === 'string' && !img.startsWith('data:'))
+        .slice(0, 1)
+    }
+
     return NextResponse.json({
       success: true,
-      review,
+      review: reviewPayload,
     })
   }
 

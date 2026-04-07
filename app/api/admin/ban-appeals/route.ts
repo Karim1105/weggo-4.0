@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db'
 import BanAppeal from '@/models/BanAppeal'
-import User from '@/models/User'
 import { requireAdmin } from '@/lib/auth'
 import { logger, getRequestId } from '@/lib/logger'
 
@@ -26,8 +25,8 @@ async function handler(request: NextRequest, admin: any) {
     const [appeals, total] = await Promise.all([
       BanAppeal.find(query)
         .populate('userId', 'name email bannedAt bannedReason')
-        .populate('bannedBy', 'name email')
-        .populate('reviewedBy', 'name email')
+        .populate('bannedBy', 'name')
+        .populate('reviewedBy', 'name')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)

@@ -40,7 +40,7 @@ async function handler(
     }
 
     // Get listings
-    const [listings, total] = await Promise.all([
+    const [listingsRaw, total] = await Promise.all([
       Product.find(query)
         .select('title price category condition location status views images createdAt updatedAt isBoosted averageRating ratingCount')
         .sort({ createdAt: -1 })
@@ -49,6 +49,15 @@ async function handler(
         .lean(),
       Product.countDocuments(query),
     ])
+
+    const listings = listingsRaw.map((listing: any) => ({
+      ...listing,
+      images: Array.isArray(listing.images)
+        ? listing.images
+            .filter((img: string) => typeof img === 'string' && !img.startsWith('data:'))
+            .slice(0, 1)
+        : [],
+    }))
 
     return NextResponse.json({
       success: true,

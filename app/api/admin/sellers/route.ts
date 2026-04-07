@@ -18,7 +18,7 @@ async function handler(request: NextRequest) {
         { role: 'seller' },
       ],
     })
-      .select('-password -resetPasswordToken -resetPasswordExpires')
+      .select('name email role sellerVerified banned createdAt')
       .sort({ createdAt: -1 })
       .lean()
 

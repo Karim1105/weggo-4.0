@@ -21,7 +21,8 @@ async function handler(
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
-    const messageLimit = parseInt(searchParams.get('messageLimit') || '30') // Messages per conversation
+    const rawMessageLimit = parseInt(searchParams.get('messageLimit') || '10')
+    const messageLimit = Math.min(Math.max(Number.isNaN(rawMessageLimit) ? 10 : rawMessageLimit, 1), 20)
 
     const skip = (page - 1) * limit
 
@@ -78,24 +79,49 @@ async function handler(
     const populatedConversations = await Promise.all(
       conversations.map(async (conv) => {
         const [otherUser, product, messages] = await Promise.all([
-          User.findById(conv.otherUserId).select('name email avatar role').lean(),
+          User.findById(conv.otherUserId).select('name avatar role').lean(),
           conv.productId ? Product.findById(conv.productId).select('title price images status').lean() : null,
           Message.find({ conversationId: conv._id })
-            .populate('sender', 'name email avatar')
-            .populate('receiver', 'name email avatar')
+            .populate('sender', 'name avatar')
+            .populate('receiver', 'name avatar')
             .sort({ createdAt: -1 })
             .limit(messageLimit)
             .lean(),
         ])
 
+        const sanitizedProduct = product
+          ? {
+              ...product,
+              images: Array.isArray((product as any).images)
+                ? (product as any).images
+                    .filter((img: string) => typeof img === 'string' && !img.startsWith('data:'))
+                    .slice(0, 1)
+                : [],
+            }
+          : null
+
+        const sanitizedMessages = messages.map((message: any) => ({
+          ...message,
+          product: message.product
+            ? {
+                ...message.product,
+                images: Array.isArray(message.product.images)
+                  ? message.product.images
+                      .filter((img: string) => typeof img === 'string' && !img.startsWith('data:'))
+                      .slice(0, 1)
+                  : [],
+              }
+            : message.product,
+        }))
+
         return {
           conversationId: conv._id,
           otherUser,
-          product,
+          product: sanitizedProduct,
           messageCount: conv.messageCount,
           unreadCount: conv.unreadCount,
           lastMessageTime: conv.lastMessageTime,
-          recentMessages: messages.reverse(),
+          recentMessages: sanitizedMessages.reverse(),
         }
       })
     )

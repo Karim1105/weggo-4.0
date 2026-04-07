@@ -23,17 +23,31 @@ async function handler(request: NextRequest) {
       query.status = status
     }
 
-    const [reports, total] = await Promise.all([
+    const [reportsRaw, total] = await Promise.all([
       Report.find(query)
         .populate('listing', 'title images status seller')
-        .populate('reporter', 'name email')
-        .populate('reviewedBy', 'name email')
+        .populate('reporter', 'name')
+        .populate('reviewedBy', 'name')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
       Report.countDocuments(query),
     ])
+
+    const reports = reportsRaw.map((report: any) => ({
+      ...report,
+      listing: report.listing
+        ? {
+            ...report.listing,
+            images: Array.isArray(report.listing.images)
+              ? report.listing.images
+                  .filter((img: string) => typeof img === 'string' && !img.startsWith('data:'))
+                  .slice(0, 1)
+              : [],
+          }
+        : report.listing,
+    }))
 
     const response = NextResponse.json({
       success: true,

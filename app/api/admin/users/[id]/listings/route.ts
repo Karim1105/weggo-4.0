@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db'
 import Product from '@/models/Product'
 import User from '@/models/User'
-import Review from '@/models/Review'
 import { requireAdmin } from '@/lib/auth'
 import { logger, getRequestId } from '@/lib/logger'
 
@@ -42,7 +41,7 @@ async function handler(
     }
 
     // Get listings
-    const [listings, total] = await Promise.all([
+    const [listingsRaw, total] = await Promise.all([
       Product.find(query)
         .select('title price category condition location status views images createdAt updatedAt isBoosted averageRating ratingCount')
         .sort({ createdAt: -1 })
@@ -51,6 +50,15 @@ async function handler(
         .lean(),
       Product.countDocuments(query),
     ])
+
+    const listings = listingsRaw.map((listing: any) => ({
+      ...listing,
+      images: Array.isArray(listing.images)
+        ? listing.images
+            .filter((img: string) => typeof img === 'string' && !img.startsWith('data:'))
+            .slice(0, 1)
+        : [],
+    }))
 
     // Get listing statistics
     const stats = await Promise.all([
@@ -69,7 +77,7 @@ async function handler(
     // Get recent reviews for this seller
     const Review = (await import('@/models/Review')).default
     const recentReviews = await Review.find({ sellerId: user._id })
-      .populate('buyerId', 'name email avatar')
+      .populate('buyerId', 'name avatar')
       .sort({ createdAt: -1 })
       .limit(5)
       .select('rating comment createdAt buyerId')

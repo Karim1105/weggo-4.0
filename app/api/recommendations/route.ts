@@ -71,12 +71,39 @@ export async function GET(request: NextRequest) {
       // No additional filter, just sort by views and recency (already handled below)
     }
 
-    const recommendations = await Product.find(query)
+    const recommendationsRaw = await Product.find(query)
       .select('_id title price images category location condition description subcategory createdAt seller')
       .populate('seller', 'name avatar')
       .sort({ views: -1, createdAt: -1 })
       .limit(12)
       .lean()
+
+    const recommendations = recommendationsRaw.map((product: any) => {
+      const imagesArr = Array.isArray(product.images)
+        ? product.images.filter((img: string) => typeof img === 'string' && !img.startsWith('data:'))
+        : []
+      const description = typeof product.description === 'string' && product.description.length > 200
+        ? product.description.slice(0, 200) + '...'
+        : product.description
+
+      return {
+        _id: product._id.toString(),
+        title: product.title,
+        price: product.price,
+        images: imagesArr.length ? [imagesArr[0]] : [],
+        category: product.category,
+        subcategory: product.subcategory,
+        location: product.location,
+        condition: product.condition,
+        description,
+        createdAt: product.createdAt,
+        seller: product.seller ? {
+          _id: product.seller._id.toString(),
+          name: product.seller.name,
+          avatar: product.seller.avatar,
+        } : null,
+      }
+    })
 
     const result = {
       success: true,

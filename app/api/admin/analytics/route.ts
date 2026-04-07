@@ -52,11 +52,11 @@ async function handler(request: NextRequest, user: any) {
       Review.countDocuments(),
       ViewHistory.countDocuments(),
       Wishlist.countDocuments(),
-      User.find().sort({ createdAt: -1 }).limit(10).select('name email createdAt').lean(),
+      User.find().sort({ createdAt: -1 }).limit(5).select('name createdAt').lean(),
       Product.find()
         .sort({ createdAt: -1 })
-        .limit(10)
-        .populate('seller', 'name email')
+        .limit(5)
+        .populate('seller', 'name')
         .select('title price category createdAt')
         .lean(),
       Product.aggregate([

@@ -40,7 +40,7 @@ async function handler(request: NextRequest) {
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
-        .populate('bannedBy', 'name email')
+        .populate('bannedBy', 'name')
         .lean(),
       User.countDocuments(query),
     ])

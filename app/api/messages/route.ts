@@ -45,12 +45,28 @@ async function handler(request: NextRequest, user: any) {
         }
 
         // Get messages for a specific conversation
-        const messages = await Message.find({ conversationId })
-          .populate('sender', 'name email avatar')
-          .populate('receiver', 'name email avatar')
+        const messagesRaw = await Message.find({ conversationId })
+          .populate('sender', 'name avatar')
+          .populate('receiver', 'name avatar')
           .populate('product', 'title price images')
           .sort({ createdAt: 1 })
           .lean()
+
+        const messages = messagesRaw.map((message: any) => {
+          const productImages = Array.isArray(message?.product?.images)
+            ? message.product.images.filter((img: string) => typeof img === 'string' && !img.startsWith('data:'))
+            : []
+
+          return {
+            ...message,
+            product: message.product
+              ? {
+                  ...message.product,
+                  images: productImages.length ? [productImages[0]] : [],
+                }
+              : message.product,
+          }
+        })
 
         // Mark as read
         await Message.updateMany(
@@ -88,12 +104,28 @@ async function handler(request: NextRequest, user: any) {
       ])
 
       const conversationIds = conversations.map((c) => c._id)
-      const messages = await Message.find({ conversationId: { $in: conversationIds } })
-        .populate('sender', 'name email avatar')
-        .populate('receiver', 'name email avatar')
+      const messagesRaw = await Message.find({ conversationId: { $in: conversationIds } })
+        .populate('sender', 'name avatar')
+        .populate('receiver', 'name avatar')
         .populate('product', 'title price images')
         .sort({ createdAt: -1 })
         .lean()
+
+      const messages = messagesRaw.map((message: any) => {
+        const productImages = Array.isArray(message?.product?.images)
+          ? message.product.images.filter((img: string) => typeof img === 'string' && !img.startsWith('data:'))
+          : []
+
+        return {
+          ...message,
+          product: message.product
+            ? {
+                ...message.product,
+                images: productImages.length ? [productImages[0]] : [],
+              }
+            : message.product,
+        }
+      })
 
       return NextResponse.json({
         success: true,
@@ -207,10 +239,26 @@ async function handler(request: NextRequest, user: any) {
         }
 
         // Populate the message before returning
-        const populatedMessage = await Message.findById(message._id)
-          .populate('sender', 'name email avatar')
-          .populate('receiver', 'name email avatar')
+        const populatedMessageRaw = await Message.findById(message._id)
+          .populate('sender', 'name avatar')
+          .populate('receiver', 'name avatar')
           .populate('product', 'title price images')
+
+        const productImages = Array.isArray((populatedMessageRaw as any)?.product?.images)
+          ? (populatedMessageRaw as any).product.images.filter((img: string) => typeof img === 'string' && !img.startsWith('data:'))
+          : []
+
+        const populatedMessage = populatedMessageRaw
+          ? {
+              ...(populatedMessageRaw as any).toObject(),
+              product: (populatedMessageRaw as any).product
+                ? {
+                    ...(populatedMessageRaw as any).product.toObject?.() ?? (populatedMessageRaw as any).product,
+                    images: productImages.length ? [productImages[0]] : [],
+                  }
+                : (populatedMessageRaw as any).product,
+            }
+          : null
 
         return NextResponse.json({
           success: true,

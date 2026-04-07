@@ -94,6 +94,7 @@ export async function GET(request: NextRequest) {
 
     // Get all active products
     const allProducts = await Product.find({ status: 'active' })
+      .select('_id title price images category location condition description subcategory createdAt seller')
       .populate('seller', 'name avatar isVerified averageRating totalSales')
       .lean()
 
@@ -101,7 +102,7 @@ export async function GET(request: NextRequest) {
     const productsWithDistance = allProducts
       .map((product: any) => {
         // Try to match location to known Egyptian cities
-        const location = product.location
+        const location = typeof product.location === 'string' ? product.location : ''
         let productCoords = null
 
         // Check if location contains any known city
@@ -126,7 +127,7 @@ export async function GET(request: NextRequest) {
 
         return {
           ...product,
-          distance: Math.round(distance * 10) / 10 // Round to 1 decimal
+          distance: Math.round(distance * 10) / 10
         }
       })
       .filter(product => product.distance <= radius)
@@ -141,19 +142,37 @@ export async function GET(request: NextRequest) {
     }
 
     // Format response
-    const listings = productsWithDistance.map((product: any) => ({
-      ...product,
-      _id: product._id.toString(),
-      seller: product.seller ? {
-        _id: product.seller._id.toString(),
-        name: product.seller.name,
-        avatar: product.seller.avatar,
-        isVerified: product.seller.isVerified,
-        rating: product.seller.averageRating,
-        totalSales: product.seller.totalSales,
-      } : null,
-      isFavorite: wishlistIds.has(product._id.toString())
-    }))
+    const listings = productsWithDistance.map((product: any) => {
+      const imagesArr = Array.isArray(product.images)
+        ? product.images.filter((img: string) => typeof img === 'string' && !img.startsWith('data:'))
+        : []
+      const description = typeof product.description === 'string' && product.description.length > 200
+        ? product.description.slice(0, 200) + '...'
+        : product.description
+
+      return {
+        _id: product._id.toString(),
+        title: product.title,
+        price: product.price,
+        images: imagesArr.length ? [imagesArr[0]] : [],
+        category: product.category,
+        subcategory: product.subcategory,
+        location: product.location,
+        condition: product.condition,
+        description,
+        createdAt: product.createdAt,
+        distance: product.distance,
+        seller: product.seller ? {
+          _id: product.seller._id.toString(),
+          name: product.seller.name,
+          avatar: product.seller.avatar,
+          isVerified: product.seller.isVerified,
+          rating: product.seller.averageRating,
+          totalSales: product.seller.totalSales,
+        } : null,
+        isFavorite: wishlistIds.has(product._id.toString())
+      }
+    })
 
     return successResponse({
       listings,

@@ -39,9 +39,32 @@ async function handler(request: NextRequest, user: any) {
     .populate('product')
     .lean()
 
-  const products = recentViews
+  const productsRaw = recentViews
     .map((v: any) => v.product)
     .filter((p: any) => p && p.status === 'active')
+
+  const products = productsRaw.map((product: any) => {
+    const imagesArr = Array.isArray(product.images)
+      ? product.images.filter((img: string) => typeof img === 'string' && !img.startsWith('data:'))
+      : []
+    const description = typeof product.description === 'string' && product.description.length > 200
+      ? product.description.slice(0, 200) + '...'
+      : product.description
+
+    return {
+      _id: product._id?.toString?.() ?? product._id,
+      title: product.title,
+      price: product.price,
+      images: imagesArr.length ? [imagesArr[0]] : [],
+      category: product.category,
+      subcategory: product.subcategory,
+      location: product.location,
+      condition: product.condition,
+      description,
+      createdAt: product.createdAt,
+      seller: product.seller,
+    }
+  })
 
   return NextResponse.json({
     success: true,
