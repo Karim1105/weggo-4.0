@@ -36,7 +36,11 @@ export default function AdminDashboard() {
     if (activeTab === 'analytics') fetchAnalytics()
     if (activeTab === 'users') fetchUsers()
     if (activeTab === 'reports') fetchReports()
-    if (activeTab === 'appeals') fetchAppeals()
+    if (activeTab === 'appeals') {
+      // Ensure the appeals tab defaults to showing pending appeals
+      setStatusFilter('pending')
+      fetchAppeals(false, 'pending')
+    }
     if (activeTab === 'listings') fetchSellers()
     // Intentionally refetch only on tab changes. Search/filter-driven reloads
     // are triggered by explicit UI actions below.

@@ -3,6 +3,9 @@ import type { NextRequest } from 'next/server'
 
 const protectedPaths = ['/sell', '/profile', '/favorites']
 
+// Paths that require admin privileges
+const adminPaths = ['/appeal-review', '/admin', '/api/admin']
+
 export function middleware(request: NextRequest) {
 	const { pathname } = request.nextUrl
 	const origin =
@@ -14,8 +17,59 @@ export function middleware(request: NextRequest) {
   const isProtected = protectedPaths.some((p) => pathname === p || pathname.startsWith(p + '/'))
 
   const isApiRequest = pathname.startsWith('/api')
+  const isApiAdminRequest = pathname.startsWith('/api/admin')
   const isStateChanging = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)
   const csrfHeader = request.headers.get('x-csrf-token')
+
+  // Helper to decode JWT payload (base64url). Uses atob in edge runtime or Buffer if available.
+  function parseJwtPayload(tok?: string) {
+    if (!tok) return null
+    try {
+      const parts = tok.split('.')
+      if (parts.length < 2) return null
+      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
+      let jsonString: string
+      if (typeof globalThis.atob === 'function') {
+        jsonString = globalThis.atob(base64)
+      } else if (typeof (globalThis as any).Buffer === 'function') {
+        jsonString = (globalThis as any).Buffer.from(base64, 'base64').toString('utf8')
+      } else {
+        return null
+      }
+      return JSON.parse(jsonString)
+    } catch (e) {
+      return null
+    }
+  }
+
+  // Check if the current pathname matches any admin path (exact or nested)
+  function isPathAdmin(p: string) {
+    return pathname === p || pathname.startsWith(p + '/')
+  }
+
+  const isAdminPath = adminPaths.some(isPathAdmin)
+
+  // If request targets an admin-only route, ensure token exists and user is admin
+  if (isAdminPath) {
+    const payload = parseJwtPayload(token)
+    const isAdmin = !!(
+      payload && (
+        payload.isAdmin === true ||
+        payload.admin === true ||
+        payload.role === 'admin' ||
+        (Array.isArray(payload.roles) && payload.roles.includes('admin'))
+      )
+    )
+
+    if (!isAdmin) {
+      // For API admin requests return 404 JSON, for pages rewrite to /404
+      if (isApiAdminRequest) {
+        return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 })
+      }
+      const notFoundUrl = new URL('/404', origin)
+      return NextResponse.rewrite(notFoundUrl)
+    }
+  }
 
   // CSRF protection for state-changing API requests
   // Exempt logout and login endpoints
@@ -90,5 +144,10 @@ export const config = {
     '/admin',
     '/admin/:path*',
     '/api/:path*',
+    '/appeals',
+    '/appeals/:path*',
+    '/appeal-review',
+    '/appeal-review/:path*',
+    '/api/admin/:path*',
   ],
 }

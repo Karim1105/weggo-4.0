@@ -28,11 +28,11 @@ export default function AppealReviewPage() {
         fetchUserDetails(appeal)
       } catch (error) {
         console.error('Failed to parse stored appeal:', error)
-        router.push('/admin')
+        router.push('/')
       }
     } else {
       console.warn('No appeal data found in localStorage')
-      router.push('/admin')
+      router.push('/')
     }
     setLoading(false)
   }, [appealId, router])
