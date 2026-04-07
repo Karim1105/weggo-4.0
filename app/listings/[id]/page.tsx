@@ -24,8 +24,6 @@ interface Seller {
   _id: string
   name: string
   avatar?: string
-  phone?: string
-  location?: string
 }
 
 interface Listing {
@@ -53,6 +51,7 @@ export default function ListingDetailPage() {
   const [showReportModal, setShowReportModal] = useState(false)
   const [reportReason, setReportReason] = useState('')
   const [isFavorite, setIsFavorite] = useState(false)
+  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
   const [currentUser, setCurrentUser] = useState<{ _id: string; role?: string } | null>(null)
   const [similar, setSimilar] = useState<any[]>([])
   const [imageError, setImageError] = useState(false)
@@ -84,35 +83,40 @@ export default function ListingDetailPage() {
 
   useEffect(() => {
     if (!listing) return
-    const loadSimilar = async () => {
-      try {
-        const res = await fetch(`/api/listings?category=${encodeURIComponent(listing.category)}&limit=8`, { credentials: 'include' })
-        const data = await res.json()
-        const listings = data.data?.listings ?? data.listings
-        if (data.success && Array.isArray(listings)) {
-          setSimilar(listings.filter((p: any) => p._id !== listing._id).slice(0, 4))
-        }
-      } catch {
-        setSimilar([])
-      }
-    }
-    loadSimilar()
-  }, [listing])
-
-  useEffect(() => {
-    if (!listing) return
     if (wishlistFetchedFor.current === id) return
     wishlistFetchedFor.current = id
     fetch('/api/wishlist', { credentials: 'include' })
       .then((r) => r.json())
       .then((d) => {
         if (d.success && Array.isArray(d.wishlist)) {
-          const inWishlist = d.wishlist.some((p: { _id: string }) => p._id === id)
-          setIsFavorite(inWishlist)
+          const ids = new Set<string>(d.wishlist.map((p: { _id: string }) => p._id))
+          setFavoriteIds(ids)
+          setIsFavorite(ids.has(id))
         }
       })
       .catch(() => {})
   }, [listing, id])
+
+  useEffect(() => {
+    if (!listing) return
+    const loadSimilar = async () => {
+      try {
+        const res = await fetch(`/api/listings?category=${encodeURIComponent(listing.category)}&limit=8`, { credentials: 'include' })
+        const data = await res.json()
+        const listings = data.data?.listings ?? data.listings
+        if (data.success && Array.isArray(listings)) {
+          const cards = listings
+            .filter((p: any) => p._id !== listing._id)
+            .slice(0, 4)
+            .map((p: any) => mapApiListingToProduct(p, favoriteIds))
+          setSimilar(cards)
+        }
+      } catch {
+        setSimilar([])
+      }
+    }
+    void loadSimilar()
+  }, [listing, favoriteIds])
 
   useEffect(() => {
     const loadUser = async () => {
@@ -193,27 +197,65 @@ export default function ListingDetailPage() {
     }
   }
 
-  const toggleFavorite = async () => {
+  const updateWishlist = async (productId: string, nextFavorite: boolean) => {
     try {
-      if (isFavorite) {
-        await fetch('/api/wishlist', {
-          method: 'DELETE',
-          headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
-          credentials: 'include',
-          body: JSON.stringify({ productId: id }),
-        })
-      } else {
-        await fetch('/api/wishlist', {
-          method: 'POST',
-          headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
-          credentials: 'include',
-          body: JSON.stringify({ productId: id }),
-        })
+      const res = await fetch('/api/wishlist', {
+        method: nextFavorite ? 'POST' : 'DELETE',
+        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
+        credentials: 'include',
+        body: JSON.stringify({ productId }),
+      })
+      const data = await res.json().catch(() => ({}))
+
+      if (!res.ok || !data.success) {
+        if (res.status === 401) {
+          toast.error('Please log in to save favorites')
+          return
+        }
+
+        toast.error(data.error || 'Failed to update favorites')
+        return false
       }
-      setIsFavorite(!isFavorite)
+
+      setFavoriteIds((prev) => {
+        const next = new Set(prev)
+        if (nextFavorite) {
+          next.add(productId)
+        } else {
+          next.delete(productId)
+        }
+        return next
+      })
+      return true
     } catch {
       toast.error('Please log in to save favorites')
+      return false
     }
+  }
+
+  const toggleFavorite = async () => {
+    const nextFavorite = !isFavorite
+    const success = await updateWishlist(id, nextFavorite)
+    if (success) {
+      setIsFavorite(nextFavorite)
+    }
+  }
+
+  const toggleSimilarFavorite = async (productId: string) => {
+    const target = similar.find((item: any) => item.id === productId)
+    if (!target) return
+
+    const nextFavorite = !target.isFavorite
+    const success = await updateWishlist(productId, nextFavorite)
+    if (!success) {
+      return
+    }
+
+    setSimilar((prev) =>
+      prev.map((item: any) => (
+        item.id === productId ? { ...item, isFavorite: nextFavorite } : item
+      ))
+    )
   }
 
   const sellerId = listing?.seller?._id || null
@@ -455,14 +497,13 @@ export default function ListingDetailPage() {
           <div className="mt-10">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Similar items</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {similar.map((p: any, index: number) => {
-                const card = mapApiListingToProduct(p, new Set())
+              {similar.map((card: any, index: number) => {
                 return (
                   <ProductCard
                     key={card.id}
                     product={card as any}
                     index={index}
-                    onToggleFavorite={() => {}}
+                    onToggleFavorite={toggleSimilarFavorite}
                   />
                 )
               })}

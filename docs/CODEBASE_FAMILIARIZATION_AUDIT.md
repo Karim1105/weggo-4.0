@@ -230,3 +230,59 @@ Additional verification added:
 
 - `tests/integration/priority2-fixes.integration.test.ts` covers the priority 2 API and admin-flow fixes.
 - `tests/rateLimit.test.ts` now verifies lazy cleanup behavior as well as request limiting.
+
+Priority 3 fixes completed in code and verified with `npm run lint`, `npm test`, `npm run test:e2e`, and `npm run build`.
+
+| ID | Status | Resolution |
+|---|---|---|
+| F-10 | Resolved | Nearby listings now query only location strings that match cities inside the requested radius and no longer default unknown locations to Cairo or load every active product into memory. |
+| F-13 | Resolved | `.env.example` and the README setup section now reflect the env vars and upload behavior the code actually uses today. |
+| F-24 | Resolved | Listing-detail favorite toggling now checks the wishlist API response before updating local state. |
+| F-27 | Resolved | The login page now restores visible invalid-credentials feedback for `?error=1`. |
+| F-34 | Resolved | Product-card favorite clicks now call `preventDefault()` so they do not trigger the parent listing link navigation. |
+| F-35 | Resolved | Browse list view now has a real link path into listing detail. |
+| F-37 | Resolved | Sell, edit, browse, and homepage category surfaces now derive from the shared category definitions instead of drifting hardcoded lists. |
+| F-41 | Resolved | The repo now has a real ESLint setup plus a combined `lint` script that runs both type-checking and ESLint. |
+| F-42 | Resolved | Coverage now includes messages, reviews, appeals, admin flows, nearby listings, and frontend page behavior through targeted integration and E2E tests. |
+| F-43 | Resolved | Playwright now starts a local dev server automatically when needed, and the E2E suite covers more than the homepage smoke path. |
+| F-39 | Resolved | The homepage “Try AI Search” CTA now links into browse instead of acting like a dead button. |
+
+Additional verification added:
+
+- `tests/integration/priority3-fixes.integration.test.ts` covers the nearby-listings behavior change.
+- `e2e/login.spec.ts` and `e2e/browse.spec.ts` add frontend-page coverage for login feedback and browse interactions.
+- `playwright.config.ts` now provisions a local web server when `E2E_BASE_URL` is not supplied.
+
+Known follow-up intentionally deferred:
+
+- The Next.js build still emits the existing `--localstorage-file` warning during static generation. That remains queued for the end-of-fixes cleanup pass.
+
+Priority 4 fixes completed in code and verified with `npm run lint`, `npm test`, and `npm run build`.
+
+| ID | Status | Resolution |
+|---|---|---|
+| F-03 | Resolved | Public listing-detail responses now redact seller phone and location, returning only the minimal seller identity fields needed by the page. |
+| F-09 | Resolved | The chatbot now sends every message through `/api/ai-chat`, and the server route returns marketplace-aware responses based on live listings instead of drifting client-side canned logic. |
+| F-15 | Resolved | Listing boost mutations now clear listings, seller, and admin analytics cache prefixes so boosted ordering and related dashboards refresh immediately. |
+| F-16 | Resolved | The profile page now loads the seller's listings with `status=all`, computes active and sold counts from real listing data, and stops showing a hardcoded sold count. |
+| F-17 | Resolved | Featured listings copy and summary stats now match the actual data source, removing the misleading AI-picked / high-rating claims. |
+| F-18 | Resolved | Environment validation now covers core runtime requirements plus partial SMTP misconfiguration, while treating missing public URLs as production warnings instead of hard build blockers. |
+| F-23 | Resolved | Similar-item cards on listing detail now have a real wishlist toggle handler instead of a no-op callback. |
+| F-26 | Resolved | Recently-viewed tracking now validates both `productId` format and active product existence before writing history. |
+| F-31 | Resolved | The debug cookie route is now closed by default in non-production unless `DEBUG_COOKIES_SECRET` is configured, and it requires the matching secret header before returning diagnostics. |
+| F-32 | Resolved | Full-cache clears now count evicted keys before flushing, so cache eviction metrics are accurate again. |
+| F-38 | Resolved | Mobile navigation now exposes messages for logged-in users and carries the unread badge there as well. |
+| F-40 | Resolved | The navbar language toggle now uses the persisted Zustand language state, so language choice survives remounts/navigation and keeps the document `dir`/`lang` in sync. |
+
+Additional verification added:
+
+- `tests/integration/priority4-fixes.integration.test.ts` covers seller privacy redaction, recently-viewed validation, the shared AI chat route, debug cookie protection, and boost cache invalidation.
+- `tests/integration/listings.integration.test.ts` now covers `seller=me&status=all`.
+- `tests/cache.test.ts` now checks full-cache eviction metrics.
+- `tests/env.test.ts` now checks the strengthened environment validation behavior.
+
+Current known cleanup items after all priority fixes:
+
+- The Next.js build still emits the existing `--localstorage-file` warning during static generation.
+- Production builds currently warn when `NEXT_PUBLIC_SITE_URL` is not configured.
+- Next/ESLint still warns about raw `<img>` usage in several UI files; these are warnings, not build failures, and can be handled in the final cleanup pass.

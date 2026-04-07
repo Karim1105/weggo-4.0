@@ -30,6 +30,7 @@ interface Listing {
   category: string
   images?: string[]
   views: number
+  status?: 'active' | 'sold' | 'pending' | 'deleted'
   createdAt: string
 }
 
@@ -51,7 +52,7 @@ export default function ProfilePage() {
       try {
         const [meRes, listingsRes, wishlistRes, savedRes] = await Promise.all([
           fetch('/api/auth/me', { credentials: 'include' }),
-          fetch('/api/listings?seller=me&limit=50', { credentials: 'include' }),
+          fetch('/api/listings?seller=me&status=all&limit=100', { credentials: 'include' }),
           fetch('/api/wishlist', { credentials: 'include' }).catch(() => null),
           fetch('/api/saved-searches', { credentials: 'include' }).catch(() => null),
         ])
@@ -148,8 +149,9 @@ export default function ProfilePage() {
     }
   }
 
-  const activeCount = listings.filter((l) => l).length
-  const soldCount = 0 // API could add status filter later
+  const activeCount = listings.filter((l) => l.status === 'active').length
+  const soldCount = listings.filter((l) => l.status === 'sold').length
+  const visibleListings = listings.filter((l) => l.status !== 'deleted')
 
   if (loading) {
     return (
@@ -164,11 +166,11 @@ export default function ProfilePage() {
   }
 
   const favoriteIds = new Set(favorites)
-  const productCards = listings.map((l) =>
+  const productCards = visibleListings.map((l) =>
     mapApiListingToProduct(
       {
         ...l,
-        seller: { name: user.name, isVerified: false },
+        seller: { name: user.name, isVerified: user.sellerVerified },
       },
       favoriteIds
     )
@@ -351,8 +353,8 @@ export default function ProfilePage() {
               transition={{ delay: 0.3 }}
               className="card-modern p-6"
             >
-              <h2 className="text-2xl font-bold mb-6">My Active Listings</h2>
-              {listings.length === 0 ? (
+              <h2 className="text-2xl font-bold mb-6">My Listings</h2>
+              {visibleListings.length === 0 ? (
                 <div className="text-center py-12">
                   <Package className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                   <p className="text-gray-600 mb-4">You haven&apos;t listed any items yet.</p>

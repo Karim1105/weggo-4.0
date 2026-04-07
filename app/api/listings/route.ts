@@ -27,6 +27,7 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search')
     const sellerParam = searchParams.get('seller')?.trim().toLowerCase()
     const sellerMe = sellerParam === 'me'
+    const requestedStatus = searchParams.get('status')?.trim().toLowerCase() || 'active'
     const sortBy = searchParams.get('sortBy') || 'newest'
     const includeTotal = searchParams.get('includeTotal') !== 'false'
     
@@ -47,6 +48,12 @@ export async function GET(request: NextRequest) {
         return ApiErrors.unauthorized()
       }
       query.seller = user._id
+
+      if (requestedStatus === 'all') {
+        delete query.status
+      } else if (['active', 'sold', 'pending', 'deleted'].includes(requestedStatus)) {
+        query.status = requestedStatus
+      }
     }
 
     if (category && category !== 'all') {
@@ -154,7 +161,7 @@ export async function GET(request: NextRequest) {
       const [countResult, candidates] = await Promise.all([
         totalPromise,
         Product.find(query)
-          .select('_id title price images category location condition description subcategory createdAt')
+          .select('_id title price images category location condition description subcategory createdAt status')
           .sort({ createdAt: -1 })
           .limit(candidateLimit)
           .lean(),
@@ -172,13 +179,13 @@ export async function GET(request: NextRequest) {
       })
 
       products = scored.slice(skip, skip + limit)
-      await Product.populate(products, { path: 'seller', select: 'name avatar' })
+      await Product.populate(products, { path: 'seller', select: 'name avatar sellerVerified averageRating totalSales' })
     } else {
       const [countResult, productsResult] = await Promise.all([
         totalPromise,
         Product.find(query)
-          .select('_id title price images category location condition description subcategory createdAt')
-          .populate('seller', 'name avatar')
+          .select('_id title price images category location condition description subcategory createdAt status')
+          .populate('seller', 'name avatar sellerVerified averageRating totalSales')
           .sort(sort)
           .skip(skip)
           .limit(limit)
@@ -195,7 +202,7 @@ export async function GET(request: NextRequest) {
       const description = typeof p.description === 'string' && p.description.length > 200
         ? p.description.slice(0, 200) + '...'
         : p.description
-      const { status, views, ...rest } = p
+      const { views, ...rest } = p
       return { ...rest, images, description }
     })
 

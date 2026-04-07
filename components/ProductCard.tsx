@@ -163,9 +163,11 @@ export default function ProductCard({ product, index, onToggleFavorite, isAdmin 
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}
             onClick={(e) => {
+              e.preventDefault()
               e.stopPropagation()
               onToggleFavorite(product.id)
             }}
+            aria-label={product.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
             className="absolute top-3 right-3 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors"
           >
             <Heart
@@ -243,4 +245,3 @@ export default function ProductCard({ product, index, onToggleFavorite, isAdmin 
     </motion.div>
   )
 }
-

@@ -6,7 +6,11 @@ export async function GET(request: NextRequest) {
   }
 
   const secret = process.env.DEBUG_COOKIES_SECRET
-  if (secret && request.headers.get('x-debug-secret') !== secret) {
+  if (!secret) {
+    return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 })
+  }
+
+  if (request.headers.get('x-debug-secret') !== secret) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   }
 

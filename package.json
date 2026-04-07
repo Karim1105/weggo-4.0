@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "tsc --noEmit",
+    "lint": "npm run lint:types && npm run lint:eslint",
+    "lint:types": "next typegen && tsc --noEmit",
+    "lint:eslint": "eslint app components lib tests e2e --ext .ts,.tsx",
     "test": "vitest run",
     "test:integration": "vitest run tests/integration",
     "test:e2e": "playwright test",
@@ -39,9 +41,12 @@
     "zustand": "^4.5.7"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.5",
     "@playwright/test": "^1.58.2",
     "@types/jsonwebtoken": "^9.0.10",
     "@types/multer": "^2.0.0",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "^16.2.2",
     "mongodb-memory-server": "^11.0.1",
     "tsx": "^4.21.0",
     "vitest": "^4.0.18"

@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
+import { categories as sharedCategories } from '@/lib/utils'
 import { 
   Smartphone, 
   Sofa, 
@@ -20,17 +21,43 @@ import {
 const COUNTS_CACHE_KEY = 'weggo_category_counts_v1'
 const COUNTS_CACHE_TTL = 10 * 60 * 1000
 
-// Slug must match API/listings and lib/utils categories (e.g. home not home-garden)
-const categoryList: { name: string; nameAr: string; slug: string; icon: typeof Smartphone; count: number; gradient: string; bgPattern: string; popular: boolean; description: string }[] = [
-  { name: 'Electronics', nameAr: 'إلكترونيات', slug: 'electronics', icon: Smartphone, count: 0, gradient: 'from-blue-400 via-blue-500 to-blue-600', bgPattern: 'circuit', popular: true, description: 'Phones, laptops, cameras & more' },
-  { name: 'Furniture', nameAr: 'أثاث', slug: 'furniture', icon: Sofa, count: 0, gradient: 'from-purple-400 via-purple-500 to-purple-600', bgPattern: 'dots', popular: false, description: 'Sofas, tables, chairs & decor' },
-  { name: 'Vehicles', nameAr: 'مركبات', slug: 'vehicles', icon: Car, count: 0, gradient: 'from-green-400 via-green-500 to-green-600', bgPattern: 'waves', popular: true, description: 'Cars, motorcycles, bikes' },
-  { name: 'Fashion', nameAr: 'أزياء', slug: 'fashion', icon: Shirt, count: 0, gradient: 'from-pink-400 via-pink-500 to-pink-600', bgPattern: 'zigzag', popular: true, description: 'Clothes, shoes, accessories' },
-  { name: 'Home & Garden', nameAr: 'منزل وحديقة', slug: 'home', icon: Home, count: 0, gradient: 'from-yellow-400 via-yellow-500 to-yellow-600', bgPattern: 'grid', popular: false, description: 'Kitchen, garden, tools' },
-  { name: 'Sports & Outdoors', nameAr: 'رياضة', slug: 'sports', icon: Dumbbell, count: 0, gradient: 'from-red-400 via-red-500 to-red-600', bgPattern: 'lines', popular: false, description: 'Fitness, outdoor, equipment' },
-  { name: 'Books & Media', nameAr: 'كتب', slug: 'books', icon: BookOpen, count: 0, gradient: 'from-indigo-400 via-indigo-500 to-indigo-600', bgPattern: 'books', popular: false, description: 'Books, magazines, media' },
-  { name: 'Gaming', nameAr: 'ألعاب فيديو', slug: 'gaming', icon: Gamepad2, count: 0, gradient: 'from-cyan-400 via-cyan-500 to-cyan-600', bgPattern: 'pixels', popular: true, description: 'Consoles, games, accessories' },
-]
+type CategoryCard = {
+  name: string
+  nameAr: string
+  slug: string
+  icon: typeof Smartphone
+  count: number
+  gradient: string
+  bgPattern: string
+  popular: boolean
+  description: string
+}
+
+const categoryPresentation: Record<string, Omit<CategoryCard, 'name' | 'nameAr' | 'slug' | 'count'>> = {
+  electronics: { icon: Smartphone, gradient: 'from-blue-400 via-blue-500 to-blue-600', bgPattern: 'circuit', popular: true, description: 'Phones, laptops, cameras & more' },
+  furniture: { icon: Sofa, gradient: 'from-purple-400 via-purple-500 to-purple-600', bgPattern: 'dots', popular: false, description: 'Sofas, tables, chairs & decor' },
+  vehicles: { icon: Car, gradient: 'from-green-400 via-green-500 to-green-600', bgPattern: 'waves', popular: true, description: 'Cars, motorcycles, bikes' },
+  fashion: { icon: Shirt, gradient: 'from-pink-400 via-pink-500 to-pink-600', bgPattern: 'zigzag', popular: true, description: 'Clothes, shoes, accessories' },
+  home: { icon: Home, gradient: 'from-yellow-400 via-yellow-500 to-yellow-600', bgPattern: 'grid', popular: false, description: 'Kitchen, garden, tools' },
+  sports: { icon: Dumbbell, gradient: 'from-red-400 via-red-500 to-red-600', bgPattern: 'lines', popular: false, description: 'Fitness, outdoor, equipment' },
+  books: { icon: BookOpen, gradient: 'from-indigo-400 via-indigo-500 to-indigo-600', bgPattern: 'books', popular: false, description: 'Books, magazines, media' },
+  toys: { icon: Star, gradient: 'from-orange-400 via-orange-500 to-orange-600', bgPattern: 'dots', popular: false, description: 'Board games, toys, puzzles' },
+  music: { icon: Sparkles, gradient: 'from-emerald-400 via-emerald-500 to-emerald-600', bgPattern: 'waves', popular: false, description: 'Instruments, audio gear, music tools' },
+  gaming: { icon: Gamepad2, gradient: 'from-cyan-400 via-cyan-500 to-cyan-600', bgPattern: 'pixels', popular: true, description: 'Consoles, games, accessories' },
+}
+
+const categoryList: CategoryCard[] = sharedCategories.map((category) => ({
+  ...category,
+  slug: category.id,
+  count: 0,
+  ...(categoryPresentation[category.id] || {
+    icon: Star,
+    gradient: 'from-slate-400 via-slate-500 to-slate-600',
+    bgPattern: 'grid',
+    popular: false,
+    description: 'Browse listings in this category',
+  }),
+}))
 
 export default function Categories() {
   const [categories, setCategories] = useState(categoryList)
@@ -248,9 +275,12 @@ export default function Categories() {
             <div className="text-left">
               <h3 className="text-xl font-bold text-gray-900 mb-1">Can't find what you're looking for?</h3>
               <p className="text-gray-600 mb-4">Use our AI-powered search to find anything</p>
-              <button className="gradient-primary text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all">
+              <Link
+                href="/browse"
+                className="inline-flex gradient-primary text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
+              >
                 Try AI Search
-              </button>
+              </Link>
             </div>
           </div>
         </motion.div>

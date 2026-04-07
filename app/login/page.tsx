@@ -13,6 +13,7 @@ function LoginPageInner() {
   const error = searchParams.get('error')
   const bannedReason = searchParams.get('reason')
   const isBanned = error === 'banned'
+  const showInvalidCredentials = error === '1'
 
   const handleAppealClick = () => {
     router.push('/appeals')
@@ -97,6 +98,13 @@ function LoginPageInner() {
           <p className="text-gray-600">Sign in to your account</p>
         </div>
 
+        {showInvalidCredentials && (
+          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
+            <p className="text-sm font-medium text-red-700">Invalid email or password.</p>
+            <p className="text-xs text-red-600 mt-1">Double-check your credentials and try again.</p>
+          </div>
+        )}
+
         <form
           method="POST"
           action="/api/auth/login"
@@ -170,4 +178,3 @@ export default function LoginPage() {
     </Suspense>
   )
 }
-

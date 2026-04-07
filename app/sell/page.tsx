@@ -8,7 +8,7 @@ import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import AIPricingSuggestion from '@/components/AIPricingSuggestion'
 import { categorizeProduct } from '@/lib/categorization'
-import { subcategoriesByCategory, withCsrfHeader } from '@/lib/utils'
+import { categories as listingCategories, subcategoriesByCategory, withCsrfHeader } from '@/lib/utils'
 import { NATIONAL_ID_GENERIC_ERROR, validateEgyptianNationalId } from '@/lib/validators'
 
 interface ListingForm {
@@ -423,14 +423,11 @@ export default function SellPage() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 >
                   <option value="">Select a category</option>
-                  <option value="electronics">Electronics</option>
-                  <option value="furniture">Furniture</option>
-                  <option value="fashion">Fashion</option>
-                  <option value="vehicles">Vehicles</option>
-                  <option value="home">Home & Garden</option>
-                  <option value="sports">Sports & Outdoors</option>
-                  <option value="books">Books & Media</option>
-                  <option value="toys">Toys & Games</option>
+                  {listingCategories.map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
                 </select>
                 {errors.category && (
                   <p className="text-red-500 text-sm mt-1">{errors.category.message}</p>
@@ -558,4 +555,3 @@ export default function SellPage() {
     </div>
   )
 }
-

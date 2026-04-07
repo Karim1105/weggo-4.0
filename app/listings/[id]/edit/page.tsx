@@ -6,7 +6,7 @@ import toast from 'react-hot-toast'
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
-import { subcategoriesByCategory, withCsrfHeader } from '@/lib/utils'
+import { categories as listingCategories, subcategoriesByCategory, withCsrfHeader } from '@/lib/utils'
 
 interface Listing {
   _id: string
@@ -184,16 +184,11 @@ export default function EditListingPage() {
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
                 >
                   <option value="">Select a category</option>
-                  <option value="electronics">Electronics</option>
-                  <option value="furniture">Furniture</option>
-                  <option value="fashion">Fashion</option>
-                  <option value="vehicles">Vehicles</option>
-                  <option value="home">Home & Garden</option>
-                  <option value="sports">Sports & Outdoors</option>
-                  <option value="books">Books & Media</option>
-                  <option value="toys">Toys & Games</option>
-                  <option value="gaming">Gaming</option>
-                  <option value="music">Music</option>
+                  {listingCategories.map((item) => (
+                    <option key={item.id} value={item.id}>
+                      {item.name}
+                    </option>
+                  ))}
                 </select>
 
                 {availableSubcategories.length > 0 && (
@@ -276,4 +271,3 @@ export default function EditListingPage() {
     </div>
   )
 }
-

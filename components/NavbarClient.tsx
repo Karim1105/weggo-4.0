@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, Search, Heart, User, Plus, Globe, LogIn, LogOut, MessageCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { revalidateNavbar } from '@/app/actions/auth'
+import { useAppStore } from '@/lib/store'
 import SellDashboardButton from './SellDashboardButton'
 import SellDashboardButtonMobile from './SellDashboardButtonMobile'
 
@@ -29,10 +30,12 @@ export default function NavbarClient({ initialUser, isAdmin }: NavbarClientProps
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [isArabic, setIsArabic] = useState(false)
   const [user, setUser] = useState<NavbarUser | null>(initialUser)
   const [unreadMessages, setUnreadMessages] = useState(0)
+  const language = useAppStore((state) => state.language)
+  const setLanguage = useAppStore((state) => state.setLanguage)
   const router = useRouter()
+  const isArabic = language === 'ar'
 
   const handleSearch = () => {
     const query = searchQuery.trim()
@@ -85,6 +88,11 @@ export default function NavbarClient({ initialUser, isAdmin }: NavbarClientProps
     fetchUnreadMessages()
   }, [user])
 
+  useEffect(() => {
+    document.documentElement.dir = isArabic ? 'rtl' : 'ltr'
+    document.documentElement.lang = language
+  }, [isArabic, language])
+
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST', credentials: 'include' })
@@ -101,9 +109,7 @@ export default function NavbarClient({ initialUser, isAdmin }: NavbarClientProps
   }
 
   const toggleLanguage = () => {
-    setIsArabic(!isArabic)
-    document.documentElement.dir = !isArabic ? 'rtl' : 'ltr'
-    document.documentElement.lang = !isArabic ? 'ar' : 'en'
+    setLanguage(isArabic ? 'en' : 'ar')
   }
 
   return (
@@ -310,6 +316,22 @@ export default function NavbarClient({ initialUser, isAdmin }: NavbarClientProps
                     isArabic={isArabic}
                     onClick={() => setIsMobileMenuOpen(false)}
                   />
+
+                  <Link
+                    href="/messages"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex items-center justify-between px-4 py-3 hover:bg-gray-100 rounded-lg transition-colors"
+                  >
+                    <span className="flex items-center space-x-3">
+                      <MessageCircle className="w-5 h-5" />
+                      <span>{isArabic ? 'الرسائل' : 'Messages'}</span>
+                    </span>
+                    {unreadMessages > 0 && (
+                      <span className="min-w-[20px] h-[20px] px-1.5 rounded-full bg-red-500 text-white text-[10px] font-semibold flex items-center justify-center">
+                        {unreadMessages > 9 ? '9+' : unreadMessages}
+                      </span>
+                    )}
+                  </Link>
 
                   <Link
                     href="/favorites"

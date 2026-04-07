@@ -21,8 +21,9 @@ export async function GET(
     }
 
     await connectDB()
+    const user = await getAuthUser(request)
     const product = await Product.findById(id)
-      .populate('seller', 'name avatar phone location')
+      .populate('seller', 'name avatar')
       .lean() as any
 
     if (!product || product.status !== 'active') {
@@ -36,7 +37,6 @@ export async function GET(
     await Product.findByIdAndUpdate(id, { $inc: { views: 1 } })
 
     // Track view history if user is logged in
-    const user = await getAuthUser(request)
     if (user && product?.seller?._id && String(user._id) !== String(product.seller._id)) {
       await ViewHistory.findOneAndUpdate(
         { user: user._id, product: id },
@@ -54,8 +54,6 @@ export async function GET(
       _id: product.seller._id,
       name: (product.seller as any).name,
       avatar: (product.seller as any).avatar,
-      phone: (product.seller as any).phone,
-      location: (product.seller as any).location,
     } : undefined
 
     const { status, views, createdAt, ...rest } = product as any

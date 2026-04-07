@@ -119,6 +119,59 @@ describe('listings integration', () => {
     expect(res.headers.get('Vary')).toBe('Cookie')
   }, 15000)
 
+  it('returns all seller statuses when seller=me requests status=all', async () => {
+    const connectDB = (await loadConnectDB()).default
+    await connectDB()
+    const Product = (await loadProductModel()).default
+    const User = (await loadUserModel()).default
+    const { generateToken } = await loadAuth()
+
+    const me = await User.create({
+      name: 'Status Seller',
+      email: 'status-me@example.com',
+      password: 'Aa123456',
+      location: 'Cairo',
+    })
+
+    await Product.create([
+      {
+        title: 'Active Listing',
+        description: 'Still available',
+        price: 100,
+        category: 'electronics',
+        condition: 'Good',
+        location: 'Cairo',
+        images: ['/uploads/active.jpg'],
+        seller: me._id,
+        status: 'active',
+      },
+      {
+        title: 'Sold Listing',
+        description: 'Already sold',
+        price: 200,
+        category: 'electronics',
+        condition: 'Good',
+        location: 'Cairo',
+        images: ['/uploads/sold.jpg'],
+        seller: me._id,
+        status: 'sold',
+      },
+    ])
+
+    const token = generateToken(me as any)
+    const { GET } = await loadListings()
+    const req = new NextRequest('http://localhost/api/listings?seller=me&status=all&limit=50', {
+      headers: new Headers({ cookie: `token=${token}` }),
+    })
+    const res = await GET(req)
+    const json = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(json.success).toBe(true)
+    expect(json.data.listings).toHaveLength(2)
+    expect(json.data.listings.map((listing: any) => listing.status).sort()).toEqual(['active', 'sold'])
+  }, 15000)
+
   it('handles location filters with regex special characters safely', async () => {
     const connectDB = (await loadConnectDB()).default
     await connectDB()

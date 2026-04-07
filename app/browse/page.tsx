@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, Suspense, useRef } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Search, Filter, Grid, List, Package, Heart, MapPin, Clock } from 'lucide-react'
 import ProductCard from '@/components/ProductCard'
@@ -300,6 +301,7 @@ function BrowsePageInner() {
               <div className="flex bg-gray-100 rounded-full p-1">
                 <button
                   onClick={() => setViewMode('grid')}
+                  aria-label="Grid view"
                   className={`p-2 rounded-full transition-colors ${
                     viewMode === 'grid' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'
                   }`}
@@ -308,6 +310,7 @@ function BrowsePageInner() {
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
+                  aria-label="List view"
                   className={`p-2 rounded-full transition-colors ${
                     viewMode === 'list' ? 'bg-white shadow-sm' : 'hover:bg-gray-200'
                   }`}
@@ -575,26 +578,26 @@ function BrowsePageInner() {
                 className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
               >
                 <div className="flex space-x-4">
-                  <img
-                    src={product.image}
-                    alt={product.title}
-                    className="w-24 h-24 object-cover rounded-xl"
-                  />
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                      {product.title}
-                    </h3>
-                    <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
-                      <span className="flex items-center space-x-1">
-                        <MapPin className="w-4 h-4" />
-                        <span>{product.location}</span>
-                      </span>
-                      <span className="flex items-center space-x-1">
-                        <Clock className="w-4 h-4" />
-                        <span>{product.postedAt}</span>
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
+                  <Link href={`/listings/${product.id}`} className="flex flex-1 space-x-4 min-w-0">
+                    <img
+                      src={product.image}
+                      alt={product.title}
+                      className="w-24 h-24 object-cover rounded-xl"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2 truncate">
+                        {product.title}
+                      </h3>
+                      <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">
+                        <span className="flex items-center space-x-1">
+                          <MapPin className="w-4 h-4" />
+                          <span>{product.location}</span>
+                        </span>
+                        <span className="flex items-center space-x-1">
+                          <Clock className="w-4 h-4" />
+                          <span>{product.postedAt}</span>
+                        </span>
+                      </div>
                       <div className="flex items-center space-x-4">
                         <span className="text-2xl font-bold text-primary-600">
                           {product.price.toLocaleString()} EGP
@@ -603,13 +606,16 @@ function BrowsePageInner() {
                           {product.condition}
                         </span>
                       </div>
-                      <button
-                        onClick={() => toggleFavorite(product.id)}
-                        className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-                      >
-                        <Heart className={`w-5 h-5 ${product.isFavorite ? 'text-red-500 fill-current' : 'text-gray-400'}`} />
-                      </button>
                     </div>
+                  </Link>
+                  <div className="flex items-start">
+                    <button
+                      onClick={() => toggleFavorite(product.id)}
+                      aria-label={product.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                      className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    >
+                      <Heart className={`w-5 h-5 ${product.isFavorite ? 'text-red-500 fill-current' : 'text-gray-400'}`} />
+                    </button>
                   </div>
                 </div>
               </motion.div>
@@ -652,5 +658,4 @@ export default function BrowsePage() {
     </Suspense>
   )
 }
-
 

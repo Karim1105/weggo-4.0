@@ -3,6 +3,7 @@ import { isValidObjectId } from 'mongoose'
 import connectDB from '@/lib/db'
 import Product from '@/models/Product'
 import { requireAdmin } from '@/lib/auth'
+import { clearCacheByPrefix } from '@/lib/cache'
 
 // POST /api/admin/listings/[id]/boost - Boost or unboost a listing
 async function handler(
@@ -50,6 +51,9 @@ async function handler(
     }
 
     await listing.save()
+    clearCacheByPrefix('listings')
+    clearCacheByPrefix('seller_')
+    clearCacheByPrefix('admin_analytics')
 
     return NextResponse.json({
       success: true,

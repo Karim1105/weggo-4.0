@@ -54,6 +54,10 @@ const EGYPTIAN_CITIES: Record<string, { lat: number; lon: number }> = {
   'New Cairo': { lat: 30.0300, lon: 31.4700 }
 }
 
+function escapeRegex(text: string): string {
+  return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
 /**
  * GET /api/listings/nearby
  * Get listings near user's location
@@ -92,46 +96,53 @@ export async function GET(request: NextRequest) {
     // Get user if authenticated (for wishlist)
     const user = await getAuthUser(request).catch(() => null)
 
-    // Get all active products
-    const allProducts = await Product.find({ status: 'active' })
+    const candidateCities = Object.entries(EGYPTIAN_CITIES)
+      .map(([city, coords]) => ({
+        city,
+        coords,
+        distance: calculateDistance(userLat, userLon, coords.lat, coords.lon),
+        regex: new RegExp(escapeRegex(city), 'i'),
+      }))
+      .filter((entry) => entry.distance <= radius)
+      .sort((a, b) => a.distance - b.distance)
+
+    if (candidateCities.length === 0) {
+      return successResponse({
+        listings: [],
+        total: 0,
+        userLocation: { lat: userLat, lon: userLon },
+        searchRadius: radius,
+        algorithm: 'nearby',
+      })
+    }
+
+    const products = await Product.find({
+      status: 'active',
+      $or: candidateCities.map((entry) => ({
+        location: { $regex: entry.regex },
+      })),
+    })
       .select('_id title price images category location condition description subcategory createdAt seller')
       .populate('seller', 'name avatar isVerified averageRating totalSales')
+      .limit(Math.max(limit * 4, 50))
       .lean()
 
-    // Filter products by distance and calculate distance for each
-    const productsWithDistance = allProducts
+    const productsWithDistance = products
       .map((product: any) => {
-        // Try to match location to known Egyptian cities
         const location = typeof product.location === 'string' ? product.location : ''
-        let productCoords = null
+        const matchedCity = candidateCities.find((entry) => entry.regex.test(location))
 
-        // Check if location contains any known city
-        for (const [city, coords] of Object.entries(EGYPTIAN_CITIES)) {
-          if (location.toLowerCase().includes(city.toLowerCase())) {
-            productCoords = coords
-            break
-          }
+        if (!matchedCity) {
+          return null
         }
-
-        // If no match, default to Cairo coordinates
-        if (!productCoords) {
-          productCoords = EGYPTIAN_CITIES['Cairo']
-        }
-
-        const distance = calculateDistance(
-          userLat,
-          userLon,
-          productCoords.lat,
-          productCoords.lon
-        )
 
         return {
           ...product,
-          distance: Math.round(distance * 10) / 10
+          distance: Math.round(matchedCity.distance * 10) / 10,
         }
       })
-      .filter(product => product.distance <= radius)
-      .sort((a, b) => a.distance - b.distance)
+      .filter((product): product is NonNullable<typeof product> => Boolean(product))
+      .sort((a, b) => a.distance - b.distance || (new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()))
       .slice(0, limit)
 
     // Get user's wishlist if authenticated

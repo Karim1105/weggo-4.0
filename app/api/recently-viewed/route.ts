@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isValidObjectId } from 'mongoose'
 import connectDB from '@/lib/db'
 import ViewHistory from '@/models/ViewHistory'
 import Product from '@/models/Product'
@@ -16,6 +17,21 @@ async function handler(request: NextRequest, user: any) {
       return NextResponse.json(
         { success: false, error: 'Product ID is required' },
         { status: 400 }
+      )
+    }
+
+    if (typeof productId !== 'string' || !isValidObjectId(productId)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid product ID format' },
+        { status: 400 }
+      )
+    }
+
+    const product = await Product.findOne({ _id: productId, status: 'active' }).select('_id').lean()
+    if (!product) {
+      return NextResponse.json(
+        { success: false, error: 'Product not found' },
+        { status: 404 }
       )
     }
 
@@ -74,5 +90,4 @@ async function handler(request: NextRequest, user: any) {
 
 export const GET = requireAuth(handler)
 export const POST = requireAuth(handler)
-
 

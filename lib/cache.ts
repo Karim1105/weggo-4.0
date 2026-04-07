@@ -35,9 +35,8 @@ export function deleteCache(key: string): number {
 }
 
 export function clearCache(): void {
-  cache.flushAll()
-  // Reset metrics when cache is cleared
   const evictedKeys = cache.keys().length
+  cache.flushAll()
   metrics.evictions += evictedKeys
 }
 
@@ -84,5 +83,4 @@ export function resetCacheMetrics() {
   metrics = { hits: 0, misses: 0, sets: 0, deletes: 0, evictions: 0 }
   return previous
 }
-
 

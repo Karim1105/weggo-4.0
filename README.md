@@ -7,7 +7,7 @@ Weggo is a second-hand marketplace for Egypt that actually tries to solve the fa
 ## What Makes This Different
 
 ### Seller Verification
-Look, the biggest problem with Egyptian marketplaces is fake listings and scams. So we made seller verification mandatory. You want to sell stuff? Upload your government ID. It gets reviewed and boom, you're a verified seller. No verification, no posting. Simple as that.
+Look, the biggest problem with Egyptian marketplaces is fake listings and scams. So we made seller verification mandatory. You want to sell stuff? Upload your government ID details, get flagged as seller-verified, and then you can post. No verification, no posting.
 
 The verification flow is already built in - there's a seller guidelines page explaining the rules, an ID upload page, and the whole thing integrates with the sell button and featured listings section. Users who are already verified just skip straight to posting their items.
 
@@ -48,7 +48,22 @@ Install everything:
 npm install
 ```
 
-You'll need a `.env.local` file with your MongoDB connection string and any other API keys. Check the setup files for details.
+You'll need a `.env.local` file. The current env surface is documented in `.env.example`.
+
+At minimum for local development:
+```bash
+MONGODB_URI=mongodb://localhost:27017/weggo
+JWT_SECRET=your_secret_here
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+NEXT_PUBLIC_API_URL=http://localhost:3000
+```
+
+Optional variables currently used by the codebase:
+- `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASS` for password reset email support
+- `SEED_ADMIN_SECRET` for the admin seed route
+- `SEED_FEATURED_SECRET`, `SEED_SELLER_EMAIL`, `SEED_SELLER_PASSWORD`, `SEED_SELLER_NAME` for featured seed helpers
+- `DEBUG_COOKIES_SECRET` and `DEBUG` for non-production debugging
 
 Run the dev server:
 ```bash
@@ -74,23 +89,27 @@ The whole front end is functional - you can browse products, filter by category,
 
 Authentication is working with registration, login, and session management. Users can create listings, upload images, edit their profiles, and manage their posts.
 
-Seller verification is set up - the ID upload page exists, it validates file types and sizes, and the verification flow is integrated into both the Hero section's "Sell Now" button and the Featured Listings "Apply Now" button. It checks if you're logged in and if you're already verified before showing the verification prompt, but and this is a massive but the verfication system it self is not working right now, any image uploaded will me accepted still working on making that functional. 
+Seller verification is set up - the ID upload page exists and the verification flow is integrated into both the Hero section's "Sell Now" button and the Featured Listings "Apply Now" button. It checks if you're logged in and if you're already verified before showing the verification prompt.
 
 The browse page has category filtering, subcategory support, search, location filters, price ranges, and sorting options. Mobile view is partially optimized with responsive text, spacing, and touch-friendly controls, but no where near done. 
 
-Messages system exists but the backend implementation is still being worked on. Same with the review system and some of the admin features.
+Messages, reviews, appeals, wishlist, and admin moderation all have working API routes and UI flows, though some areas are still rough around the edges and are being tightened over time.
 
 **Performance is actually good now** - the wishlist API used to get hammered with 50+ requests per second because of a React useCallback circular dependency that would make any dev want to flip a table. That's fixed. Homepage loads clean, API calls happen once per page load like they should. No more DDoS-ing ourselves.
 
 ## What's Not Done Yet
 
-The ID verification backend doesn't actually verify IDs - it just accepts the upload and marks you as verified. You'd need to integrate something like Veriff or build your own review system for that.
+The ID verification backend doesn't actually do manual or third-party verification yet - it stores the submitted ID number and marks the user as seller-verified. You'd need to integrate a real review or verification system to harden that.
 
 Payment integration isn't implemented, because we will not implement it weggo is just a middleman we do not plan on handling this kind of responsibility.
 
 Real-time features like live chat and notifications aren't set up. We'd need WebSockets or something for that.
 
 The "AI" could be way better with more training data and fine-tuning. Right now it's just using basic prompts, i mean go figure we do not have that many recourses.
+
+## Uploads And Deployment
+
+Uploads are currently served from the local filesystem through the `/api/uploads/[...path]` route. This repo does not currently use Cloudinary or another hosted media backend.
 
 ## Deployment
 
@@ -126,7 +145,6 @@ No license yet but probably going with MIT open source eventually. i said probab
 ## Credits
 
 Icons from Lucide, placeholder images from Unsplash, fonts from Google Fonts. Built by someone who got tired of dealing with fake listings on Egyptian marketplaces, and screwed over by their teammates
-
 
 
 

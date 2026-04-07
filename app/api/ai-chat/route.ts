@@ -1,47 +1,119 @@
 import { NextRequest, NextResponse } from 'next/server'
+import connectDB from '@/lib/db'
+import Product from '@/models/Product'
+
+type ProductSummary = {
+  title: string
+  price: number
+  location: string
+}
+
+const QUERY_CONFIG = [
+  {
+    matcher: (text: string) => text.includes('phone') || text.includes('mobile'),
+    category: 'electronics',
+    icon: '📱',
+    label: 'phones',
+    keywords: ['phone', 'mobile'],
+    fallback: 'I could not find phone listings right now, but the electronics section is your best next stop.',
+  },
+  {
+    matcher: (text: string) => text.includes('laptop') || text.includes('computer'),
+    category: 'electronics',
+    icon: '💻',
+    label: 'laptops',
+    keywords: ['laptop', 'computer'],
+    fallback: 'I could not find laptop listings right now, but the electronics section should have the closest matches.',
+  },
+  {
+    matcher: (text: string) => text.includes('furniture') || text.includes('sofa'),
+    category: 'furniture',
+    icon: '🛋️',
+    label: 'furniture',
+    keywords: ['furniture', 'sofa'],
+    fallback: 'I could not find matching furniture right now, but the furniture section should help you browse more options.',
+  },
+]
+
+function formatListings(icon: string, items: ProductSummary[]) {
+  return items
+    .map((item) => `${icon} ${item.title} - ${item.price.toLocaleString()} EGP (${item.location})`)
+    .join('\n')
+}
+
+async function getMatchingListings(category: string, keywords: string[]) {
+  const listings = await Product.find({ status: 'active', category })
+    .select('title price location createdAt')
+    .sort({ isBoosted: -1, createdAt: -1 })
+    .limit(12)
+    .lean()
+
+  const normalized = listings.filter((listing: any) => {
+    const title = typeof listing.title === 'string' ? listing.title.toLowerCase() : ''
+    return keywords.some((keyword) => title.includes(keyword))
+  })
+
+  const picked = (normalized.length > 0 ? normalized : listings).slice(0, 3)
+  return picked.map((listing: any) => ({
+    title: listing.title,
+    price: listing.price,
+    location: listing.location,
+  }))
+}
+
+function generateFallbackResponse(message: string): string {
+  const lowerMessage = message.toLowerCase()
+
+  if (lowerMessage.includes('price') || lowerMessage.includes('cost')) {
+    return 'Pricing help is available from the sell flow. Add your item details and use the pricing suggestion tool to get a guided range.'
+  }
+
+  if (lowerMessage.includes('how') || lowerMessage.includes('كيف')) {
+    return 'Weggo lets you browse listings, save favorites, message sellers directly, and list your own items once your seller account is verified.'
+  }
+
+  return 'I can help you browse items, point you to the right category, or explain how Weggo works. Try asking for phones, laptops, furniture, or selling help.'
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { message, context } = await request.json()
+    const { message } = await request.json()
+    const text = typeof message === 'string' ? message.trim() : ''
 
-    // In production, integrate with OpenAI API or your preferred AI service
-    // For now, return intelligent mock responses
-    
-    const response = generateAIResponse(message, context)
+    if (!text) {
+      return NextResponse.json(
+        { success: false, error: 'Message is required' },
+        { status: 400 }
+      )
+    }
+
+    await connectDB()
+
+    const lowerMessage = text.toLowerCase()
+    const matchedQuery = QUERY_CONFIG.find((entry) => entry.matcher(lowerMessage))
+
+    if (matchedQuery) {
+      const listings = await getMatchingListings(matchedQuery.category, matchedQuery.keywords)
+      const response = listings.length > 0
+        ? `Here are a few ${matchedQuery.label} I found for you:\n\n${formatListings(matchedQuery.icon, listings)}\n\nIf you want more, head to Browse and filter the category further.`
+        : matchedQuery.fallback
+
+      return NextResponse.json({
+        success: true,
+        response,
+        timestamp: new Date().toISOString(),
+      })
+    }
 
     return NextResponse.json({
       success: true,
-      response: response,
-      timestamp: new Date().toISOString()
+      response: generateFallbackResponse(text),
+      timestamp: new Date().toISOString(),
     })
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { success: false, error: 'Failed to process AI request' },
       { status: 500 }
     )
   }
 }
-
-function generateAIResponse(message: string, context: any): string {
-  const lowerMessage = message.toLowerCase()
-
-  // Product search queries
-  if (lowerMessage.includes('phone') || lowerMessage.includes('mobile')) {
-    return 'I found some great phones for you! Here are top picks:\n\n📱 iPhone 13 Pro - 15,000 EGP (Cairo)\n📱 Samsung Galaxy S22 - 12,500 EGP (Alexandria)\n📱 OnePlus 10 Pro - 11,000 EGP (Giza)\n\nWould you like to see more details?'
-  }
-
-  if (lowerMessage.includes('laptop') || lowerMessage.includes('computer')) {
-    return 'Here are excellent laptops available:\n\n💻 Dell XPS 15 - 18,000 EGP (Cairo)\n💻 MacBook Pro M1 - 25,000 EGP (Alexandria)\n💻 Lenovo ThinkPad - 14,500 EGP (Giza)\n\nAll in great condition!'
-  }
-
-  // Pricing questions
-  if (lowerMessage.includes('price') || lowerMessage.includes('cost')) {
-    return 'I can help you with pricing! Our AI analyzes:\n\n✓ Similar items across platforms\n✓ Current market trends\n✓ Item condition\n✓ Location demand\n\nJust list your item and click "Get AI Price Suggestion"!'
-  }
-
-  // General help
-  return 'I\'m here to help! You can ask me about:\n\n🔍 Finding specific items\n💰 Price suggestions\n📍 Items in your area\n❓ How Weggo works\n\nWhat would you like to know?'
-}
-
-
-
