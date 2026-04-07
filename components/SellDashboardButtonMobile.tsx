@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { Plus, LayoutDashboard } from 'lucide-react'
+import { getSellDashboardHref } from '@/lib/ui/role-ui'
 
 interface SellDashboardButtonMobileProps {
   isAdmin: boolean
@@ -8,7 +9,7 @@ interface SellDashboardButtonMobileProps {
 }
 
 export default function SellDashboardButtonMobile({ isAdmin, isArabic, onClick }: SellDashboardButtonMobileProps) {
-  if (isAdmin) {
+  if (getSellDashboardHref(isAdmin ? 'admin' : 'user') === '/admin') {
     return (
       <Link
         href="/admin"

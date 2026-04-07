@@ -27,7 +27,11 @@ interface Product {
   }
 }
 
-export default function PersonalizedFeed() {
+interface PersonalizedFeedProps {
+  isAdmin: boolean
+}
+
+export default function PersonalizedFeed({ isAdmin }: PersonalizedFeedProps) {
   const [products, setProducts] = useState<Product[]>([])
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
   const [filter, setFilter] = useState<'all' | 'recommended' | 'nearby' | 'trending'>('recommended')
@@ -38,7 +42,6 @@ export default function PersonalizedFeed() {
   const [userLocation, setUserLocation] = useState<{ lat: number; lon: number } | null>(null)
   const [locationPermission, setLocationPermission] = useState<'granted' | 'denied' | 'prompt'>('prompt')
   const [slidesToShow, setSlidesToShow] = useState(4)
-  const [isAdmin, setIsAdmin] = useState(false)
   const storeFavorites = useAppStore((s) => s.favorites)
   const addFavorite = useAppStore((s) => s.addFavorite)
   const removeFavorite = useAppStore((s) => s.removeFavorite)
@@ -59,22 +62,6 @@ export default function PersonalizedFeed() {
     handleResize() // Set initial value
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
-  }, [])
-
-  // Fetch admin status
-  useEffect(() => {
-    const fetchAdminStatus = async () => {
-      try {
-        const res = await fetch('/api/auth/me', { credentials: 'include' })
-        const data = await res.json()
-        if (data.success && data.user?.role === 'admin') {
-          setIsAdmin(true)
-        }
-      } catch {
-        setIsAdmin(false)
-      }
-    }
-    fetchAdminStatus()
   }, [])
 
   // Fetch all items

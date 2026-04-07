@@ -6,6 +6,7 @@ import { Heart, MapPin, Clock, MoreVertical, Trash2, Ban } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import toast from 'react-hot-toast'
 import { withCsrfHeader } from '@/lib/utils'
+import { getProductCardActionVariant } from '@/lib/ui/role-ui'
 
 interface Product {
   id: string
@@ -36,6 +37,7 @@ interface ProductCardProps {
 export default function ProductCard({ product, index, onToggleFavorite, isAdmin = false }: ProductCardProps) {
   const [showDropdown, setShowDropdown] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
+  const actionVariant = getProductCardActionVariant(isAdmin)
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -143,7 +145,7 @@ export default function ProductCard({ product, index, onToggleFavorite, isAdmin 
         />
 
         {/* Favorite Button or Admin Dropdown Button */}
-        {isAdmin ? (
+        {actionVariant === 'admin-menu' ? (
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.9 }}

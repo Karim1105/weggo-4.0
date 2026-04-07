@@ -1,6 +1,4 @@
-'use client'
-
-import { motion } from 'framer-motion'
+import { cookies } from 'next/headers'
 import Hero from '@/components/Hero'
 import PersonalizedFeed from '@/components/PersonalizedFeed'
 import Categories from '@/components/Categories'
@@ -8,8 +6,34 @@ import FeaturedListings from '@/components/FeaturedListings'
 import HowItWorks from '@/components/HowItWorks'
 import Footer from '@/components/Footer'
 import RecentlyViewed from '@/components/RecentlyViewed'
+import { isAdminRole } from '@/lib/ui/role-ui'
 
-export default function Home() {
+async function getUserRole(): Promise<'user' | 'admin' | null> {
+  try {
+    const cookieStore = await cookies()
+    const cookieHeader = cookieStore.toString()
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
+    const res = await fetch(`${baseUrl}/api/auth/me`, {
+      method: 'GET',
+      headers: {
+        Cookie: cookieHeader,
+      },
+    })
+
+    const data = await res.json()
+    if (data.success && data.user) {
+      return data.user.role === 'admin' ? 'admin' : 'user'
+    }
+  } catch {
+    // Not authenticated
+  }
+
+  return null
+}
+
+export default async function Home() {
+  const role = await getUserRole()
+
   return (
     <div className="relative">
       {/* Smooth Flowing Gradient Background */}
@@ -24,7 +48,7 @@ export default function Home() {
       
       {/* Seamless sections - no individual gradients */}
       <Categories />
-      <PersonalizedFeed />
+      <PersonalizedFeed isAdmin={isAdminRole(role)} />
       <RecentlyViewed />
       <FeaturedListings />
       <HowItWorks />

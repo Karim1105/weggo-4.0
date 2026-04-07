@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, Search, Heart, User, Plus, Globe, LogIn, LogOut, MessageCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -33,7 +33,6 @@ export default function NavbarClient({ initialUser, isAdmin }: NavbarClientProps
   const [user, setUser] = useState<NavbarUser | null>(initialUser)
   const [unreadMessages, setUnreadMessages] = useState(0)
   const router = useRouter()
-  const pathname = usePathname()
 
   const handleSearch = () => {
     const query = searchQuery.trim()
@@ -59,47 +58,32 @@ export default function NavbarClient({ initialUser, isAdmin }: NavbarClientProps
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Re-check auth on navigation so login shows immediately (no manual refresh).
   useEffect(() => {
-    checkAuth()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname])
+    const fetchUnreadMessages = async () => {
+      if (!user) {
+        setUnreadMessages(0)
+        return
+      }
 
-  const checkAuth = async () => {
-    try {
-      const res = await fetch('/api/auth/me', { credentials: 'include' })
-      const data = await res.json()
-      if (data.success && data.user) {
-        setUser(data.user as NavbarUser)
-        // Only revalidate navbar cache for admin users to reduce traffic
-        if (data.user.role === 'admin') {
-          await revalidateNavbar()
-          // Refresh the page to get the newly cached navbar
-          router.refresh()
-        }
-        try {
-          const res = await fetch('/api/messages', { credentials: 'include' })
-          const msgData = await res.json()
-          if (msgData.success && Array.isArray(msgData.conversations)) {
-            const totalUnread = msgData.conversations.reduce(
-              (sum: number, c: { unreadCount?: number }) => sum + (c.unreadCount || 0),
-              0
-            )
-            setUnreadMessages(totalUnread)
-          }
-        } catch {
+      try {
+        const res = await fetch('/api/messages', { credentials: 'include' })
+        const msgData = await res.json()
+        if (msgData.success && Array.isArray(msgData.conversations)) {
+          const totalUnread = msgData.conversations.reduce(
+            (sum: number, c: { unreadCount?: number }) => sum + (c.unreadCount || 0),
+            0
+          )
+          setUnreadMessages(totalUnread)
+        } else {
           setUnreadMessages(0)
         }
-      } else {
-        setUser(null)
+      } catch {
         setUnreadMessages(0)
       }
-    } catch (error) {
-      // Not authenticated
-      setUser(null)
-      setUnreadMessages(0)
     }
-  }
+
+    fetchUnreadMessages()
+  }, [user])
 
   const handleLogout = async () => {
     try {
