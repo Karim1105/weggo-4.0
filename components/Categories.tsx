@@ -17,6 +17,9 @@ import {
   Star
 } from 'lucide-react'
 
+const COUNTS_CACHE_KEY = 'weggo_category_counts_v1'
+const COUNTS_CACHE_TTL = 10 * 60 * 1000
+
 // Slug must match API/listings and lib/utils categories (e.g. home not home-garden)
 const categoryList: { name: string; nameAr: string; slug: string; icon: typeof Smartphone; count: number; gradient: string; bgPattern: string; popular: boolean; description: string }[] = [
   { name: 'Electronics', nameAr: 'إلكترونيات', slug: 'electronics', icon: Smartphone, count: 0, gradient: 'from-blue-400 via-blue-500 to-blue-600', bgPattern: 'circuit', popular: true, description: 'Phones, laptops, cameras & more' },
@@ -34,7 +37,31 @@ export default function Categories() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetchCategoryCounts()
+    const cachedRaw = localStorage.getItem(COUNTS_CACHE_KEY)
+    if (cachedRaw) {
+      try {
+        const parsed = JSON.parse(cachedRaw) as { timestamp: number; counts: Record<string, number> }
+        if (parsed?.counts && Date.now() - parsed.timestamp < COUNTS_CACHE_TTL) {
+          setCategories(
+            categoryList.map((cat) => ({
+              ...cat,
+              count: parsed.counts[cat.slug] || 0,
+            }))
+          )
+          setLoading(false)
+          return
+        }
+      } catch {
+        localStorage.removeItem(COUNTS_CACHE_KEY)
+      }
+    }
+
+    const scheduleFetch = () => fetchCategoryCounts()
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      ;(window as any).requestIdleCallback(scheduleFetch, { timeout: 1200 })
+    } else {
+      setTimeout(scheduleFetch, 150)
+    }
   }, [])
 
   const fetchCategoryCounts = async () => {
@@ -43,6 +70,10 @@ export default function Categories() {
       const data = await res.json()
       
       if (data.success) {
+        localStorage.setItem(
+          COUNTS_CACHE_KEY,
+          JSON.stringify({ timestamp: Date.now(), counts: data.data.counts || {} })
+        )
         const updatedCategories = categoryList.map(cat => ({
           ...cat,
           count: data.data.counts[cat.slug] || 0
@@ -67,8 +98,8 @@ export default function Categories() {
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5 pointer-events-none">
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary-100 via-transparent to-secondary-100" />
-        <div className="absolute top-20 right-10 w-72 h-72 bg-accent-200 rounded-full blur-3xl animate-pulse will-change-auto" />
-        <div className="absolute bottom-20 left-10 w-96 h-96 bg-primary-200 rounded-full blur-3xl animate-pulse will-change-auto" style={{ animationDelay: '1s' }} />
+        <div className="absolute top-20 right-10 w-72 h-72 bg-accent-200 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 left-10 w-96 h-96 bg-primary-200 rounded-full blur-3xl" />
       </div>
 
       <div className="max-w-7xl mx-auto relative">
@@ -76,7 +107,6 @@ export default function Categories() {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          layout="position"
           className="text-center mb-12 md:mb-20"
         >
           <motion.div
@@ -88,13 +118,13 @@ export default function Categories() {
           >
             <motion.div
               animate={{ rotate: 360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
               className="w-3 h-3 bg-primary-500 rounded-full"
             />
             <span>Explore Categories</span>
             <motion.div
               animate={{ rotate: -360 }}
-              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
               className="w-3 h-3 bg-accent-500 rounded-full"
             />
           </motion.div>
@@ -134,8 +164,8 @@ export default function Categories() {
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
-                  transition={{ delay: index * 0.1 }}
-                  whileHover={{ scale: 1.05, y: -5 }}
+                  transition={{ delay: index * 0.05, duration: 0.25 }}
+                  whileHover={{ scale: 1.02, y: -2 }}
                   className="relative group cursor-pointer"
                 >
                 <div className="card-modern p-4 md:p-6 h-full hover-lift">
@@ -185,9 +215,8 @@ export default function Categories() {
                   initial={{ opacity: 0, scale: 0.9 }}
                   whileInView={{ opacity: 1, scale: 1 }}
                   viewport={{ once: true }}
-                  transition={{ delay: index * 0.05 }}
-                  whileHover={{ scale: 1.05, y: -2 }}
-                  layout="position"
+                  transition={{ delay: index * 0.03, duration: 0.2 }}
+                  whileHover={{ scale: 1.02, y: -1 }}
                   className="group cursor-pointer"
                 >
                   <div className="card-modern p-4 md:p-6 hover-lift h-full">

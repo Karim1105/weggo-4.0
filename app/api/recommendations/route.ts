@@ -49,9 +49,10 @@ export async function GET(request: NextRequest) {
       recommendationOr.push({ category: { $in: preferredCategories } })
     }
 
+    // Use an anchored regex to improve performance and leverage indexes if possible
     const locationTerm = typeof user.location === 'string' ? user.location.trim() : ''
     if (locationTerm) {
-      recommendationOr.push({ location: { $regex: locationTerm, $options: 'i' } })
+      recommendationOr.push({ location: { $regex: `^${locationTerm}`, $options: 'i' } })
     }
 
     // Get recommendations based on:
@@ -65,6 +66,9 @@ export async function GET(request: NextRequest) {
     }
     if (recommendationOr.length > 0) {
       query.$or = recommendationOr
+    } else {
+      // Fallback: recommend most popular active products from other sellers not viewed by the user
+      // No additional filter, just sort by views and recency (already handled below)
     }
 
     const recommendations = await Product.find(query)

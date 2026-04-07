@@ -390,3 +390,22 @@
   background-size: 1000px 100%;
 }
 
+/* Global fast motion mode */
+.fast-motion [class*='animate-'] {
+  animation-duration: 0.3s !important;
+  animation-iteration-count: 1 !important;
+}
+
+.fast-motion .animate-spin,
+.fast-motion .shimmer {
+  animation-duration: 0.7s !important;
+  animation-iteration-count: infinite !important;
+}
+
+.fast-motion *,
+.fast-motion *::before,
+.fast-motion *::after {
+  transition-duration: 120ms !important;
+  scroll-behavior: auto !important;
+}
+

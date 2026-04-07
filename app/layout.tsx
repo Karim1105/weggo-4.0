@@ -5,6 +5,7 @@ import { Toaster } from 'react-hot-toast'
 import Navbar from '@/components/Navbar'
 import AIChatbot from '@/components/AIChatbot'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import MotionProvider from '@/components/MotionProvider'
 import { initializeEnv } from '@/lib/env'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
@@ -22,16 +23,18 @@ export default function RootLayout({
 }) {
   initializeEnv()
   return (
-    <html lang="en" dir="ltr" className="overflow-x-hidden">
+    <html lang="en" dir="ltr" className="overflow-x-hidden fast-motion">
       <body className={`${inter.variable} ${cairo.variable} font-sans antialiased bg-gray-50 overflow-x-hidden`}>
-        <ErrorBoundary>
-          <Navbar />
-          <main className="min-h-screen overflow-x-hidden">
-            {children}
-          </main>
-          <AIChatbot />
-          <Toaster position="top-center" />
-        </ErrorBoundary>
+        <MotionProvider>
+          <ErrorBoundary>
+            <Navbar />
+            <main className="min-h-screen overflow-x-hidden">
+              {children}
+            </main>
+            <AIChatbot />
+            <Toaster position="top-center" />
+          </ErrorBoundary>
+        </MotionProvider>
       </body>
     </html>
   )
