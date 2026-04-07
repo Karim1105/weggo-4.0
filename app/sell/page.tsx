@@ -260,7 +260,7 @@ export default function SellPage() {
             className="flex items-center justify-center gap-2 py-3 text-primary-600 font-medium hover:underline"
           >
             <User className="w-5 h-5" />
-            Go to Profile to upload ID later
+            Go to Profile to complete verification later
           </Link>
         </motion.div>
       </div>

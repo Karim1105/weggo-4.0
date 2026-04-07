@@ -22,42 +22,67 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB()
 
+    const contentType = request.headers.get('content-type') || ''
+    const isJsonRequest = contentType.includes('application/json')
+
     // Derive the public origin for redirects. Prefer the configured
     // NEXT_PUBLIC_SITE_URL to avoid localhost redirects behind proxies.
     const origin =
       process.env.NEXT_PUBLIC_SITE_URL ||
       request.nextUrl.origin
 
-    // Form login only (browser POST from /login page)
-    const formData = await request.formData()
-    const email = String(formData.get('email') || '').trim()
-    const password = String(formData.get('password') || '')
-    const redirectParam = String(formData.get('redirect') || '')
+    let email = ''
+    let password = ''
+    let redirectParam = ''
 
-    logger.debug('Login attempt (form)', { email }, requestId)
+    if (isJsonRequest) {
+      const body = await request.json().catch(() => null)
+      email = String(body?.email || '').trim()
+      password = String(body?.password || '')
+      redirectParam = String(body?.redirect || '')
+    } else {
+      const formData = await request.formData()
+      email = String(formData.get('email') || '').trim()
+      password = String(formData.get('password') || '')
+      redirectParam = String(formData.get('redirect') || '')
+    }
+
+    logger.debug('Login attempt', { email, mode: isJsonRequest ? 'json' : 'form' }, requestId)
 
     if (!email || !validateEmail(email)) {
-      logger.info('Login failed - invalid email (form)', { email }, requestId)
+      logger.info('Login failed - invalid email', { email }, requestId)
+      if (isJsonRequest) {
+        return NextResponse.json({ success: false, error: 'Invalid credentials' }, { status: 400 })
+      }
       const errorUrl = new URL('/login?error=1', origin)
       return NextResponse.redirect(errorUrl, 303)
     }
 
     if (!password) {
-      logger.info('Login failed - missing password (form)', { email }, requestId)
+      logger.info('Login failed - missing password', { email }, requestId)
+      if (isJsonRequest) {
+        return NextResponse.json({ success: false, error: 'Invalid credentials' }, { status: 400 })
+      }
       const errorUrl = new URL('/login?error=1', origin)
       return NextResponse.redirect(errorUrl, 303)
     }
 
     const user = await User.findOne({ email: email.toLowerCase() })
     if (!user) {
-      logger.info('Login failed - user not found (form)', { email }, requestId)
+      logger.info('Login failed - user not found', { email }, requestId)
+      if (isJsonRequest) {
+        return NextResponse.json({ success: false, error: 'Invalid credentials' }, { status: 401 })
+      }
       const errorUrl = new URL('/login?error=1', origin)
       return NextResponse.redirect(errorUrl, 303)
     }
 
     const isMatch = await user.comparePassword(password)
     if (!isMatch) {
-      logger.info('Login failed - invalid password (form)', { email }, requestId)
+      logger.info('Login failed - invalid password', { email }, requestId)
+      if (isJsonRequest) {
+        return NextResponse.json({ success: false, error: 'Invalid credentials' }, { status: 401 })
+      }
       const errorUrl = new URL('/login?error=1', origin)
       return NextResponse.redirect(errorUrl, 303)
     }
@@ -65,6 +90,12 @@ export async function POST(request: NextRequest) {
     // Check if user is banned
     if (user.banned) {
       logger.info('Login failed - user is banned ', { email, userId: user._id }, requestId)
+      if (isJsonRequest) {
+        return NextResponse.json(
+          { success: false, error: user.bannedReason || 'Your account has been banned' },
+          { status: 403 }
+        )
+      }
       const errorUrl = new URL(
         `/login?error=banned&reason=${encodeURIComponent(user.bannedReason || 'Your account has been banned')}`,
         origin
@@ -86,9 +117,21 @@ export async function POST(request: NextRequest) {
         ? redirectParam
         : baseRedirect
 
-    // Use an absolute redirect based on the public origin.
+    // Use an absolute redirect based on the public origin for form requests.
     const redirectUrl = new URL(safeRedirect, origin)
-    const response = NextResponse.redirect(redirectUrl, 303)
+    const response = isJsonRequest
+      ? NextResponse.json({
+          success: true,
+          user: {
+            id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            sellerVerified: (user as any).sellerVerified ?? false,
+          },
+          redirect: safeRedirect,
+        })
+      : NextResponse.redirect(redirectUrl, 303)
 
     // Set token expiration: 8 hours for admins, 7 days for regular users
     const maxAge = user.role === 'admin' ? 60 * 60 * 8 : 60 * 60 * 24 * 7
@@ -102,11 +145,14 @@ export async function POST(request: NextRequest) {
     })
     setCsrfTokenCookie(response)
 
-    logger.info('User logged in successfully (form)', { email, userId: user._id }, requestId)
+    logger.info('User logged in successfully', { email, userId: user._id, mode: isJsonRequest ? 'json' : 'form' }, requestId)
 
     return response
   } catch (error: any) {
     logger.error('Login error', error, { endpoint: '/api/auth/login' }, requestId)
+    if ((request.headers.get('content-type') || '').includes('application/json')) {
+      return NextResponse.json({ success: false, error: 'Login failed' }, { status: 500 })
+    }
     // On any server error, send the user back to the login page without
     // exposing internal details.
     const origin =

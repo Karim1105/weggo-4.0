@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Shield, CheckCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { withCsrfHeader } from '@/lib/utils'
@@ -9,8 +10,26 @@ import { NATIONAL_ID_GENERIC_ERROR, validateEgyptianNationalId } from '@/lib/val
 
 export default function UploadIdPage() {
   const router = useRouter()
+  const [authLoading, setAuthLoading] = useState(true)
+  const [canVerify, setCanVerify] = useState(false)
   const [nationalIdNumber, setNationalIdNumber] = useState('')
   const [uploading, setUploading] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/auth/me', { credentials: 'include' })
+      .then(async (res) => {
+        if (res.status === 401) {
+          router.replace('/login?redirect=/auth/upload-id')
+          return null
+        }
+        return res.json()
+      })
+      .then((data) => {
+        if (!data?.success || !data?.user) return
+        setCanVerify(!data.user.sellerVerified && !data.user.banned)
+      })
+      .finally(() => setAuthLoading(false))
+  }, [router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,6 +65,28 @@ export default function UploadIdPage() {
     } finally {
       setUploading(false)
     }
+  }
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen pt-24 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500" />
+      </div>
+    )
+  }
+
+  if (!canVerify) {
+    return (
+      <div className="min-h-screen pt-24 pb-12 px-4 flex items-center justify-center">
+        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 p-8 max-w-lg w-full text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-3">Verification already completed</h1>
+          <p className="text-gray-600 mb-6">You are already verified as a seller.</p>
+          <Link href="/sell" className="inline-flex items-center justify-center px-5 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700">
+            Continue to Sell
+          </Link>
+        </div>
+      </div>
+    )
   }
 
   return (

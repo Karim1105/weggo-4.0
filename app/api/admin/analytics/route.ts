@@ -182,7 +182,7 @@ async function handler(request: NextRequest, user: any) {
       },
     }
 
-    setCache(cacheKey, result, 300) // Cache for 5 minutes
+    setCache(cacheKey, result, 30) // Cache for 30 sec
 
     const response = NextResponse.json(result)
 
