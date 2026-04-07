@@ -25,8 +25,11 @@ async function handler(
       )
     }
 
-    // Delete the product
-    await Product.findByIdAndDelete(listingId)
+    // Soft-delete the product by setting status='deleted' and expiresAt to 30 days
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    product.status = 'deleted'
+    ;(product as any).expiresAt = expiresAt
+    await product.save()
 
     // Clear cache
     clearCacheByPrefix('listings')

@@ -72,13 +72,23 @@ async function handler(request: NextRequest, admin: any) {
     user.bannedReason = trimmedReason
     user.bannedBy = (admin as any)._id
 
-    // Mark all user's listings as deleted (soft delete)
+    // Mark all user's listings as deleted (soft delete) and set expiresAt for TTL cleanup
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
     const listingResult = await Product.updateMany(
       { seller: user._id, status: { $ne: 'deleted' } },
-      { status: 'deleted' }
+      { $set: { status: 'deleted', expiresAt } }
     )
 
     await user.save()
+
+    // Clear caches that may include this user's listings
+    try {
+      const { clearCacheByPrefix } = await import('@/lib/cache')
+      clearCacheByPrefix('listings')
+      clearCacheByPrefix(`seller_${user._id}`)
+    } catch (e) {
+      // ignore cache errors
+    }
 
     logger.info('User banned successfully with listings deleted', { userId: user._id, email: user.email, adminId: admin._id, listingsDeleted: listingResult.modifiedCount }, requestId)
 

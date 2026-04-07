@@ -36,7 +36,11 @@ async function handler(
       case 'delete-listing':
         // Soft delete the listing
         if (report.listing) {
-          await Product.findByIdAndUpdate(report.listing, { status: 'deleted' })
+          const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+          await Product.findByIdAndUpdate(report.listing, {
+            status: 'deleted',
+            expiresAt,
+          })
         }
         newStatus = 'resolved'
         break

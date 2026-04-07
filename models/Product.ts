@@ -23,6 +23,7 @@ export interface IProduct extends Document {
   averageRating: number
   ratingCount: number
   lastInquiry?: Date
+  expiresAt?: Date | null
   createdAt: Date
   updatedAt: Date
 }
@@ -103,6 +104,10 @@ const ProductSchema = new Schema<IProduct>(
       type: Date,
       default: null,
     },
+    expiresAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -117,6 +122,10 @@ ProductSchema.index({ status: 1 })
 ProductSchema.index({ isBoosted: -1 })
 ProductSchema.index({ condition: 1 })
 ProductSchema.index({ subcategory: 1 })
+// TTL index: documents with a non-null `expiresAt` will be removed by MongoDB
+// once the `expiresAt` time is reached. expireAfterSeconds: 0 means expire at the
+// time specified in the field.
+ProductSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 })
 
 export default mongoose.models.Product || mongoose.model<IProduct>('Product', ProductSchema)
 

@@ -49,13 +49,22 @@ async function handler(request: NextRequest, admin: any) {
     user.bannedReason = undefined
     user.bannedBy = undefined
 
-    // Restore all user's listings that were deleted (set back to active)
+    // Restore all user's listings that were deleted (set back to active) and remove expiresAt
+    // Only restore listings that were soft-deleted with an expiresAt (i.e. admin/ban deletions)
     const listingResult = await Product.updateMany(
-      { seller: user._id, status: 'deleted' },
-      { status: 'active' }
+      { seller: user._id, status: 'deleted', expiresAt: { $exists: true } },
+      { $set: { status: 'active' }, $unset: { expiresAt: 1 } }
     )
 
     await user.save()
+    // Clear cache for listings and seller
+    try {
+      const { clearCacheByPrefix } = await import('@/lib/cache')
+      clearCacheByPrefix('listings')
+      clearCacheByPrefix(`seller_${user._id}`)
+    } catch (e) {
+      // ignore cache errors
+    }
 
     logger.info('User unbanned successfully with listings restored', { userId: user._id, email: user.email, adminId: admin._id, listingsRestored: listingResult.modifiedCount }, requestId)
 
