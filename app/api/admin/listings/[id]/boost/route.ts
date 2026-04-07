@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isValidObjectId } from 'mongoose'
 import connectDB from '@/lib/db'
 import Product from '@/models/Product'
 import { requireAdmin } from '@/lib/auth'
@@ -11,6 +12,13 @@ async function handler(
 ) {
   try {
     const { id: listingId } = await context.params
+    if (!isValidObjectId(listingId)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid listing ID format' },
+        { status: 400 }
+      )
+    }
+
     await connectDB()
 
     const body = await request.json()

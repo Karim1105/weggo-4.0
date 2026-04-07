@@ -15,6 +15,8 @@ export function rateLimit(
   windowMs: number = 15 * 60 * 1000 // 15 minutes
 ) {
   return (req: NextRequest): NextResponse | null => {
+    initializeRateLimitCleanup()
+
     const ip = req.headers.get('x-forwarded-for') || 
                req.headers.get('x-real-ip') || 
                'unknown'
@@ -81,4 +83,13 @@ export function getRateLimitStoreSize(): number {
   return Object.keys(store).length
 }
 
+export function resetRateLimitStateForTests() {
+  Object.keys(store).forEach((key) => {
+    delete store[key]
+  })
 
+  if (cleanupInterval) {
+    clearInterval(cleanupInterval)
+    cleanupInterval = null
+  }
+}

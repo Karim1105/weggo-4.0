@@ -31,6 +31,9 @@ export async function GET(request: NextRequest) {
         isVerified: user.isVerified,
         sellerVerified: (user as any).sellerVerified ?? false,
         banned: (user as any).banned ?? false,
+        bannedAt: (user as any).bannedAt ?? null,
+        bannedReason: (user as any).bannedReason ?? null,
+        bannedBy: (user as any).bannedBy ?? null,
       },
     })
     
@@ -49,5 +52,4 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
 

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isValidObjectId } from 'mongoose'
 import connectDB from '@/lib/db'
 import Product from '@/models/Product'
 import ViewHistory from '@/models/ViewHistory'
@@ -12,6 +13,13 @@ export async function GET(
 ) {
   try {
     const { id } = await params
+    if (!isValidObjectId(id)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid product ID format' },
+        { status: 400 }
+      )
+    }
+
     await connectDB()
     const product = await Product.findById(id)
       .populate('seller', 'name avatar phone location')
@@ -63,7 +71,8 @@ export async function GET(
       product: sanitizedProduct,
     }, {
       headers: {
-        'Cache-Control': 'public, s-maxage=30, stale-while-revalidate=60'
+        'Cache-Control': 'private, no-store',
+        'Vary': 'Cookie'
       }
     })
   } catch (error: any) {
@@ -80,6 +89,13 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
+    if (!isValidObjectId(id)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid product ID format' },
+        { status: 400 }
+      )
+    }
+
     const user = await getAuthUser(request)
     if (!user) {
       return NextResponse.json(
@@ -128,6 +144,13 @@ export async function PUT(
 ) {
   try {
     const { id } = await params
+    if (!isValidObjectId(id)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid product ID format' },
+        { status: 400 }
+      )
+    }
+
     const user = await getAuthUser(request)
     if (!user) {
       return NextResponse.json(
@@ -249,5 +272,3 @@ export async function PUT(
     )
   }
 }
-
-

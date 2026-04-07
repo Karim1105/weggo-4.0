@@ -156,6 +156,13 @@ async function handler(request: NextRequest, user: any) {
         )
       }
 
+      if (receiverId === user._id.toString()) {
+        return NextResponse.json(
+          { success: false, error: 'You cannot message yourself' },
+          { status: 400 }
+        )
+      }
+
       // Validate productId if provided
       if (productId && !isValidObjectId(productId)) {
         return NextResponse.json(
@@ -190,6 +197,35 @@ async function handler(request: NextRequest, user: any) {
           { success: false, error: 'User is not available' },
           { status: 403 }
         )
+      }
+
+      let product: any = null
+      if (productId) {
+        product = await Product.findById(productId).select('seller status').lean()
+        if (!product) {
+          return NextResponse.json(
+            { success: false, error: 'Product not found' },
+            { status: 404 }
+          )
+        }
+
+        if (product.status !== 'active') {
+          return NextResponse.json(
+            { success: false, error: 'This listing is not available for messaging' },
+            { status: 400 }
+          )
+        }
+
+        const sellerId = product.seller?.toString()
+        const currentUserId = user._id.toString()
+        const sellerIsParticipant = sellerId === currentUserId || sellerId === receiverId
+
+        if (!sellerIsParticipant) {
+          return NextResponse.json(
+            { success: false, error: 'Invalid product for this conversation' },
+            { status: 400 }
+          )
+        }
       }
 
       const myBlocked = new Set(((me as any)?.blockedUsers || []).map((id: any) => id.toString()))
@@ -233,7 +269,7 @@ async function handler(request: NextRequest, user: any) {
         // If messaging about a specific product, mark product as "inquired" by updating status
         if (productId) {
           await Product.updateOne(
-            { _id: productId },
+            { _id: productId, status: 'active' },
             { $set: { lastInquiry: new Date() } }
           )
         }
@@ -293,4 +329,3 @@ async function handler(request: NextRequest, user: any) {
 
 export const GET = requireAuthNotBanned(handler)
 export const POST = requireAuthNotBanned(handler)
-

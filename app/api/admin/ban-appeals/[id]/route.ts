@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isValidObjectId } from 'mongoose'
 import connectDB from '@/lib/db'
 import BanAppeal from '@/models/BanAppeal'
 import User from '@/models/User'
 import { requireAdmin } from '@/lib/auth'
 import { logger, getRequestId } from '@/lib/logger'
 
-async function handler(
+async function getHandler(
   request: NextRequest,
   admin: any,
   context: { params: Promise<{ id: string }> }
@@ -14,6 +15,61 @@ async function handler(
 
   try {
     const { id: appealId } = await context.params
+    if (!isValidObjectId(appealId)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid appeal ID format' },
+        { status: 400 }
+      )
+    }
+
+    await connectDB()
+
+    const appeal = await BanAppeal.findById(appealId)
+      .populate('userId', 'name email bannedAt bannedReason banned')
+      .populate('bannedBy', 'name')
+      .populate('reviewedBy', 'name')
+      .lean()
+
+    if (!appeal) {
+      return NextResponse.json(
+        { success: false, error: 'Appeal not found' },
+        { status: 404 }
+      )
+    }
+
+    logger.info('Fetched appeal detail', { appealId, adminId: admin._id }, requestId)
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        appeal,
+      },
+    })
+  } catch (error: any) {
+    logger.error('Fetch appeal detail error', error, { endpoint: '/api/admin/ban-appeals/[id]' }, requestId)
+    return NextResponse.json(
+      { success: false, error: error.message || 'Failed to fetch appeal' },
+      { status: 500 }
+    )
+  }
+}
+
+async function postHandler(
+  request: NextRequest,
+  admin: any,
+  context: { params: Promise<{ id: string }> }
+) {
+  const requestId = getRequestId(request)
+
+  try {
+    const { id: appealId } = await context.params
+    if (!isValidObjectId(appealId)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid appeal ID format' },
+        { status: 400 }
+      )
+    }
+
     await connectDB()
 
     const body = await request.json()
@@ -119,4 +175,5 @@ async function handler(
   }
 }
 
-export const POST = requireAdmin(handler)
+export const GET = requireAdmin(getHandler)
+export const POST = requireAdmin(postHandler)

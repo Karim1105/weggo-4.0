@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isValidObjectId } from 'mongoose'
 import connectDB from '@/lib/db'
 import Report from '@/models/Report'
 import Product from '@/models/Product'
@@ -12,6 +13,13 @@ async function handler(
 ) {
   try {
     const { id: reportId } = await context.params
+    if (!isValidObjectId(reportId)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid report ID format' },
+        { status: 400 }
+      )
+    }
+
     await connectDB()
 
     const body = await request.json()

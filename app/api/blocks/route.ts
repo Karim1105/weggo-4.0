@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isValidObjectId } from 'mongoose'
 import connectDB from '@/lib/db'
 import User from '@/models/User'
 import { requireAuth } from '@/lib/auth'
@@ -27,10 +28,25 @@ async function handler(request: NextRequest, user: any) {
     )
   }
 
+  if (typeof userId !== 'string' || !isValidObjectId(userId)) {
+    return NextResponse.json(
+      { success: false, error: 'Invalid user ID format' },
+      { status: 400 }
+    )
+  }
+
   if (userId === user._id.toString()) {
     return NextResponse.json(
       { success: false, error: 'You cannot block yourself' },
       { status: 400 }
+    )
+  }
+
+  const targetUser = await User.findById(userId).select('_id').lean()
+  if (!targetUser) {
+    return NextResponse.json(
+      { success: false, error: 'User not found' },
+      { status: 404 }
     )
   }
 
@@ -61,4 +77,3 @@ async function handler(request: NextRequest, user: any) {
 export const GET = requireAuth(handler)
 export const POST = requireAuth(handler)
 export const DELETE = requireAuth(handler)
-

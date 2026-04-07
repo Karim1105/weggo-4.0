@@ -6,110 +6,112 @@ import Product from '@/models/Product'
 import { requireAuth } from '@/lib/auth'
 import { updateProductRating, updateSellerRating } from '@/lib/rating'
 
-async function handler(request: NextRequest, user: any) {
+async function getHandler(request: NextRequest) {
   await connectDB()
 
-  if (request.method === 'GET') {
-    const { searchParams } = new URL(request.url)
-    const sellerId = searchParams.get('sellerId')
+  const { searchParams } = new URL(request.url)
+  const sellerId = searchParams.get('sellerId')
 
-    if (sellerId) {
-      // Validate sellerId
-      if (!isValidObjectId(sellerId)) {
-        return NextResponse.json(
-          { success: false, error: 'Invalid seller ID format' },
-          { status: 400 }
-        )
-      }
-
-      // Add pagination
-      const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
-      const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')))
-      const skip = (page - 1) * limit
-
-      // Use MongoDB aggregation for accurate average rating and pagination
-      const [result] = await Review.aggregate([
-        { $match: { seller: new Types.ObjectId(sellerId) } },
-        {
-          $facet: {
-            stats: [
-              {
-                $group: {
-                  _id: null,
-                  averageRating: { $avg: '$rating' },
-                  totalReviews: { $sum: 1 },
-                },
-              },
-            ],
-            reviews: [
-              { $sort: { createdAt: -1 } },
-              { $skip: skip },
-              { $limit: limit },
-              {
-                $lookup: {
-                  from: 'users',
-                  localField: 'reviewer',
-                  foreignField: '_id',
-                  as: 'reviewer',
-                },
-              },
-              { $unwind: { path: '$reviewer', preserveNullAndEmptyArrays: true } },
-              {
-                $lookup: {
-                  from: 'products',
-                  localField: 'product',
-                  foreignField: '_id',
-                  as: 'product',
-                },
-              },
-              { $unwind: { path: '$product', preserveNullAndEmptyArrays: true } },
-              {
-                $project: {
-                  rating: 1,
-                  comment: 1,
-                  createdAt: 1,
-                  'reviewer.name': 1,
-                  'reviewer.avatar': 1,
-                  'product.title': 1,
-                  'product.images': 1,
-                },
-              },
-            ],
-          },
-        },
-      ])
-
-      const stats = result?.stats?.[0] || { averageRating: 0, totalReviews: 0 }
-      const reviewsRaw = result?.reviews || []
-      const reviews = reviewsRaw.map((review: any) => {
-        const images = Array.isArray(review?.product?.images)
-          ? review.product.images.filter((img: string) => typeof img === 'string' && !img.startsWith('data:')).slice(0, 1)
-          : []
-
-        return {
-          ...review,
-          product: review.product
-            ? {
-                ...review.product,
-                images,
-              }
-            : review.product,
-        }
-      })
-
-      return NextResponse.json({
-        success: true,
-        reviews,
-        averageRating: Math.round(stats.averageRating * 100) / 100,
-        totalReviews: stats.totalReviews,
-      })
+  if (sellerId) {
+    // Validate sellerId
+    if (!isValidObjectId(sellerId)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid seller ID format' },
+        { status: 400 }
+      )
     }
 
-    return NextResponse.json(
-      { success: false, error: 'Seller ID is required' },
-      { status: 400 }
-    )
+    // Add pagination
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1'))
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20')))
+    const skip = (page - 1) * limit
+
+    // Use MongoDB aggregation for accurate average rating and pagination
+    const [result] = await Review.aggregate([
+      { $match: { seller: new Types.ObjectId(sellerId) } },
+      {
+        $facet: {
+          stats: [
+            {
+              $group: {
+                _id: null,
+                averageRating: { $avg: '$rating' },
+                totalReviews: { $sum: 1 },
+              },
+            },
+          ],
+          reviews: [
+            { $sort: { createdAt: -1 } },
+            { $skip: skip },
+            { $limit: limit },
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'reviewer',
+                foreignField: '_id',
+                as: 'reviewer',
+              },
+              },
+            { $unwind: { path: '$reviewer', preserveNullAndEmptyArrays: true } },
+            {
+              $lookup: {
+                from: 'products',
+                localField: 'product',
+                foreignField: '_id',
+                as: 'product',
+              },
+            },
+            { $unwind: { path: '$product', preserveNullAndEmptyArrays: true } },
+            {
+              $project: {
+                rating: 1,
+                comment: 1,
+                createdAt: 1,
+                'reviewer.name': 1,
+                'reviewer.avatar': 1,
+                'product.title': 1,
+                'product.images': 1,
+              },
+            },
+          ],
+        },
+      },
+    ])
+
+    const stats = result?.stats?.[0] || { averageRating: 0, totalReviews: 0 }
+    const reviewsRaw = result?.reviews || []
+    const reviews = reviewsRaw.map((review: any) => {
+      const images = Array.isArray(review?.product?.images)
+        ? review.product.images.filter((img: string) => typeof img === 'string' && !img.startsWith('data:')).slice(0, 1)
+        : []
+
+      return {
+        ...review,
+        product: review.product
+          ? {
+              ...review.product,
+              images,
+            }
+          : review.product,
+      }
+    })
+
+    return NextResponse.json({
+      success: true,
+      reviews,
+      averageRating: Math.round(stats.averageRating * 100) / 100,
+      totalReviews: stats.totalReviews,
+    })
   }
+
+  return NextResponse.json(
+    { success: false, error: 'Seller ID is required' },
+    { status: 400 }
+  )
+}
+
+async function postHandler(request: NextRequest, user: any) {
+  await connectDB()
 
   if (request.method === 'POST') {
     const body = await request.json()
@@ -207,7 +209,6 @@ async function handler(request: NextRequest, user: any) {
   )
 }
 
-export const GET = requireAuth(handler)
-export const POST = requireAuth(handler)
-
+export const GET = getHandler
+export const POST = requireAuth(postHandler)
 

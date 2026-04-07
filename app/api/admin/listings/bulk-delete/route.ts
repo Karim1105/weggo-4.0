@@ -29,10 +29,21 @@ async function handler(request: NextRequest, admin: any) {
 
     await connectDB()
 
-    // Delete all listings
-    const result = await Product.deleteMany({
-      _id: { $in: listingIds },
-    })
+    const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+
+    // Soft-delete listings to align with the rest of moderation flows.
+    const result = await Product.updateMany(
+      {
+        _id: { $in: listingIds },
+        status: { $ne: 'deleted' },
+      },
+      {
+        $set: {
+          status: 'deleted',
+          expiresAt,
+        },
+      }
+    )
 
     // Clear cache
     clearCacheByPrefix('listings')
@@ -41,8 +52,8 @@ async function handler(request: NextRequest, admin: any) {
 
     return NextResponse.json({
       success: true,
-      message: `${result.deletedCount} listing(s) deleted successfully`,
-      deletedCount: result.deletedCount,
+      message: `${result.modifiedCount} listing(s) deleted successfully`,
+      deletedCount: result.modifiedCount,
     })
   } catch (error: any) {
     console.error('Error bulk deleting listings:', error)

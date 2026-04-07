@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isValidObjectId } from 'mongoose'
 import connectDB from '@/lib/db'
 import Message from '@/models/Message'
 import User from '@/models/User'
@@ -16,11 +17,20 @@ async function handler(
 
   try {
     const { id: userId } = await context.params
+    if (!isValidObjectId(userId)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid user ID format' },
+        { status: 400 }
+      )
+    }
+
     await connectDB()
 
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '20')
+    const rawPage = parseInt(searchParams.get('page') || '1')
+    const rawLimit = parseInt(searchParams.get('limit') || '20')
+    const page = Math.max(1, Number.isNaN(rawPage) ? 1 : rawPage)
+    const limit = Math.min(100, Math.max(1, Number.isNaN(rawLimit) ? 20 : rawLimit))
     const rawMessageLimit = parseInt(searchParams.get('messageLimit') || '10')
     const messageLimit = Math.min(Math.max(Number.isNaN(rawMessageLimit) ? 10 : rawMessageLimit, 1), 20)
 

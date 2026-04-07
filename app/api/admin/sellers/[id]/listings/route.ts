@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { isValidObjectId } from 'mongoose'
 import connectDB from '@/lib/db'
 import Product from '@/models/Product'
 import User from '@/models/User'
@@ -15,11 +16,20 @@ async function handler(
 ) {
   try {
     const { id: sellerId } = await context.params
+    if (!isValidObjectId(sellerId)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid seller ID format' },
+        { status: 400 }
+      )
+    }
+
     await connectDB()
 
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '50')
+    const rawPage = parseInt(searchParams.get('page') || '1')
+    const rawLimit = parseInt(searchParams.get('limit') || '50')
+    const page = Math.max(1, Number.isNaN(rawPage) ? 1 : rawPage)
+    const limit = Math.min(100, Math.max(1, Number.isNaN(rawLimit) ? 50 : rawLimit))
     const status = searchParams.get('status') || 'all' // all, active, sold, pending, deleted
 
     const skip = (page - 1) * limit

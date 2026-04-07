@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import { motion } from 'framer-motion'
-import { ChevronLeft, Star, AlertTriangle } from 'lucide-react'
+import { ChevronLeft, Star } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { withCsrfHeader } from '@/lib/utils'
 
@@ -17,32 +17,70 @@ export default function AppealReviewPage() {
   const [loadingAction, setLoadingAction] = useState<string | null>(null)
   const [userChats, setUserChats] = useState<any[]>([])
   const [userListings, setUserListings] = useState<any[]>([])
+  const [detailError, setDetailError] = useState<string | null>(null)
+  const [chatsError, setChatsError] = useState<string | null>(null)
+  const [listingsError, setListingsError] = useState<string | null>(null)
 
   useEffect(() => {
-    // Try to fetch from localStorage
-    const storedAppeal = typeof window !== 'undefined' ? localStorage.getItem(`appeal_${appealId}`) : null
-    if (storedAppeal) {
+    const loadAppeal = async () => {
+      setLoading(true)
+      setDetailError(null)
+
       try {
-        const appeal = JSON.parse(storedAppeal)
-        setAppeal(appeal)
-        fetchUserDetails(appeal)
+        const res = await fetch(`/api/admin/ban-appeals/${appealId}`, {
+          credentials: 'include',
+        })
+        const data = await res.json()
+
+        if (!res.ok || !data.success || !data.data?.appeal) {
+          throw new Error(data.error || 'Failed to load appeal')
+        }
+
+        const nextAppeal = data.data.appeal
+        setAppeal(nextAppeal)
+        if (typeof window !== 'undefined') {
+          localStorage.setItem(`appeal_${appealId}`, JSON.stringify(nextAppeal))
+        }
+        await fetchUserDetails(nextAppeal)
       } catch (error) {
-        console.error('Failed to parse stored appeal:', error)
-        router.push('/')
+        const storedAppeal = typeof window !== 'undefined' ? localStorage.getItem(`appeal_${appealId}`) : null
+        if (storedAppeal) {
+          try {
+            const fallbackAppeal = JSON.parse(storedAppeal)
+            setAppeal(fallbackAppeal)
+            setDetailError('Showing cached appeal details because the live admin fetch failed.')
+            await fetchUserDetails(fallbackAppeal)
+            setLoading(false)
+            return
+          } catch (fallbackError) {
+            console.error('Failed to parse stored appeal:', fallbackError)
+          }
+        }
+
+        const message = error instanceof Error ? error.message : 'Failed to load appeal details'
+        setAppeal(null)
+        setDetailError(message)
+        toast.error(message)
       }
-    } else {
-      console.warn('No appeal data found in localStorage')
-      router.push('/')
+
+      setLoading(false)
     }
-    setLoading(false)
+
+    void loadAppeal()
   }, [appealId, router])
 
   const fetchUserDetails = async (appeal: any) => {
+    setChatsError(null)
+    setListingsError(null)
+    setUserChats([])
+    setUserListings([])
+
     try {
       const userId = typeof appeal.userId === 'object' ? appeal.userId._id : appeal.userId
 
       if (!userId) {
-        console.warn('No user ID found in appeal')
+        setChatsError('Appeal is missing the linked user ID.')
+        setListingsError('Appeal is missing the linked user ID.')
         return
       }
 
@@ -54,17 +92,21 @@ export default function AppealReviewPage() {
       const chatsData = await chatsRes.json()
       const listingsData = await listingsRes.json()
 
-      console.log('Chats response:', chatsData)
-      console.log('Listings response:', listingsData)
-
-      if (chatsData.success) {
+      if (chatsRes.ok && chatsData.success) {
         setUserChats(chatsData.data?.conversations || [])
+      } else {
+        setChatsError(chatsData.error || 'Failed to load user chats')
       }
-      if (listingsData.success) {
+
+      if (listingsRes.ok && listingsData.success) {
         setUserListings(listingsData.data?.listings || [])
+      } else {
+        setListingsError(listingsData.error || 'Failed to load user listings')
       }
     } catch (error) {
       console.error('Failed to fetch user details:', error)
+      setChatsError('Failed to load user chats')
+      setListingsError('Failed to load user listings')
       toast.error('Failed to load user details')
     }
   }
@@ -114,7 +156,15 @@ export default function AppealReviewPage() {
   if (!appeal) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Appeal not found</div>
+        <div className="text-center space-y-3">
+          <div className="text-gray-600">{detailError || 'Appeal not found'}</div>
+          <button
+            onClick={() => router.push('/admin')}
+            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+          >
+            Back to Admin
+          </button>
+        </div>
       </div>
     )
   }
@@ -147,6 +197,16 @@ export default function AppealReviewPage() {
       {/* Content */}
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="space-y-6">
+          {detailError && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-yellow-50 border border-yellow-200 text-yellow-900 p-4 rounded-xl shadow-sm"
+            >
+              {detailError}
+            </motion.div>
+          )}
+
           {/* User Information */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -218,7 +278,9 @@ export default function AppealReviewPage() {
             className="bg-white p-6 rounded-xl shadow-sm"
           >
             <h2 className="text-lg font-semibold mb-4">User Chats ({userChats.length})</h2>
-            {userChats && userChats.length > 0 ? (
+            {chatsError ? (
+              <p className="text-sm text-red-600">{chatsError}</p>
+            ) : userChats && userChats.length > 0 ? (
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {userChats.map((conversation: any) => (
                   <a
@@ -253,7 +315,9 @@ export default function AppealReviewPage() {
             className="bg-white p-6 rounded-xl shadow-sm"
           >
             <h2 className="text-lg font-semibold mb-4">User Listings ({userListings.length})</h2>
-            {userListings && userListings.length > 0 ? (
+            {listingsError ? (
+              <p className="text-sm text-red-600">{listingsError}</p>
+            ) : userListings && userListings.length > 0 ? (
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {userListings.map((listing: any) => (
                   <a
