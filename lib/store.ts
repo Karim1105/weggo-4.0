@@ -29,6 +29,7 @@ interface AppState {
   
   // Favorites
   favorites: string[]
+  setFavorites: (ids: string[]) => void
   addFavorite: (id: string) => void
   removeFavorite: (id: string) => void
   toggleFavorite: (id: string) => void
@@ -66,8 +67,9 @@ export const useAppStore = create<AppState>()(
       
       // Favorites
       favorites: [],
+      setFavorites: (ids) => set({ favorites: Array.from(new Set(ids)) }),
       addFavorite: (id) => set((state) => ({
-        favorites: [...state.favorites, id]
+        favorites: state.favorites.includes(id) ? state.favorites : [...state.favorites, id]
       })),
       removeFavorite: (id) => set((state) => ({
         favorites: state.favorites.filter(f => f !== id)

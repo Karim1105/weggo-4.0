@@ -13,6 +13,28 @@ async function handler(request: NextRequest, user: any) {
     if (request.method === 'GET') {
       const { searchParams } = new URL(request.url)
       const { page, limit, skip } = parsePagination(searchParams, { limit: 100, maxLimit: 100 })
+      const idsOnly = searchParams.get('idsOnly') === 'true'
+
+      if (idsOnly) {
+        const [wishlist, total] = await Promise.all([
+          Wishlist.find({ user: user._id })
+            .select('product')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .lean(),
+          Wishlist.countDocuments({ user: user._id }),
+        ])
+
+        return NextResponse.json({
+          success: true,
+          wishlist: wishlist.map((w: any) => ({ _id: String(w.product) })),
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        })
+      }
 
       const [wishlist, total] = await Promise.all([
         Wishlist.find({ user: user._id })

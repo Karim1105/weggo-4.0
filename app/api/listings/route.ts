@@ -28,6 +28,7 @@ export async function GET(request: NextRequest) {
     const sellerParam = searchParams.get('seller')?.trim().toLowerCase()
     const sellerMe = sellerParam === 'me'
     const sortBy = searchParams.get('sortBy') || 'newest'
+    const includeTotal = searchParams.get('includeTotal') !== 'false'
     
     // Validate and sanitize pagination parameters to prevent DoS
     const rawPage = parseInt(searchParams.get('page') || '1')
@@ -129,6 +130,7 @@ export async function GET(request: NextRequest) {
           maxPrice,
           search,
           sortBy,
+          includeTotal,
           page,
           limit,
         })
@@ -140,17 +142,24 @@ export async function GET(request: NextRequest) {
 
     const useRelevance = Boolean(searchTerm) && sortBy === 'newest'
 
-    const total = await Product.countDocuments(query)
+    const totalPromise: Promise<number | null> = includeTotal
+      ? Product.countDocuments(query)
+      : Promise.resolve(null)
+
+    let total: number | null = null
 
     let products: any[] = []
     if (useRelevance) {
       const candidateLimit = Math.min(1000, skip + limit + 200)
-      const candidates = await Product.find(query)
-        .select('_id title price images category location condition description subcategory createdAt')
-        .populate('seller', 'name avatar')
-        .sort({ createdAt: -1 })
-        .limit(candidateLimit)
-        .lean()
+      const [countResult, candidates] = await Promise.all([
+        totalPromise,
+        Product.find(query)
+          .select('_id title price images category location condition description subcategory createdAt')
+          .sort({ createdAt: -1 })
+          .limit(candidateLimit)
+          .lean(),
+      ])
+      total = countResult
 
       const scored = candidates.map((item) => ({
         ...item,
@@ -163,14 +172,20 @@ export async function GET(request: NextRequest) {
       })
 
       products = scored.slice(skip, skip + limit)
+      await Product.populate(products, { path: 'seller', select: 'name avatar' })
     } else {
-      products = await Product.find(query)
-        .select('_id title price images category location condition description subcategory createdAt')
-        .populate('seller', 'name avatar')
-        .sort(sort)
-        .skip(skip)
-        .limit(limit)
-        .lean()
+      const [countResult, productsResult] = await Promise.all([
+        totalPromise,
+        Product.find(query)
+          .select('_id title price images category location condition description subcategory createdAt')
+          .populate('seller', 'name avatar')
+          .sort(sort)
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+      ])
+      total = countResult
+      products = productsResult
     }
 
     // Sanitize payload: limit images to first image and shorten description
@@ -189,7 +204,8 @@ export async function GET(request: NextRequest) {
       page,
       limit,
       total,
-      totalPages: Math.max(1, Math.ceil(total / limit)),
+      totalPages: includeTotal && total !== null ? Math.max(1, Math.ceil(total / limit)) : null,
+      hasMore: sanitizedListings.length === limit,
     }
 
     if (cacheKey) {
@@ -472,6 +488,7 @@ function buildListingsCacheKey(params: {
   maxPrice: string | null
   search: string | null
   sortBy: string
+  includeTotal: boolean
   page: number
   limit: number
 }) {
@@ -486,6 +503,7 @@ function buildListingsCacheKey(params: {
     safe(params.maxPrice),
     safe(params.search),
     params.sortBy,
+    params.includeTotal ? 't1' : 't0',
     params.page,
     params.limit,
   ].join('|')

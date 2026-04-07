@@ -27,7 +27,6 @@ export default function FeaturedListings() {
   const router = useRouter()
   const { user, handleVerificationFlow } = useUserVerification()
   const [products, setProducts] = useState<Product[]>([])
-  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
   const storeFavorites = useAppStore((s) => s.favorites)
   const addFavorite = useAppStore((s) => s.addFavorite)
   const removeFavorite = useAppStore((s) => s.removeFavorite)
@@ -42,20 +41,10 @@ export default function FeaturedListings() {
 
   const fetchFeatured = useCallback(async () => {
     try {
-      const params = new URLSearchParams({ sortBy: 'newest', limit: '8', page: '1' })
-      const [listingsRes, wishlistRes] = await Promise.all([
-        fetch(`/api/listings?${params}`, { credentials: 'include' }),
-        fetch('/api/wishlist', { credentials: 'include' }).catch(() => null),
-      ])
+      const params = new URLSearchParams({ sortBy: 'newest', limit: '8', page: '1', includeTotal: 'false' })
+      const listingsRes = await fetch(`/api/listings?${params}`, { credentials: 'include' })
       const data = await listingsRes.json()
-      const ids = new Set<string>()
-      if (wishlistRes) {
-        const wData = await wishlistRes.json()
-        if (wData?.success && Array.isArray(wData.wishlist)) {
-          wData.wishlist.forEach((p: { _id: string }) => ids.add(p._id))
-        }
-      }
-      setFavoriteIds(ids)
+      const ids = new Set(storeFavorites)
       const listings = data.data?.listings ?? data.listings
       if (data.success && Array.isArray(listings) && listings.length) {
         const activeListings = listings.filter((l: any) => l.status !== 'deleted')
@@ -64,11 +53,16 @@ export default function FeaturedListings() {
     } catch {
       setProducts([])
     }
-  }, [])
+  }, [storeFavorites])
 
   useEffect(() => {
     fetchFeatured()
   }, [fetchFeatured])
+
+  useEffect(() => {
+    const ids = new Set(storeFavorites)
+    setProducts((prev) => prev.map((p) => ({ ...p, isFavorite: ids.has(p.id) })))
+  }, [storeFavorites])
 
   const toggleFavorite = (id: string) => {
     const product = products.find((p) => p.id === id)
@@ -78,7 +72,6 @@ export default function FeaturedListings() {
       prev.map((p) => (p.id === id ? { ...p, isFavorite: next } : p))
     )
     if (next) {
-      setFavoriteIds((prev) => new Set([...prev, id]))
       addFavorite(id)
       fetch('/api/wishlist', {
         method: 'POST',
@@ -87,11 +80,6 @@ export default function FeaturedListings() {
         body: JSON.stringify({ productId: id }),
       }).catch(() => {})
     } else {
-      setFavoriteIds((prev) => {
-        const s = new Set(prev)
-        s.delete(id)
-        return s
-      })
       removeFavorite(id)
       fetch('/api/wishlist', {
         method: 'DELETE',

@@ -99,7 +99,6 @@ export default function EditListingPage() {
       }
       toast.success('Listing updated')
       router.push(`/listings/${id}`)
-      router.refresh()
     } catch {
       toast.error('Failed to update listing')
     } finally {

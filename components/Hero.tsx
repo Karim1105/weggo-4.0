@@ -42,7 +42,7 @@ export default function Hero() {
           // Use cached data immediately
           setFeaturedProducts(data)
           // Still fetch fresh data in background
-          fetchListings(true)
+          fetchListings()
           return
         }
       } catch (e) {
@@ -52,11 +52,11 @@ export default function Hero() {
     }
 
     // No valid cache, fetch normally
-    fetchListings(false)
+    fetchListings()
   }, [])
 
-  const fetchListings = (isBackgroundUpdate: boolean) => {
-    fetch('/api/listings?limit=8&sortBy=newest', { credentials: 'include' })
+  const fetchListings = () => {
+    fetch('/api/listings?limit=8&sortBy=newest&includeTotal=false', { credentials: 'include' })
       .then((r) => r.json())
       .then((data) => {
         const listings = data.data?.listings ?? data.listings

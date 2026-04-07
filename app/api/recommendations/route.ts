@@ -44,19 +44,31 @@ export async function GET(request: NextRequest) {
       ...new Set(wishlist.map((w: any) => w.product?.category).filter(Boolean)),
     ]
 
+    const recommendationOr: any[] = []
+    if (preferredCategories.length > 0) {
+      recommendationOr.push({ category: { $in: preferredCategories } })
+    }
+
+    const locationTerm = typeof user.location === 'string' ? user.location.trim() : ''
+    if (locationTerm) {
+      recommendationOr.push({ location: { $regex: locationTerm, $options: 'i' } })
+    }
+
     // Get recommendations based on:
     // 1. Similar categories from view history
     // 2. Preferred categories from wishlist
     // 3. Popular items in user's location
-    const recommendations = await Product.find({
+    const query: any = {
       status: 'active',
       _id: { $nin: viewedProductIds },
       seller: { $ne: user._id },
-      $or: [
-        { category: { $in: preferredCategories } },
-        { location: { $regex: user.location || '', $options: 'i' } },
-      ],
-    })
+    }
+    if (recommendationOr.length > 0) {
+      query.$or = recommendationOr
+    }
+
+    const recommendations = await Product.find(query)
+      .select('_id title price images category location condition description subcategory createdAt seller')
       .populate('seller', 'name avatar')
       .sort({ views: -1, createdAt: -1 })
       .limit(12)

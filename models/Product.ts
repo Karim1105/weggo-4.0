@@ -122,6 +122,13 @@ ProductSchema.index({ status: 1 })
 ProductSchema.index({ isBoosted: -1 })
 ProductSchema.index({ condition: 1 })
 ProductSchema.index({ subcategory: 1 })
+ProductSchema.index({ status: 1, isBoosted: -1, createdAt: -1 })
+ProductSchema.index({ status: 1, category: 1, isBoosted: -1, createdAt: -1 })
+ProductSchema.index({ status: 1, subcategory: 1, isBoosted: -1, createdAt: -1 })
+ProductSchema.index({ status: 1, condition: 1, isBoosted: -1, createdAt: -1 })
+ProductSchema.index({ status: 1, seller: 1, createdAt: -1 })
+ProductSchema.index({ status: 1, views: -1, createdAt: -1 })
+ProductSchema.index({ status: 1, averageRating: -1, ratingCount: -1, createdAt: -1 })
 // TTL index: documents with a non-null `expiresAt` will be removed by MongoDB
 // once the `expiresAt` time is reached. expireAfterSeconds: 0 means expire at the
 // time specified in the field.

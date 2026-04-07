@@ -34,10 +34,7 @@ export default function RecentlyViewed() {
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const [recentRes, wishlistRes] = await Promise.all([
-        fetch('/api/recently-viewed', { credentials: 'include' }).catch(() => null),
-        fetch('/api/wishlist', { credentials: 'include' }).catch(() => null),
-      ])
+      const recentRes = await fetch('/api/recently-viewed', { credentials: 'include' }).catch(() => null)
 
       if (!recentRes?.ok) {
         setItems([])
@@ -50,13 +47,7 @@ export default function RecentlyViewed() {
         return
       }
 
-      const ids = new Set<string>()
-      if (wishlistRes?.ok) {
-        const wData = await wishlistRes.json()
-        if (wData?.success && Array.isArray(wData.wishlist)) {
-          wData.wishlist.forEach((p: { _id: string }) => ids.add(p._id))
-        }
-      }
+      const ids = new Set(storeFavorites)
 
       setItems(recentData.products.map((p: any) => mapApiListingToProduct(p, ids)))
     } catch {
@@ -64,11 +55,16 @@ export default function RecentlyViewed() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [storeFavorites])
 
   useEffect(() => {
     fetchData()
   }, [fetchData])
+
+  useEffect(() => {
+    const ids = new Set(storeFavorites)
+    setItems((prev) => prev.map((p) => ({ ...p, isFavorite: ids.has(p.id) })))
+  }, [storeFavorites])
 
   const toggleFavorite = (id: string) => {
     const isFav = storeFavorites.includes(id)

@@ -33,7 +33,6 @@ interface PersonalizedFeedProps {
 
 export default function PersonalizedFeed({ isAdmin }: PersonalizedFeedProps) {
   const [products, setProducts] = useState<Product[]>([])
-  const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
   const [filter, setFilter] = useState<'all' | 'recommended' | 'nearby' | 'trending'>('recommended')
   const [showBrowse, setShowBrowse] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
@@ -68,51 +67,30 @@ export default function PersonalizedFeed({ isAdmin }: PersonalizedFeedProps) {
   const fetchAllItems = useCallback(async () => {
     setIsLoading(true)
     try {
-      const params = new URLSearchParams({ sortBy: 'newest', limit: '16', page: '1' })
-      const [listingsRes, wishlistRes] = await Promise.all([
-        fetch(`/api/listings?${params}`, { credentials: 'include' }),
-        fetch('/api/wishlist', { credentials: 'include' }).catch(() => null),
-      ])
-      const ids = new Set<string>()
+      const params = new URLSearchParams({ sortBy: 'newest', limit: '16', page: '1', includeTotal: 'false' })
+      const listingsRes = await fetch(`/api/listings?${params}`, { credentials: 'include' })
       const listingsData = await listingsRes.json()
       const rawListings = listingsData.data?.listings ?? listingsData.listings
       let listings: any[] = listingsData.success && Array.isArray(rawListings) ? rawListings : []
-      if (wishlistRes?.ok) {
-        const wData = await wishlistRes.json()
-        if (wData?.success && Array.isArray(wData.wishlist)) {
-          wData.wishlist.forEach((p: { _id: string }) => ids.add(p._id))
-        }
-      }
-      setFavoriteIds(ids)
+      const ids = new Set(storeFavorites)
       setProducts(listings.map((l: any) => mapApiListingToProduct(l, ids)))
     } catch {
       setProducts([])
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [storeFavorites])
 
   // Fetch personalized recommendations
   const fetchRecommendations = useCallback(async () => {
     setIsLoading(true)
     try {
-      const [recommendationsRes, wishlistRes] = await Promise.all([
-        fetch('/api/recommendations', { credentials: 'include' }),
-        fetch('/api/wishlist', { credentials: 'include' }).catch(() => null),
-      ])
-      
-      const ids = new Set<string>()
-      if (wishlistRes?.ok) {
-        const wData = await wishlistRes.json()
-        if (wData?.success && Array.isArray(wData.wishlist)) {
-          wData.wishlist.forEach((p: { _id: string }) => ids.add(p._id))
-        }
-      }
+      const recommendationsRes = await fetch('/api/recommendations', { credentials: 'include' })
+      const ids = new Set(storeFavorites)
       
       if (recommendationsRes.ok) {
         const data = await recommendationsRes.json()
         const recommendations = data.recommendations || []
-        setFavoriteIds(ids)
         setProducts(recommendations.map((l: any) => mapApiListingToProduct(l, ids)))
       } else {
         // If not authenticated or no recommendations, fallback to all items
@@ -124,29 +102,18 @@ export default function PersonalizedFeed({ isAdmin }: PersonalizedFeedProps) {
     } finally {
       setIsLoading(false)
     }
-  }, [fetchAllItems])
+  }, [fetchAllItems, storeFavorites])
 
   // Fetch trending items
   const fetchTrending = useCallback(async () => {
     setIsLoading(true)
     try {
-      const [trendingRes, wishlistRes] = await Promise.all([
-        fetch('/api/listings/trending?limit=16', { credentials: 'include' }),
-        fetch('/api/wishlist', { credentials: 'include' }).catch(() => null),
-      ])
-      
-      const ids = new Set<string>()
-      if (wishlistRes?.ok) {
-        const wData = await wishlistRes.json()
-        if (wData?.success && Array.isArray(wData.wishlist)) {
-          wData.wishlist.forEach((p: { _id: string }) => ids.add(p._id))
-        }
-      }
+      const trendingRes = await fetch('/api/listings/trending?limit=16', { credentials: 'include' })
+      const ids = new Set(storeFavorites)
       
       if (trendingRes.ok) {
         const data = await trendingRes.json()
         const listings = data.data?.listings || []
-        setFavoriteIds(ids)
         setProducts(listings.map((l: any) => mapApiListingToProduct(l, ids)))
       } else {
         setProducts([])
@@ -156,7 +123,7 @@ export default function PersonalizedFeed({ isAdmin }: PersonalizedFeedProps) {
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [storeFavorites])
 
   // Fetch nearby items with location
   const fetchNearby = useCallback(async () => {
@@ -171,23 +138,12 @@ export default function PersonalizedFeed({ isAdmin }: PersonalizedFeedProps) {
             setLocationPermission('granted')
             
             try {
-              const [nearbyRes, wishlistRes] = await Promise.all([
-                fetch(`/api/listings/nearby?lat=${latitude}&lon=${longitude}&radius=100&limit=16`, { credentials: 'include' }),
-                fetch('/api/wishlist', { credentials: 'include' }).catch(() => null),
-              ])
-              
-              const ids = new Set<string>()
-              if (wishlistRes?.ok) {
-                const wData = await wishlistRes.json()
-                if (wData?.success && Array.isArray(wData.wishlist)) {
-                  wData.wishlist.forEach((p: { _id: string }) => ids.add(p._id))
-                }
-              }
+              const nearbyRes = await fetch(`/api/listings/nearby?lat=${latitude}&lon=${longitude}&radius=100&limit=16`, { credentials: 'include' })
+              const ids = new Set(storeFavorites)
               
               if (nearbyRes.ok) {
                 const data = await nearbyRes.json()
                 const listings = data.data?.listings || []
-                setFavoriteIds(ids)
                 setProducts(listings.map((l: any) => mapApiListingToProduct(l, ids)))
               } else {
                 setProducts([])
@@ -217,23 +173,12 @@ export default function PersonalizedFeed({ isAdmin }: PersonalizedFeedProps) {
       // Already have location, fetch nearby
       setIsLoading(true)
       try {
-        const [nearbyRes, wishlistRes] = await Promise.all([
-          fetch(`/api/listings/nearby?lat=${userLocation.lat}&lon=${userLocation.lon}&radius=100&limit=16`, { credentials: 'include' }),
-          fetch('/api/wishlist', { credentials: 'include' }).catch(() => null),
-        ])
-        
-        const ids = new Set<string>()
-        if (wishlistRes?.ok) {
-          const wData = await wishlistRes.json()
-          if (wData?.success && Array.isArray(wData.wishlist)) {
-            wData.wishlist.forEach((p: { _id: string }) => ids.add(p._id))
-          }
-        }
+        const nearbyRes = await fetch(`/api/listings/nearby?lat=${userLocation.lat}&lon=${userLocation.lon}&radius=100&limit=16`, { credentials: 'include' })
+        const ids = new Set(storeFavorites)
         
         if (nearbyRes.ok) {
           const data = await nearbyRes.json()
           const listings = data.data?.listings || []
-          setFavoriteIds(ids)
           setProducts(listings.map((l: any) => mapApiListingToProduct(l, ids)))
         } else {
           setProducts([])
@@ -244,7 +189,12 @@ export default function PersonalizedFeed({ isAdmin }: PersonalizedFeedProps) {
         setIsLoading(false)
       }
     }
-  }, [userLocation, fetchAllItems])
+  }, [userLocation, fetchAllItems, storeFavorites])
+
+  useEffect(() => {
+    const ids = new Set(storeFavorites)
+    setProducts((prev) => prev.map((p) => ({ ...p, isFavorite: ids.has(p.id) })))
+  }, [storeFavorites])
 
   // Fetch feed when filter changes
   useEffect(() => {
@@ -274,7 +224,6 @@ export default function PersonalizedFeed({ isAdmin }: PersonalizedFeedProps) {
       prev.map((p) => (p.id === id ? { ...p, isFavorite: next } : p))
     )
     if (next) {
-      setFavoriteIds((prev) => new Set([...prev, id]))
       addFavorite(id)
       fetch('/api/wishlist', {
         method: 'POST',
@@ -283,11 +232,6 @@ export default function PersonalizedFeed({ isAdmin }: PersonalizedFeedProps) {
         body: JSON.stringify({ productId: id }),
       }).catch(() => {})
     } else {
-      setFavoriteIds((prev) => {
-        const s = new Set(prev)
-        s.delete(id)
-        return s
-      })
       removeFavorite(id)
       fetch('/api/wishlist', {
         method: 'DELETE',

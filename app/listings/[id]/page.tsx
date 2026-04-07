@@ -236,7 +236,6 @@ export default function ListingDetailPage() {
       }
       toast.success('Listing deleted')
       router.push('/profile')
-      router.refresh()
     } catch {
       toast.error('Failed to delete listing')
     }

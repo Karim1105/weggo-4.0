@@ -6,6 +6,7 @@ import FeaturedListings from '@/components/FeaturedListings'
 import HowItWorks from '@/components/HowItWorks'
 import Footer from '@/components/Footer'
 import RecentlyViewed from '@/components/RecentlyViewed'
+import WishlistHydrator from '@/components/WishlistHydrator'
 import { isAdminRole } from '@/lib/ui/role-ui'
 
 async function getUserRole(): Promise<'user' | 'admin' | null> {
@@ -43,6 +44,8 @@ export default async function Home() {
         <div className="absolute inset-0 bg-gradient-to-bl from-orange-50/20 via-transparent to-amber-50/20" />
         <div className="absolute inset-0 bg-gradient-to-br from-slate-50/40 via-blue-50/20 to-indigo-50/30" />
       </div>
+
+      <WishlistHydrator />
 
       <Hero />
       
