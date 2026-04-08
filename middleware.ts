@@ -117,7 +117,7 @@ export function middleware(request: NextRequest) {
       "default-src 'self'",
       `script-src ${scriptSrc.join(' ')}`,
       "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: https:",
+      "img-src 'self' data: https: blob:",
       "font-src 'self'",
       "connect-src 'self'",
       "frame-ancestors 'none'",

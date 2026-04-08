@@ -561,32 +561,22 @@ export async function POST(request: NextRequest) {
       return ApiErrors.badRequest('At least one image is required')
     }
 
-    const session = await mongoose.startSession()
     try {
-      await session.withTransaction(async () => {
-        await Product.create(
-          [
-            {
-              _id: productId,
-              title,
-              description,
-              category,
-              subcategory,
-              condition: normalizedCondition,
-              price,
-              location,
-              images,
-              seller: user._id,
-            },
-          ],
-          { session }
-        )
+      await Product.create({
+        _id: productId,
+        title,
+        description,
+        category,
+        subcategory,
+        condition: normalizedCondition,
+        price,
+        location,
+        images,
+        seller: user._id,
       })
     } catch (dbError) {
       await cleanupUploadedImages(images)
       throw dbError
-    } finally {
-      session.endSession()
     }
 
     const product = await Product.findById(productId).populate('seller', 'name avatar').exec()
