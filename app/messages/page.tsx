@@ -85,6 +85,25 @@ export default function MessagesPage() {
     [conversations]
   )
 
+  const handleConversationClick = (conversationId: string) => {
+    let decremented = false
+    setConversations((prev) =>
+      prev.map((conversation) => {
+        if (conversation.conversationId === conversationId && conversation.unreadCount > 0) {
+          decremented = true
+          return { ...conversation, unreadCount: conversation.unreadCount - 1 }
+        }
+        return conversation
+      })
+    )
+
+    if (decremented && typeof window !== 'undefined') {
+      window.dispatchEvent(
+        new CustomEvent('messages:unread:update', { detail: { delta: -1 } })
+      )
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen pt-24 pb-12 px-4 flex items-center justify-center">
@@ -151,6 +170,7 @@ export default function MessagesPage() {
                 >
                   <motion.div
                     whileHover={{ scale: 1.01, y: -1 }}
+                    onClick={() => handleConversationClick(conv.conversationId)}
                     className={`card-modern p-4 flex gap-4 items-center ${
                       conv.unreadCount > 0 ? 'border-primary-200 bg-primary-50/40' : ''
                     }`}

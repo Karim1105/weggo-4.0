@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Menu, X, Search, Heart, User, Plus, LayoutDashboard, Globe, LogIn, LogOut, MessageCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -32,7 +32,31 @@ export default function NavbarClient({ initialUser, sellHref }: NavbarClientProp
   const language = useAppStore((state) => state.language)
   const setLanguage = useAppStore((state) => state.setLanguage)
   const router = useRouter()
+  const pathname = usePathname()
   const isArabic = language === 'ar'
+
+  const fetchUnreadMessages = useCallback(async () => {
+    if (!user) {
+      setUnreadMessages(0)
+      return
+    }
+
+    try {
+      const res = await fetch('/api/messages', { credentials: 'include' })
+      const msgData = await res.json()
+      if (msgData.success && Array.isArray(msgData.conversations)) {
+        const totalUnread = msgData.conversations.reduce(
+          (sum: number, c: { unreadCount?: number }) => sum + (c.unreadCount || 0),
+          0
+        )
+        setUnreadMessages(totalUnread)
+      } else {
+        setUnreadMessages(0)
+      }
+    } catch {
+      setUnreadMessages(0)
+    }
+  }, [user])
 
   const handleSearch = () => {
     const query = searchQuery.trim()
@@ -59,31 +83,23 @@ export default function NavbarClient({ initialUser, sellHref }: NavbarClientProp
   }, [])
 
   useEffect(() => {
-    const fetchUnreadMessages = async () => {
-      if (!user) {
-        setUnreadMessages(0)
-        return
-      }
+    fetchUnreadMessages()
+  }, [user, pathname, fetchUnreadMessages])
 
-      try {
-        const res = await fetch('/api/messages', { credentials: 'include' })
-        const msgData = await res.json()
-        if (msgData.success && Array.isArray(msgData.conversations)) {
-          const totalUnread = msgData.conversations.reduce(
-            (sum: number, c: { unreadCount?: number }) => sum + (c.unreadCount || 0),
-            0
-          )
-          setUnreadMessages(totalUnread)
-        } else {
-          setUnreadMessages(0)
-        }
-      } catch {
-        setUnreadMessages(0)
+  useEffect(() => {
+    const handleUnreadUpdate = (event: Event) => {
+      const customEvent = event as CustomEvent<{ delta?: number }>
+      const delta = customEvent.detail?.delta
+      if (typeof delta === 'number') {
+        setUnreadMessages((prev) => Math.max(0, prev + delta))
+      } else {
+        fetchUnreadMessages()
       }
     }
 
-    fetchUnreadMessages()
-  }, [user])
+    window.addEventListener('messages:unread:update', handleUnreadUpdate)
+    return () => window.removeEventListener('messages:unread:update', handleUnreadUpdate)
+  }, [fetchUnreadMessages])
 
   useEffect(() => {
     document.documentElement.dir = isArabic ? 'rtl' : 'ltr'
