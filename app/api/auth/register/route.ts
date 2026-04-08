@@ -22,29 +22,36 @@ export async function POST(request: NextRequest) {
     await connectDB()
     const body = await request.json()
     const { name, email, password, phone, location } = body
+    const normalizedData = {
+      name: typeof name === 'string' ? name.trim() : name,
+      email: typeof email === 'string' ? email.trim().toLowerCase() : email,
+      password,
+      phone: typeof phone === 'string' ? phone.trim() : phone,
+      location: typeof location === 'string' ? location.trim() : location,
+    }
 
-    logger.debug('Registration attempt', { email }, requestId)
+    logger.debug('Registration attempt', { email: normalizedData.email }, requestId)
 
     // Validation
-    const validation = validateRegisterForm({ name, email, password, phone, location })
+    const validation = validateRegisterForm(normalizedData)
     if (!validation.valid) {
       return ApiErrors.validationError(validation.errors)
     }
 
     // Check if user exists before attempting create (prevents duplicate key error)
-    const existingUser = await User.findOne({ email: email.toLowerCase() })
+    const existingUser = await User.findOne({ email: normalizedData.email })
     if (existingUser) {
-      logger.info('Registration failed - user already exists', { email }, requestId)
+      logger.info('Registration failed - user already exists', { email: normalizedData.email }, requestId)
       return ApiErrors.conflict('Email address is already registered. Please log in or use a different email.')
     }
 
     // Create user
     const user = await User.create({
-      name,
-      email: email.toLowerCase(),
-      password,
-      phone,
-      location,
+      name: normalizedData.name,
+      email: normalizedData.email,
+      password: normalizedData.password,
+      phone: normalizedData.phone,
+      location: normalizedData.location,
     })
 
     const token = generateToken(user)
@@ -74,7 +81,7 @@ export async function POST(request: NextRequest) {
     })
     setCsrfTokenCookie(response)
 
-    logger.info('User registered successfully', { email, userId: user._id }, requestId)
+    logger.info('User registered successfully', { email: normalizedData.email, userId: user._id }, requestId)
 
     return response
   } catch (error: any) {

@@ -1,10 +1,11 @@
 'use client'
 
-import { Suspense } from 'react'
+import { Suspense, useEffect } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Mail, Lock, LogIn, AlertTriangle, X } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 function LoginPageInner() {
   const searchParams = useSearchParams()
@@ -14,6 +15,16 @@ function LoginPageInner() {
   const bannedReason = searchParams.get('reason')
   const isBanned = error === 'banned'
   const showInvalidCredentials = error === '1'
+
+  useEffect(() => {
+    if (showInvalidCredentials) {
+      toast.error('Invalid email or password. Double-check your credentials and try again.')
+    }
+
+    if (isBanned) {
+      toast.error('Your account is suspended. You can submit an appeal for review.')
+    }
+  }, [showInvalidCredentials, isBanned])
 
   const handleAppealClick = () => {
     router.push('/appeals')
@@ -97,13 +108,6 @@ function LoginPageInner() {
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome Back</h1>
           <p className="text-gray-600">Sign in to your account</p>
         </div>
-
-        {showInvalidCredentials && (
-          <div className="mb-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3">
-            <p className="text-sm font-medium text-red-700">Invalid email or password.</p>
-            <p className="text-xs text-red-600 mt-1">Double-check your credentials and try again.</p>
-          </div>
-        )}
 
         <form
           method="POST"

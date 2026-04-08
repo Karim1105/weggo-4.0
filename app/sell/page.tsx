@@ -9,7 +9,7 @@ import toast from 'react-hot-toast'
 import AIPricingSuggestion from '@/components/AIPricingSuggestion'
 import { categorizeProduct } from '@/lib/categorization'
 import { categories as listingCategories, subcategoriesByCategory, withCsrfHeader } from '@/lib/utils'
-import { NATIONAL_ID_GENERIC_ERROR, validateEgyptianNationalId } from '@/lib/validators'
+import { NATIONAL_ID_GENERIC_ERROR } from '@/lib/validators'
 
 interface ListingForm {
   title: string
@@ -23,8 +23,6 @@ interface ListingForm {
 }
 
 export default function SellPage() {
-  const [user, setUser] = useState<{ sellerVerified?: boolean; banned?: boolean } | null>(null)
-  const [authLoading, setAuthLoading] = useState(true)
   const [showVerificationDialog, setShowVerificationDialog] = useState(false)
   const [uploadingId, setUploadingId] = useState(false)
   const [nationalIdNumber, setNationalIdNumber] = useState('')
@@ -47,28 +45,8 @@ export default function SellPage() {
   const watchCategory = watch('category')
   const watchCondition = watch('condition')
 
-  useEffect(() => {
-    fetch('/api/auth/me', { credentials: 'include' })
-      .then((r) => r.json())
-      .then((data) => {
-        if (data.success && data.user) {
-          setUser(data.user)
-          if (!data.user.sellerVerified && !data.user.banned) {
-            setShowVerificationDialog(true)
-          }
-        }
-      })
-      .catch(() => setUser(null))
-      .finally(() => setAuthLoading(false))
-  }, [])
-
   const handleUploadId = async (e: React.FormEvent) => {
     e.preventDefault()
-    const validation = validateEgyptianNationalId(nationalIdNumber)
-    if (!validation.valid) {
-      toast.error(NATIONAL_ID_GENERIC_ERROR)
-      return
-    }
     setUploadingId(true)
     try {
       const res = await fetch('/api/auth/upload-id', {
@@ -80,7 +58,6 @@ export default function SellPage() {
       const data = await res.json()
       if (data.success) {
         toast.success('You are now a verified seller!')
-        setUser((prev) => (prev ? { ...prev, sellerVerified: true } : null))
         setShowVerificationDialog(false)
         setNationalIdNumber('')
       } else {
@@ -141,8 +118,11 @@ export default function SellPage() {
       }
       if (res.status === 403 && result.code === 'VERIFICATION_REQUIRED') {
         setShowVerificationDialog(true)
-        setUser((prev) => (prev ? { ...prev, sellerVerified: false } : null))
         toast.error(result.error)
+        return
+      }
+      if (res.status === 403 && result.code === 'ACCOUNT_BANNED') {
+        toast.error(result.error || 'Your account is restricted from listing items')
         return
       }
       if (!result.success) {
@@ -198,25 +178,7 @@ export default function SellPage() {
     }
   }
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen pt-24 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500" />
-      </div>
-    )
-  }
-
-  if (user?.banned) {
-    return (
-      <div className="min-h-screen pt-24 pb-12 px-4 flex flex-col items-center justify-center">
-        <ShieldAlert className="w-16 h-16 text-red-500 mb-4" />
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Account restricted</h1>
-        <p className="text-gray-600 text-center max-w-md">Your account has been banned from listing items.</p>
-      </div>
-    )
-  }
-
-  if (showVerificationDialog && !user?.sellerVerified) {
+  if (showVerificationDialog) {
     return (
       <div className="min-h-screen pt-24 pb-12 px-4 flex items-center justify-center">
         <motion.div
@@ -240,16 +202,15 @@ export default function SellPage() {
                 type="text"
                 inputMode="numeric"
                 autoComplete="off"
-                maxLength={14}
                 value={nationalIdNumber}
-                onChange={(e) => setNationalIdNumber(e.target.value.replace(/\D/g, '').slice(0, 14))}
+                onChange={(e) => setNationalIdNumber(e.target.value)}
                 placeholder="Enter your 14-digit ID number"
                 className="block w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
               />
             </label>
             <button
               type="submit"
-              disabled={uploadingId || nationalIdNumber.length === 0}
+              disabled={uploadingId}
               className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-primary-600 text-white font-medium rounded-lg hover:bg-primary-700 disabled:opacity-50"
             >
               {uploadingId ? 'Submitting...' : 'Submit National ID & become verified seller'}

@@ -1,6 +1,9 @@
 import type { Metadata } from 'next'
 import { Inter, Cairo } from 'next/font/google'
 import { cookies } from 'next/headers'
+import { verifyToken } from '@/lib/auth'
+import connectDB from '@/lib/db'
+import User from '@/models/User'
 import './globals.css'
 import { Toaster } from 'react-hot-toast'
 import Navbar from '@/components/Navbar'
@@ -20,19 +23,17 @@ export const metadata: Metadata = {
 async function getUserRole(): Promise<'user' | 'admin' | null> {
   try {
     const cookieStore = await cookies()
-    const cookieHeader = cookieStore.toString()
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
-    const res = await fetch(`${baseUrl}/api/auth/me`, {
-      method: 'GET',
-      headers: {
-        Cookie: cookieHeader,
-      },
-    })
+    const token = cookieStore.get('token')?.value
+    if (!token) return null
 
-    const data = await res.json()
-    if (data.success && data.user) {
-      return data.user.role === 'admin' ? 'admin' : 'user'
-    }
+    const payload = verifyToken(token)
+    if (!payload) return null
+
+    await connectDB()
+    const user = await User.findById(payload.userId).select('role').lean()
+    if (!user) return null
+
+    return (user as any).role === 'admin' ? 'admin' : 'user'
   } catch {
     // Not authenticated
   }

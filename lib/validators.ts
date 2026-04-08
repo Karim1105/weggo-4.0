@@ -21,19 +21,80 @@ export function validateEmail(email: string): boolean {
  * Password validation
  * Requires: at least 8 characters
  */
-export function validatePassword(password: string): { valid: boolean; message?: string } {
-  if (password.length < 8) {
+export function validatePassword(
+  password: string
+): { valid: boolean; message?: string } {
+  if (!password || password.length < 8) {
     return { valid: false, message: 'Password must be at least 8 characters' }
   }
+
+  if (!/[a-z]/.test(password)) {
+    return { valid: false, message: 'Password must include a lowercase letter' }
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    return { valid: false, message: 'Password must include an uppercase letter' }
+  }
+
+  if (!/\d/.test(password)) {
+    return { valid: false, message: 'Password must include a number' }
+  }
+
+  if (!/[!@#$%^&*(),.?":{}|<>_\-\\[\]\/+=~`]/.test(password)) {
+    return { valid: false, message: 'Password must include a special character' }
+  }
+
   return { valid: true }
 }
 
-export function validateEgyptianNationalId(nationalId: string): { valid: boolean; message?: string } {
+export function validateEgyptianNationalId(
+  nationalId: string
+): { valid: boolean; message?: string } {
   const cleaned = (nationalId || '').trim()
-  const nationalIdRegex = /^[23]\d{13}$/
 
-  if (!nationalIdRegex.test(cleaned)) {
+  // 1. Basic format
+  if (!/^[23]\d{13}$/.test(cleaned)) {
     return { valid: false, message: NATIONAL_ID_GENERIC_ERROR }
+  }
+
+  // 2. Extract parts
+  const century = cleaned[0] === '2' ? 1900 : 2000
+  const year = parseInt(cleaned.slice(1, 3), 10)
+  const month = parseInt(cleaned.slice(3, 5), 10)
+  const day = parseInt(cleaned.slice(5, 7), 10)
+  const governorate = cleaned.slice(7, 9)
+
+  const fullYear = century + year
+
+  // 3. Validate date
+  const date = new Date(fullYear, month - 1, day)
+
+  if (
+    date.getFullYear() !== fullYear ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return { valid: false, message: NATIONAL_ID_GENERIC_ERROR }
+  }
+
+  // 4. Prevent future dates
+  if (date > new Date()) {
+    return { valid: false, message: NATIONAL_ID_GENERIC_ERROR }
+  }
+
+  // 5. Validate governorate code
+  const validGovernorates = new Set([
+    '01','02','03','04','11','12','13','14','15','16','17','18','19',
+    '21','22','23','24','25','26','27','28','29','31','32','33','34','35','88'
+  ])
+
+  if (!validGovernorates.has(governorate)) {
+    return { valid: false, message: NATIONAL_ID_GENERIC_ERROR }
+  }
+
+  const age = new Date().getFullYear() - fullYear
+  if (age < 18) {
+    return { valid: false, message: 'You must be at least 18 years old' }
   }
 
   return { valid: true }
@@ -58,14 +119,33 @@ export function validateName(name: string): { valid: boolean; message?: string }
 /**
  * Phone validation (optional, but if provided must be valid)
  */
-export function validatePhone(phone: string | undefined): { valid: boolean; message?: string } {
+export function validatePhone(
+  phone: string | undefined
+): { valid: boolean; message?: string } {
   if (!phone) return { valid: true } // Optional
-  if (phone.length < 10) {
-    return { valid: false, message: 'Phone must be at least 10 characters' }
+
+  // Normalize: remove spaces, dashes, parentheses
+  const cleaned = phone.replace(/[\s\-\(\)]/g, '')
+
+  // Convert +20 to local format
+  let normalized = cleaned
+  if (cleaned.startsWith('+20')) {
+    normalized = '0' + cleaned.slice(3)
+  } else if (cleaned.startsWith('20')) {
+    normalized = '0' + cleaned.slice(2)
   }
-  if (!/^[\d\s\-\+\(\)]*$/.test(phone)) {
-    return { valid: false, message: 'Phone contains invalid characters' }
+
+  // Must be exactly 11 digits
+  if (!/^01\d{9}$/.test(normalized)) {
+    return { valid: false, message: 'Please enter a valid Egyptian phone number' }
   }
+
+  // Must start with valid operator codes
+  const validPrefixes = ['010', '011', '012', '015']
+  if (!validPrefixes.some(prefix => normalized.startsWith(prefix))) {
+    return { valid: false, message: 'Invalid phone operator' }
+  }
+
   return { valid: true }
 }
 

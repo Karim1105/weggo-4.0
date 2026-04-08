@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { Mail, Lock, User, Phone, MapPin, UserPlus } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { withCsrfHeader } from '@/lib/utils'
+import { validateRegisterForm } from '@/lib/validators'
 
 function RegisterPageInner() {
   const [formData, setFormData] = useState({
@@ -27,13 +28,29 @@ function RegisterPageInner() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    const normalizedFormData = {
+      name: formData.name.trim(),
+      email: formData.email.trim(),
+      password: formData.password,
+      phone: formData.phone.trim(),
+      location: formData.location.trim(),
+    }
+
+    const clientValidation = validateRegisterForm(normalizedFormData)
+    if (!clientValidation.valid) {
+      const messages = Object.values(clientValidation.errors)
+      toast.error(messages.length ? `Please fix: ${messages.join(' | ')}` : 'Please check your input and try again.')
+      return
+    }
+
     setLoading(true)
 
     try {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
-        body: JSON.stringify(formData),
+        body: JSON.stringify(normalizedFormData),
       })
 
       const data = await res.json()
@@ -43,10 +60,29 @@ function RegisterPageInner() {
         router.push(redirect.startsWith('/') ? redirect : '/')
         router.refresh()
       } else {
-        toast.error(data.error || 'Registration failed')
+        if (data.code === 'VALIDATION_ERROR' && data.details && typeof data.details === 'object') {
+          const validationErrors = Object.values(data.details).filter(Boolean)
+          const message = validationErrors.length
+            ? `Please fix the following: ${validationErrors.join(' | ')}`
+            : 'Please check your input and try again.'
+          toast.error(message)
+          return
+        }
+
+        if (data.code === 'CONFLICT') {
+          toast.error(data.error || 'This email is already registered. Try logging in instead.')
+          return
+        }
+
+        if (data.code === 'RATE_LIMIT_EXCEEDED') {
+          toast.error('Too many registration attempts. Please wait a few minutes and try again.')
+          return
+        }
+
+        toast.error(data.error || 'Registration failed. Please check your details and try again.')
       }
     } catch (error) {
-      toast.error('Registration failed')
+      toast.error('Could not create account. Please check your internet connection and try again.')
     } finally {
       setLoading(false)
     }
