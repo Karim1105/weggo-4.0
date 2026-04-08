@@ -26,14 +26,11 @@ export async function GET(request: NextRequest) {
         email: user.email,
         phone: user.phone,
         location: user.location,
-        role: user.role,
         avatar: user.avatar,
         isVerified: user.isVerified,
         sellerVerified: (user as any).sellerVerified ?? false,
         banned: (user as any).banned ?? false,
-        bannedAt: (user as any).bannedAt ?? null,
         bannedReason: (user as any).bannedReason ?? null,
-        bannedBy: (user as any).bannedBy ?? null,
       },
     })
     

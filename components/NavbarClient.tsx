@@ -4,28 +4,25 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Menu, X, Search, Heart, User, Plus, Globe, LogIn, LogOut, MessageCircle } from 'lucide-react'
+import { Menu, X, Search, Heart, User, Plus, LayoutDashboard, Globe, LogIn, LogOut, MessageCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { revalidateNavbar } from '@/app/actions/auth'
 import { useAppStore } from '@/lib/store'
-import SellDashboardButton from './SellDashboardButton'
-import SellDashboardButtonMobile from './SellDashboardButtonMobile'
 
 // Type-safe user interface
 interface NavbarUser {
   id: string
   name: string
   email: string
-  role: 'user' | 'admin'
   avatar?: string
 }
 
 interface NavbarClientProps {
   initialUser: NavbarUser | null
-  isAdmin: boolean
+  sellHref: '/sell' | '/admin'
 }
 
-export default function NavbarClient({ initialUser, isAdmin }: NavbarClientProps) {
+export default function NavbarClient({ initialUser, sellHref }: NavbarClientProps) {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
@@ -206,7 +203,23 @@ export default function NavbarClient({ initialUser, isAdmin }: NavbarClientProps
 
             {user ? (
               <>
-                <SellDashboardButton isAdmin={isAdmin} isArabic={isArabic} />
+                {sellHref === '/admin' ? (
+                  <Link
+                    href="/admin"
+                    className="group flex items-center space-x-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-2xl font-bold hover:shadow-xl transition-all hover:-translate-y-1 shadow-lg"
+                  >
+                    <LayoutDashboard className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                    <span>{isArabic ? 'لوحة التحكم' : 'Dashboard'}</span>
+                  </Link>
+                ) : (
+                  <Link
+                    href="/sell"
+                    className="group flex items-center space-x-2 gradient-primary text-white px-6 py-3 rounded-2xl font-bold hover:shadow-xl transition-all hover:-translate-y-1 shadow-lg"
+                  >
+                    <Plus className="w-5 h-5 group-hover:scale-110 transition-transform" />
+                    <span>{isArabic ? 'بيع' : 'Sell'}</span>
+                  </Link>
+                )}
 
                 <Link
                   href="/messages"
@@ -311,11 +324,25 @@ export default function NavbarClient({ initialUser, isAdmin }: NavbarClientProps
 
               {user ? (
                 <>
-                  <SellDashboardButtonMobile 
-                    isAdmin={isAdmin} 
-                    isArabic={isArabic}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  />
+                  {sellHref === '/admin' ? (
+                    <Link
+                      href="/admin"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center justify-center space-x-2 bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-6 py-3 rounded-full font-semibold"
+                    >
+                      <LayoutDashboard className="w-5 h-5" />
+                      <span>{isArabic ? 'لوحة التحكم' : 'Dashboard'}</span>
+                    </Link>
+                  ) : (
+                    <Link
+                      href="/sell"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex items-center justify-center space-x-2 gradient-primary text-white px-6 py-3 rounded-full font-semibold"
+                    >
+                      <Plus className="w-5 h-5" />
+                      <span>{isArabic ? 'بيع' : 'Sell'}</span>
+                    </Link>
+                  )}
 
                   <Link
                     href="/messages"

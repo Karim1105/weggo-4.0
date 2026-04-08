@@ -27,11 +27,7 @@ interface Product {
   }
 }
 
-interface PersonalizedFeedProps {
-  isAdmin: boolean
-}
-
-export default function PersonalizedFeed({ isAdmin }: PersonalizedFeedProps) {
+export default function PersonalizedFeed() {
   const [products, setProducts] = useState<Product[]>([])
   const [filter, setFilter] = useState<'all' | 'recommended' | 'nearby' | 'trending'>('recommended')
   const [showBrowse, setShowBrowse] = useState(false)
@@ -589,7 +585,6 @@ export default function PersonalizedFeed({ isAdmin }: PersonalizedFeedProps) {
                            product={product}
                            index={index}
                            onToggleFavorite={toggleFavorite}
-                           isAdmin={isAdmin}
                          />
                        </div>
                      </motion.div>
@@ -636,7 +631,6 @@ export default function PersonalizedFeed({ isAdmin }: PersonalizedFeedProps) {
                     product={product}
                     index={index}
                     onToggleFavorite={toggleFavorite}
-                    isAdmin={isAdmin}
                   />
                 </motion.div>
               ))}

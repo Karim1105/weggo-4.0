@@ -1,4 +1,3 @@
-import { cookies } from 'next/headers'
 import Hero from '@/components/Hero'
 import PersonalizedFeed from '@/components/PersonalizedFeed'
 import Categories from '@/components/Categories'
@@ -7,33 +6,7 @@ import HowItWorks from '@/components/HowItWorks'
 import Footer from '@/components/Footer'
 import RecentlyViewed from '@/components/RecentlyViewed'
 import WishlistHydrator from '@/components/WishlistHydrator'
-import { isAdminRole } from '@/lib/ui/role-ui'
-
-async function getUserRole(): Promise<'user' | 'admin' | null> {
-  try {
-    const cookieStore = await cookies()
-    const cookieHeader = cookieStore.toString()
-    const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'
-    const res = await fetch(`${baseUrl}/api/auth/me`, {
-      method: 'GET',
-      headers: {
-        Cookie: cookieHeader,
-      },
-    })
-
-    const data = await res.json()
-    if (data.success && data.user) {
-      return data.user.role === 'admin' ? 'admin' : 'user'
-    }
-  } catch {
-    // Not authenticated
-  }
-
-  return null
-}
-
-export default async function Home() {
-  const role = await getUserRole()
+export default function Home() {
 
   return (
     <div className="relative">
@@ -51,7 +24,7 @@ export default async function Home() {
       
       {/* Seamless sections - no individual gradients */}
       <Categories />
-      <PersonalizedFeed isAdmin={isAdminRole(role)} />
+      <PersonalizedFeed />
       <RecentlyViewed />
       <FeaturedListings />
       <HowItWorks />

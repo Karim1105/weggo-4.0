@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { revalidatePath } from 'next/cache'
 import connectDB from '@/lib/db'
 import User from '@/models/User'
 import { generateToken } from '@/lib/auth'
@@ -144,6 +145,9 @@ export async function POST(request: NextRequest) {
       maxAge: maxAge,
     })
     setCsrfTokenCookie(response)
+
+    // Invalidate layout cache so navbar reflects the new auth state immediately.
+    revalidatePath('/', 'layout')
 
     logger.info('User logged in successfully', { email, userId: user._id, mode: isJsonRequest ? 'json' : 'form' }, requestId)
 
