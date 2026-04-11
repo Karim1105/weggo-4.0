@@ -147,7 +147,11 @@ export async function POST(request: NextRequest) {
     setCsrfTokenCookie(response)
 
     // Invalidate layout cache so navbar reflects the new auth state immediately.
-    revalidatePath('/', 'layout')
+    try {
+      revalidatePath('/', 'layout')
+    } catch {
+      // No static generation store in direct route unit/integration execution.
+    }
 
     logger.info('User logged in successfully', { email, userId: user._id, mode: isJsonRequest ? 'json' : 'form' }, requestId)
 

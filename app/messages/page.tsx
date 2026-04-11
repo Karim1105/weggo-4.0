@@ -86,18 +86,21 @@ export default function MessagesPage() {
   )
 
   const handleConversationClick = (conversationId: string) => {
-    let decremented = false
+    const clickedConversation = conversations.find(
+      (conversation) => conversation.conversationId === conversationId
+    )
+    const shouldDecrement = Boolean(clickedConversation && clickedConversation.unreadCount > 0)
+
     setConversations((prev) =>
       prev.map((conversation) => {
         if (conversation.conversationId === conversationId && conversation.unreadCount > 0) {
-          decremented = true
           return { ...conversation, unreadCount: conversation.unreadCount - 1 }
         }
         return conversation
       })
     )
 
-    if (decremented && typeof window !== 'undefined') {
+    if (shouldDecrement && typeof window !== 'undefined') {
       window.dispatchEvent(
         new CustomEvent('messages:unread:update', { detail: { delta: -1 } })
       )

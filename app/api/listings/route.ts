@@ -490,7 +490,7 @@ export async function GET(request: NextRequest) {
 
     const response = successResponse(resultData)
 
-    response.headers.set('Cache-Control', 'private, no-store, max-age=0, must-revalidate')
+    response.headers.set('Cache-Control', 'private, no-store')
     response.headers.set('Vary', 'Cookie')
     
     return response
@@ -600,7 +600,7 @@ export async function POST(request: NextRequest) {
       return ApiErrors.serverError()
     }
 
-    revalidateTag('listings')
+    revalidateTag('listings', 'max')
 
     logger.info('Listing created successfully', { listingId: product._id, userId: user._id }, requestId)
 

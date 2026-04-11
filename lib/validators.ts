@@ -40,10 +40,6 @@ export function validatePassword(
     return { valid: false, message: 'Password must include a number' }
   }
 
-  if (!/[!@#$%^&*(),.?":{}|<>_\-\\[\]\/+=~`]/.test(password)) {
-    return { valid: false, message: 'Password must include a special character' }
-  }
-
   return { valid: true }
 }
 
