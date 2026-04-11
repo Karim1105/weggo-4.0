@@ -6,7 +6,7 @@ const protectedPaths = ['/sell', '/profile', '/favorites']
 // Paths that require admin privileges
 const adminPaths = ['/appeal-review', '/admin', '/api/admin']
 
-export function middleware(request: NextRequest) {
+export function proxy(request: NextRequest) {
 	const { pathname } = request.nextUrl
 	const origin =
 		process.env.NEXT_PUBLIC_SITE_URL ||
