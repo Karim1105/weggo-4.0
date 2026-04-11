@@ -1,7 +1,7 @@
 import fs from 'fs/promises'
 import path from 'path'
 import mongoose from 'mongoose'
-import { unstable_cache, revalidateTag } from 'next/cache'
+import { revalidateTag } from 'next/cache'
 import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db'
 import Product from '@/models/Product'
@@ -12,13 +12,14 @@ import { successResponse, errorResponse, ApiErrors } from '@/lib/api-response'
 import { normalizeCondition, validateCreateListingForm } from '@/lib/validators'
 import { logger, getRequestId } from '@/lib/logger'
 
-export const dynamic = 'force-dynamic'
+export const dynamic = 'force-dynamic' //no Cache
 
 const MAX_PAGE_SIZE = 100
 const MAX_FILTER_LENGTH = 100
 const MAX_TEXT_LENGTH = 2000
 
-const ALLOWED_SORTS = new Set(['newest', 'oldest', 'price-low', 'price-high', 'rating-high'])
+const MAX_SORT_LENGTH = 120
+const ALLOWED_FRONTEND_SORT_KEYS = new Set(['createdAt', 'price', 'averageRating', 'ratingCount'])
 
 type SortDirection = 1 | -1
 
@@ -45,12 +46,13 @@ type ListingQueryParams = {
   minPrice: number | null
   maxPrice: number | null
   search: string | null
-  sortBy: string
+  sort: string | null
   includeTotal: boolean
   limit: number
   cursor: string | null
   sellerId: string | null
   status: 'active' | 'sold' | 'pending' | 'deleted' | 'all'
+  stateFilter: '!=deleted' | null
 }
 
 function parseInteger(value: string | null, fallback: number, min: number, max: number): number | null {
@@ -78,11 +80,11 @@ function safeText(value: FormDataEntryValue | null, maxLength: number): string |
   return trimmed
 }
 
-function escapeRegex(input: string): string {
-  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+function escapeRegex(input: string): string { //remove special characters from user input for security and to prevent regex errors
+  return input.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')//don't remove
 }
 
-function getSortConfig(sortBy: string, useTextScore: boolean): { sort: Record<string, any>; fields: SortField[] } {
+function getSortConfigFromFrontend(sortParam: string | null, useTextScore: boolean): { sort: Record<string, any>; fields: SortField[] } {
   const sort: Record<string, any> = { isBoosted: -1 }
   const fields: SortField[] = [{ key: 'isBoosted', direction: -1 }]
 
@@ -91,29 +93,39 @@ function getSortConfig(sortBy: string, useTextScore: boolean): { sort: Record<st
     fields.push({ key: 'relevanceScore', direction: -1 })
   }
 
-  if (sortBy === 'price-low') {
-    sort.price = 1
-    fields.push({ key: 'price', direction: 1 })
-  } else if (sortBy === 'price-high') {
-    sort.price = -1
-    fields.push({ key: 'price', direction: -1 })
-  } else if (sortBy === 'oldest') {
-    sort.createdAt = 1
-    fields.push({ key: 'createdAt', direction: 1 })
-  } else if (sortBy === 'rating-high') {
-    sort.averageRating = -1
-    sort.ratingCount = -1
-    fields.push({ key: 'averageRating', direction: -1 })
-    fields.push({ key: 'ratingCount', direction: -1 })
-    sort.createdAt = -1
-    fields.push({ key: 'createdAt', direction: -1 })
-  } else {
+  const normalized = (sortParam || '').trim().toLowerCase()
+  const tokens = normalized ? normalized.split(',') : []
+  const seen = new Set<string>()
+
+  tokens.forEach((token) => {
+    const [keyRaw, directionRaw] = token.split(':').map((part) => part.trim())
+    if (!keyRaw || !directionRaw || seen.has(keyRaw) || !ALLOWED_FRONTEND_SORT_KEYS.has(keyRaw)) {
+      return
+    }
+
+    const direction: SortDirection | null =
+      directionRaw === 'asc' || directionRaw === '1'
+        ? 1
+        : directionRaw === 'desc' || directionRaw === '-1'
+          ? -1
+          : null
+
+    if (!direction) return
+
+    const key = keyRaw as keyof CursorPayload
+    sort[key] = direction
+    fields.push({ key, direction })
+    seen.add(keyRaw)
+  })
+
+  if (!seen.has('createdAt')) {
     sort.createdAt = -1
     fields.push({ key: 'createdAt', direction: -1 })
   }
 
-  sort._id = sortBy === 'oldest' ? 1 : -1
-  fields.push({ key: '_id', direction: sortBy === 'oldest' ? 1 : -1 })
+  const idDirection = (sort.createdAt as SortDirection | undefined) || -1
+  sort._id = idDirection
+  fields.push({ key: '_id', direction: idDirection })
 
   return { sort, fields }
 }
@@ -240,12 +252,16 @@ async function fetchListingsData(params: ListingQueryParams) {
     query.condition = params.condition
   }
 
+  if (params.stateFilter === '!=deleted') {
+    query.status = { $ne: 'deleted' }
+  }
+
   const searchTerm = params.search?.trim() || ''
   if (searchTerm) {
     query.$text = { $search: searchTerm }
   }
 
-  const { sort, fields } = getSortConfig(params.sortBy, Boolean(searchTerm))
+  const { sort, fields } = getSortConfigFromFrontend(params.sort, Boolean(searchTerm))
   const cursor = decodeCursor(params.cursor)
 
   const pipeline: any[] = [{ $match: query }]
@@ -395,7 +411,8 @@ export async function GET(request: NextRequest) {
     const sellerParam = searchParams.get('seller')?.trim().toLowerCase()
     const sellerMe = sellerParam === 'me'
     const requestedStatus = searchParams.get('status')?.trim().toLowerCase() || 'active'
-    const sortByRaw = searchParams.get('sortBy') || 'newest'
+    const stateRaw = searchParams.get('state')?.trim().toLowerCase() || null
+    const sortRaw = searchParams.get('sort')
     const includeTotal = searchParams.get('includeTotal') !== 'false'
 
     const page = parseInteger(searchParams.get('page'), 1, 1, 1_000_000)
@@ -423,8 +440,15 @@ export async function GET(request: NextRequest) {
     if (search && search.length > MAX_FILTER_LENGTH) {
       return ApiErrors.badRequest('Search term is too long (maximum 100 characters)')
     }
+    if (sortRaw && sortRaw.length > MAX_SORT_LENGTH) {
+      return ApiErrors.badRequest('Sort configuration is too long')
+    }
+    if (stateRaw && stateRaw !== '!=deleted') {
+      return ApiErrors.badRequest('Invalid state filter. Allowed value: state=!=deleted')
+    }
 
-    const sortBy = ALLOWED_SORTS.has(sortByRaw) ? sortByRaw : 'newest'
+    const sort = sortRaw?.trim() || null
+    const stateFilter: '!=deleted' | null = stateRaw === '!=deleted' ? '!=deleted' : null
     const status = ['active', 'sold', 'pending', 'deleted', 'all'].includes(requestedStatus)
       ? (requestedStatus as 'active' | 'sold' | 'pending' | 'deleted' | 'all')
       : 'active'
@@ -447,21 +471,16 @@ export async function GET(request: NextRequest) {
       minPrice,
       maxPrice,
       search,
-      sortBy,
+      sort,
       includeTotal,
       limit,
       cursor,
       sellerId,
       status,
+      stateFilter,
     }
 
-    const resultData = sellerMe
-      ? await fetchListingsData(queryParams)
-      : await unstable_cache(
-          async () => fetchListingsData(queryParams),
-          ['listings', buildListingsCacheKey(queryParams)],
-          { revalidate: 60, tags: ['listings'] }
-        )()
+    const resultData = await fetchListingsData(queryParams)
 
     logger.debug(
       'Listings fetched',
@@ -471,12 +490,8 @@ export async function GET(request: NextRequest) {
 
     const response = successResponse(resultData)
 
-    if (sellerMe) {
-      response.headers.set('Cache-Control', 'private, no-store')
-      response.headers.set('Vary', 'Cookie')
-    } else {
-      response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=300')
-    }
+    response.headers.set('Cache-Control', 'private, no-store, max-age=0, must-revalidate')
+    response.headers.set('Vary', 'Cookie')
     
     return response
   } catch (error: any) {
@@ -619,40 +634,3 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function buildListingsCacheKey(params: {
-  category: string | null
-  subcategory: string | null
-  location: string | null
-  condition: string | null
-  minPrice: number | null
-  maxPrice: number | null
-  search: string | null
-  sortBy: string
-  includeTotal: boolean
-  limit: number
-  cursor: string | null
-  sellerId: string | null
-  status: 'active' | 'sold' | 'pending' | 'deleted' | 'all'
-}) {
-  const safe = (value: string | null | number) => {
-    if (value === null || value === undefined) return ''
-    const normalized = String(value).trim()
-    return normalized ? encodeURIComponent(normalized) : ''
-  }
-  return [
-    'listings',
-    safe(params.category),
-    safe(params.subcategory),
-    safe(params.location),
-    safe(params.condition),
-    safe(params.minPrice),
-    safe(params.maxPrice),
-    safe(params.search),
-    params.sortBy,
-    params.includeTotal ? 't1' : 't0',
-    params.status,
-    params.cursor || '',
-    params.limit,
-    params.sellerId || '',
-  ].join('|')
-}
