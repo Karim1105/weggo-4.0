@@ -11,6 +11,56 @@ import { categorizeProduct } from '@/lib/categorization'
 import { categories as listingCategories, subcategoriesByCategory, withCsrfHeader } from '@/lib/utils'
 import { NATIONAL_ID_GENERIC_ERROR } from '@/lib/validators'
 
+const MAX_IMAGE_DIMENSION = 1920
+const IMAGE_QUALITY = 0.82
+
+async function compressAndStripMetadata(file: File): Promise<File> {
+  if (!file.type.startsWith('image/')) return file
+
+  const objectUrl = URL.createObjectURL(file)
+
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const img = new Image()
+      img.onload = () => resolve(img)
+      img.onerror = () => reject(new Error('Could not read selected image'))
+      img.src = objectUrl
+    })
+
+    const width = image.naturalWidth
+    const height = image.naturalHeight
+    const scale = Math.min(1, MAX_IMAGE_DIMENSION / Math.max(width, height))
+    const targetWidth = Math.max(1, Math.round(width * scale))
+    const targetHeight = Math.max(1, Math.round(height * scale))
+
+    const canvas = document.createElement('canvas')
+    canvas.width = targetWidth
+    canvas.height = targetHeight
+
+    const context = canvas.getContext('2d')
+    if (!context) {
+      throw new Error('Could not process selected image')
+    }
+
+    context.drawImage(image, 0, 0, targetWidth, targetHeight)
+
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((result) => {
+        if (result) resolve(result)
+        else reject(new Error('Could not compress selected image'))
+      }, 'image/jpeg', IMAGE_QUALITY)
+    })
+
+    const normalizedName = file.name.replace(/\.[^/.]+$/, '') || 'image'
+    return new File([blob], `${normalizedName}.jpg`, {
+      type: 'image/jpeg',
+      lastModified: Date.now(),
+    })
+  } finally {
+    URL.revokeObjectURL(objectUrl)
+  }
+}
+
 interface ListingForm {
   title: string
   description: string
@@ -70,13 +120,19 @@ export default function SellPage() {
     }
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (files) {
-      const newFiles = Array.from(files)
-      setImageFiles(prev => [...prev, ...newFiles])
-      const newPreviews = newFiles.map(file => URL.createObjectURL(file))
-      setImagePreviews(prev => [...prev, ...newPreviews])
+      try {
+        const processedFiles = await Promise.all(Array.from(files).map((file) => compressAndStripMetadata(file)))
+        setImageFiles(prev => [...prev, ...processedFiles])
+        const newPreviews = processedFiles.map(file => URL.createObjectURL(file))
+        setImagePreviews(prev => [...prev, ...newPreviews])
+      } catch {
+        toast.error('Failed to process one or more selected images')
+      }
+
+      e.target.value = ''
     }
   }
 

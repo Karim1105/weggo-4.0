@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Filter, Grid, List } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -22,6 +22,7 @@ export default function BrowsePageContainer() {
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [showFilters, setShowFilters] = useState(false)
+  const loadMoreTriggerRef = useRef<HTMLDivElement | null>(null)
 
   const {
     searchInput,
@@ -138,6 +139,27 @@ export default function BrowsePageContainer() {
       toast.error('Failed to save')
     }
   }, [filters, router, searchInput])
+
+  useEffect(() => {
+    const target = loadMoreTriggerRef.current
+    if (!target || loading || loadingMore || !hasMore) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0]
+        if (first.isIntersecting) {
+          loadMore()
+        }
+      },
+      { root: null, rootMargin: '300px', threshold: 0 }
+    )
+
+    observer.observe(target)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [hasMore, loadMore, loading, loadingMore])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40">
@@ -272,7 +294,16 @@ export default function BrowsePageContainer() {
 
         <ProductGrid viewMode={viewMode} products={products} loading={loading} onToggleFavorite={toggleFavorite} />
 
+        {hasMore && <div ref={loadMoreTriggerRef} className="h-1 w-full" aria-hidden="true" />}
+
         <LoadMoreButton visible={!loading && products.length > 0 && hasMore} loading={loadingMore} onClick={loadMore} />
+
+        {!loading && products.length > 0 && !hasMore && (
+          <div className="mt-8 rounded-2xl border border-gray-200 bg-white/90 p-6 text-center">
+            <p className="text-sm font-medium text-gray-800">No more listings right now</p>
+            <p className="mt-1 text-xs text-gray-500">Try changing filters or check back later.</p>
+          </div>
+        )}
 
         {!loading && products.length === 0 && <EmptyResults onClearFilters={() => {
           clearFilters()

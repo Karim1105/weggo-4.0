@@ -3,6 +3,7 @@ import path from 'path'
 import { randomUUID } from 'crypto'
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
+const MAX_TOTAL_FILE_SIZE = 20 * 1024 * 1024 // 20MB
 const MAX_LISTING_IMAGES = 10
 const ALLOWED_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
 
@@ -80,7 +81,12 @@ export async function handleImageUpload(
   const imagePaths: string[] = []
 
   if (files.length > MAX_LISTING_IMAGES) {
-    throw new Error(`Maximum ${MAX_LISTING_IMAGES} images per listing allowed.`)
+    throw new Error(`You can upload up to ${MAX_LISTING_IMAGES} images per listing.`)
+  }
+
+  const totalSize = files.reduce((sum, file) => sum + (file?.size || 0), 0)
+  if (totalSize > MAX_TOTAL_FILE_SIZE) {
+    throw new Error('Total image size is too large. Maximum combined size is 20MB.')
   }
 
   for (const file of files) {
