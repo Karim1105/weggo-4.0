@@ -171,21 +171,21 @@ export default function NavbarClient({ initialUser, sellHref }: NavbarClientProp
           </AnimatePresence>
 
           {/* Logo */}
-          <Link href="/" className={`flex items-center space-x-3 transition-opacity duration-300 -ml-4 md:-ml-12 lg:-ml-16 ${isMobileSearchOpen ? 'md:opacity-100 opacity-0' : 'opacity-100'}`}>
+          <Link href="/" className={`inline-block shrink-0 leading-none transition-opacity duration-300 mr-2 md:mr-4 ${isMobileSearchOpen ? 'md:opacity-100 opacity-0' : 'opacity-100'}`}>
             <motion.div
               whileHover={{ scale: 1.05, rotate: 2 }}
-              className="-my-3 md:-my-4"
+              className="inline-block"
             >
               <img
                 src="/weggo-logo.png"
                 alt="Weggo logo"
-                className="h-36 md:h-40 w-auto object-contain"
+                className="block h-17 md:h-12 w-auto object-contain"
               />
             </motion.div>
           </Link>
 
           {/* Search Bar - Desktop */}
-          <div className="hidden md:flex flex-1 max-w-[44rem] ml-0 md:-ml-8 lg:-ml-10 mr-6 lg:mr-8">
+          <div className="hidden md:flex flex-1 max-w-[44rem] ml-2 md:ml-4 lg:ml-6 mr-6 lg:mr-8">
             <div className="relative w-full">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input

@@ -39,3 +39,5 @@ next-env.d.ts
 /public/uploads/listings
 /public/uploads/ids
 /.vs
+/.env.local
+/public/weggo-logo-org.png
