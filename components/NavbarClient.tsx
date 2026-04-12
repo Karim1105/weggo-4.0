@@ -45,6 +45,10 @@ export default function NavbarClient({ initialUser, sellHref }: NavbarClientProp
       const res = await fetch('/api/messages', { credentials: 'include' })
       const msgData = await res.json()
       if (msgData.success && Array.isArray(msgData.conversations)) {
+        if (typeof msgData.totalUnread === 'number') {
+          setUnreadMessages(msgData.totalUnread)
+          return
+        }
         const totalUnread = msgData.conversations.reduce(
           (sum: number, c: { unreadCount?: number }) => sum + (c.unreadCount || 0),
           0

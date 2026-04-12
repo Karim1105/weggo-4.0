@@ -6,29 +6,12 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { ArrowLeft, MessageCircle, User, Clock, Shield } from 'lucide-react'
 import { withCsrfHeader } from '@/lib/utils'
+import type { MessageDTO } from '@/types/messages'
 
-interface UserLite {
-  _id: string
-  name: string
-  email?: string
-  avatar?: string
-}
-
-interface ProductLite {
-  _id: string
-  title: string
-  price: number
-  images?: string[]
-}
-
-interface Message {
-  _id: string
-  conversationId: string
-  content: string
-  createdAt: string
-  sender: UserLite
-  receiver: UserLite
-  product?: ProductLite
+function getOutgoingStatus(message: MessageDTO): 'Sent' | 'Received' | 'Read' {
+  if (message.read || message.readAt) return 'Read'
+  if (message.receivedAt) return 'Received'
+  return 'Sent'
 }
 
 export default function ConversationPage() {
@@ -36,7 +19,7 @@ export default function ConversationPage() {
   const router = useRouter()
   const conversationId = params.conversationId as string
 
-  const [messages, setMessages] = useState<Message[]>([])
+  const [messages, setMessages] = useState<MessageDTO[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
@@ -90,8 +73,12 @@ export default function ConversationPage() {
     if (!replyText.trim() || messages.length === 0 || !currentUserId) return
 
     const first = messages[0]
-    const isSender = first.sender._id === currentUserId
+    const isSender = first.sender.id === currentUserId
     const otherUser = isSender ? first.receiver : first.sender
+    if (otherUser.banned) {
+      setSendError('You cannot message a banned user.')
+      return
+    }
     const product = first.product
 
     setSending(true)
@@ -102,8 +89,8 @@ export default function ConversationPage() {
         headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
         credentials: 'include',
         body: JSON.stringify({
-          receiverId: otherUser._id,
-          productId: product?._id,
+          receiverId: otherUser.id,
+          productId: product?.id,
           content: replyText.trim(),
         }),
       })
@@ -125,7 +112,7 @@ export default function ConversationPage() {
   const handleBlock = async () => {
     if (!currentUserId || messages.length === 0) return
     const first = messages[0]
-    const isSender = first.sender._id === currentUserId
+    const isSender = first.sender.id === currentUserId
     const otherUser = isSender ? first.receiver : first.sender
 
     if (!window.confirm(`Block ${otherUser.name || otherUser.email}? They won't be able to message you.`)) {
@@ -138,7 +125,7 @@ export default function ConversationPage() {
         method: 'POST',
         headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
         credentials: 'include',
-        body: JSON.stringify({ userId: otherUser._id }),
+        body: JSON.stringify({ userId: otherUser.id }),
       })
       const data = await res.json()
       if (!data.success) return
@@ -186,8 +173,9 @@ export default function ConversationPage() {
   }
 
   const first = messages[0]
-  const isSender = currentUserId && first.sender._id === currentUserId
+  const isSender = currentUserId && first.sender.id === currentUserId
   const otherUser = isSender ? first.receiver : first.sender
+  const isOtherUserBanned = Boolean(otherUser.banned)
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-4 bg-gray-50">
@@ -204,6 +192,11 @@ export default function ConversationPage() {
             <span className="font-semibold text-gray-900">
               {otherUser.name || otherUser.email}
             </span>
+            {isOtherUserBanned && (
+              <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
+                BANNED
+              </span>
+            )}
             <button
               type="button"
               disabled={blocking}
@@ -220,14 +213,14 @@ export default function ConversationPage() {
         <div className="card-modern flex-1 flex flex-col overflow-hidden">
           <div className="flex-1 overflow-y-auto p-4 space-y-3">
             {messages.map((msg) => {
-              const mine = currentUserId && msg.sender._id === currentUserId
+              const mine = currentUserId && msg.sender.id === currentUserId
               const time = new Date(msg.createdAt).toLocaleTimeString([], {
                 hour: '2-digit',
                 minute: '2-digit',
               })
               return (
                 <div
-                  key={msg._id}
+                  key={msg.id}
                   className={`flex ${mine ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
@@ -241,6 +234,7 @@ export default function ConversationPage() {
                     <div className="mt-1 flex items-center gap-1 text-[11px] opacity-80">
                       <Clock className="w-3 h-3" />
                       <span>{time}</span>
+                      {mine && <span>• {getOutgoingStatus(msg)}</span>}
                     </div>
                   </div>
                 </div>
@@ -253,6 +247,11 @@ export default function ConversationPage() {
             onSubmit={handleSend}
             className="border-t border-gray-200 p-3 bg-white flex flex-col gap-2"
           >
+            {isOtherUserBanned && (
+              <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+                You can no longer send messages because this user is banned.
+              </div>
+            )}
             {sendError && (
               <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
                 {sendError}
@@ -264,11 +263,12 @@ export default function ConversationPage() {
                 onChange={(e) => setReplyText(e.target.value)}
                 rows={1}
                 placeholder="Type a message..."
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
+                disabled={isOtherUserBanned}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none disabled:bg-gray-100 disabled:text-gray-500"
               />
               <motion.button
                 type="submit"
-                disabled={sending || !replyText.trim()}
+                disabled={isOtherUserBanned || sending || !replyText.trim()}
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.96 }}
                 className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary-600 text-white font-medium disabled:opacity-60"

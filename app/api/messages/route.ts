@@ -1,313 +1,98 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { isValidObjectId } from 'mongoose'
-import connectDB from '@/lib/db'
-import Message from '@/models/Message'
-import Product from '@/models/Product'
-import User from '@/models/User'
+import { Types } from 'mongoose'
 import { requireAuthNotBanned } from '@/lib/auth'
+import { IUser } from '@/models/User'
+import {
+  getConversationMessages,
+  getUserConversations,
+  MessageServiceError,
+  sendMessage,
+} from '@/app/api/messages/services/message.service'
+import {
+  validateGetMessagesQuery,
+  validateSendMessageInput,
+} from '@/app/api/messages/validators/message.validator'
 
-async function handler(request: NextRequest, user: any) {
+function getUserObjectId(user: IUser): Types.ObjectId {
+  return user._id instanceof Types.ObjectId ? user._id : new Types.ObjectId(user._id)
+}
+
+async function handler(request: NextRequest, user: IUser) {
   try {
-    await connectDB()
-
     if (request.method === 'GET') {
-      const { searchParams } = new URL(request.url)
-      const conversationId = searchParams.get('conversationId')
-      const otherUserId = searchParams.get('otherUserId')
-      const productId = searchParams.get('productId')
-
-      if (otherUserId && !isValidObjectId(otherUserId)) {
+      const validation = validateGetMessagesQuery(request.url)
+      if (!validation.data) {
         return NextResponse.json(
-          { success: false, error: 'Invalid other user ID format' },
+          { success: false, error: validation.error || 'Invalid query parameters' },
           { status: 400 }
         )
       }
 
-      if (productId && !isValidObjectId(productId)) {
-        return NextResponse.json(
-          { success: false, error: 'Invalid product ID format' },
-          { status: 400 }
-        )
-      }
+      const userId = getUserObjectId(user)
+      const { conversationId, page, pageSize } = validation.data
 
       if (conversationId) {
-        // Validate that user is a participant in the conversation (either sender or receiver)
-        const isParticipant = await Message.exists({
+        const result = await getConversationMessages({
           conversationId,
-          $or: [{ sender: user._id }, { receiver: user._id }]
+          userId,
+          page,
+          pageSize,
         })
-
-        if (!isParticipant) {
-          return NextResponse.json(
-            { success: false, error: 'Access denied to this conversation' },
-            { status: 403 }
-          )
-        }
-
-        // Get messages for a specific conversation
-        const messagesRaw = await Message.find({ conversationId })
-          .populate('sender', 'name avatar')
-          .populate('receiver', 'name avatar')
-          .populate('product', 'title price images')
-          .sort({ createdAt: 1 })
-          .lean()
-
-        const messages = messagesRaw.map((message: any) => {
-          const productImages = Array.isArray(message?.product?.images)
-            ? message.product.images.filter((img: string) => typeof img === 'string' && !img.startsWith('data:'))
-            : []
-
-          return {
-            ...message,
-            product: message.product
-              ? {
-                  ...message.product,
-                  images: productImages.length ? [productImages[0]] : [],
-                }
-              : message.product,
-          }
-        })
-
-        // Mark as read
-        await Message.updateMany(
-          { conversationId, receiver: user._id, read: false },
-          { read: true }
-        )
 
         return NextResponse.json({
           success: true,
-          messages,
+          messages: result.messages,
+          pagination: result.pagination,
+          markedReadCount: result.markedReadCount,
         })
       }
 
-      // Get all conversations for user
-      const conversations = await Message.aggregate([
-        {
-          $match: {
-            $or: [{ sender: user._id }, { receiver: user._id }],
-          },
-        },
-        {
-          $sort: { createdAt: -1 },
-        },
-        {
-          $group: {
-            _id: '$conversationId',
-            lastMessage: { $first: '$$ROOT' },
-            unreadCount: {
-              $sum: {
-                $cond: [{ $eq: ['$receiver', user._id] }, { $cond: ['$read', 0, 1] }, 0],
-              },
-            },
-          },
-        },
-      ])
-
-      const conversationIds = conversations.map((c) => c._id)
-      const messagesRaw = await Message.find({ conversationId: { $in: conversationIds } })
-        .populate('sender', 'name avatar')
-        .populate('receiver', 'name avatar')
-        .populate('product', 'title price images')
-        .sort({ createdAt: -1 })
-        .lean()
-
-      const messages = messagesRaw.map((message: any) => {
-        const productImages = Array.isArray(message?.product?.images)
-          ? message.product.images.filter((img: string) => typeof img === 'string' && !img.startsWith('data:'))
-          : []
-
-        return {
-          ...message,
-          product: message.product
-            ? {
-                ...message.product,
-                images: productImages.length ? [productImages[0]] : [],
-              }
-            : message.product,
-        }
+      const result = await getUserConversations({
+        userId,
+        page,
+        pageSize,
       })
 
       return NextResponse.json({
         success: true,
-        conversations: conversations.map((conv) => ({
-          conversationId: conv._id,
-          lastMessage: messages.find((m) => m.conversationId === conv._id),
-          unreadCount: conv.unreadCount,
-        })),
+        conversations: result.conversations,
+        totalUnread: result.totalUnread,
+        pagination: result.pagination,
       })
     }
 
     if (request.method === 'POST') {
-      const body = await request.json()
-      const { receiverId, productId, content } = body
-
-      if (!receiverId || !content) {
+      const body = (await request.json()) as unknown
+      const validation = await validateSendMessageInput(body)
+      if (!validation.data) {
         return NextResponse.json(
-          { success: false, error: 'Receiver ID and content are required' },
+          { success: false, error: validation.error || 'Invalid payload' },
           { status: 400 }
         )
       }
-
-      // Validate receiverId is a valid ObjectId
-      if (!isValidObjectId(receiverId)) {
-        return NextResponse.json(
-          { success: false, error: 'Invalid receiver ID format' },
-          { status: 400 }
-        )
-      }
-
-      if (receiverId === user._id.toString()) {
-        return NextResponse.json(
-          { success: false, error: 'You cannot message yourself' },
-          { status: 400 }
-        )
-      }
-
-      // Validate productId if provided
-      if (productId && !isValidObjectId(productId)) {
-        return NextResponse.json(
-          { success: false, error: 'Invalid product ID format' },
-          { status: 400 }
-        )
-      }
-
-      // Basic validation / anti-spam
-      if (typeof content !== 'string' || content.trim().length < 1 || content.trim().length > 2000) {
-        return NextResponse.json(
-          { success: false, error: 'Message must be between 1 and 2000 characters' },
-          { status: 400 }
-        )
-      }
-
-      // Blocking checks (both directions)
-      const [me, other] = await Promise.all([
-        User.findById(user._id).select('blockedUsers').lean(),
-        User.findById(receiverId).select('blockedUsers banned').lean(),
-      ])
-
-      if (!other) {
-        return NextResponse.json(
-          { success: false, error: 'Receiver not found' },
-          { status: 404 }
-        )
-      }
-
-      if ((other as any).banned) {
-        return NextResponse.json(
-          { success: false, error: 'User is not available' },
-          { status: 403 }
-        )
-      }
-
-      let product: any = null
-      if (productId) {
-        product = await Product.findById(productId).select('seller status').lean()
-        if (!product) {
-          return NextResponse.json(
-            { success: false, error: 'Product not found' },
-            { status: 404 }
-          )
-        }
-
-        if (product.status !== 'active') {
-          return NextResponse.json(
-            { success: false, error: 'This listing is not available for messaging' },
-            { status: 400 }
-          )
-        }
-
-        const sellerId = product.seller?.toString()
-        const currentUserId = user._id.toString()
-        const sellerIsParticipant = sellerId === currentUserId || sellerId === receiverId
-
-        if (!sellerIsParticipant) {
-          return NextResponse.json(
-            { success: false, error: 'Invalid product for this conversation' },
-            { status: 400 }
-          )
-        }
-      }
-
-      const myBlocked = new Set(((me as any)?.blockedUsers || []).map((id: any) => id.toString()))
-      const theirBlocked = new Set(((other as any)?.blockedUsers || []).map((id: any) => id.toString()))
-      if (myBlocked.has(receiverId.toString()) || theirBlocked.has(user._id.toString())) {
-        return NextResponse.json(
-          { success: false, error: 'You cannot message this user' },
-          { status: 403 }
-        )
-      }
-
-      // Prevent repeated identical messages within a short window
-      const recentDuplicate = await Message.findOne({
-        sender: user._id,
-        receiver: receiverId,
-        product: productId || null,
-        content: content.trim(),
-        createdAt: { $gte: new Date(Date.now() - 30 * 1000) },
-      }).lean()
-      if (recentDuplicate) {
-        return NextResponse.json(
-          { success: false, error: 'Please wait a moment before sending the same message again.' },
-          { status: 429 }
-        )
-      }
-
-      // Generate conversation ID (sorted to ensure consistency)
-      const userIds = [user._id.toString(), receiverId].sort()
-      const conversationId = `${userIds[0]}_${userIds[1]}${productId ? `_${productId}` : ''}`
 
       try {
-        // Create the message
-        const message = await Message.create({
-          conversationId,
-          sender: user._id,
-          receiver: receiverId,
-          product: productId || null,
-          content: content.trim(),
+        const message = await sendMessage({
+          payload: validation.data,
+          userId: getUserObjectId(user),
         })
-
-        // If messaging about a specific product, mark product as "inquired" by updating status
-        if (productId) {
-          await Product.updateOne(
-            { _id: productId, status: 'active' },
-            { $set: { lastInquiry: new Date() } }
-          )
-        }
-
-        // Populate the message before returning
-        const populatedMessageRaw = await Message.findById(message._id)
-          .populate('sender', 'name avatar')
-          .populate('receiver', 'name avatar')
-          .populate('product', 'title price images')
-
-        const productImages = Array.isArray((populatedMessageRaw as any)?.product?.images)
-          ? (populatedMessageRaw as any).product.images.filter((img: string) => typeof img === 'string' && !img.startsWith('data:'))
-          : []
-
-        const populatedMessage = populatedMessageRaw
-          ? {
-              ...(populatedMessageRaw as any).toObject(),
-              product: (populatedMessageRaw as any).product
-                ? {
-                    ...(populatedMessageRaw as any).product.toObject?.() ?? (populatedMessageRaw as any).product,
-                    images: productImages.length ? [productImages[0]] : [],
-                  }
-                : (populatedMessageRaw as any).product,
-            }
-          : null
 
         return NextResponse.json({
           success: true,
-          message: populatedMessage,
+          message,
         })
-      } catch (error: any) {
-        console.error('Message creation error:', error)
-        const message = process.env.NODE_ENV === 'production'
-          ? 'Failed to send message. Please try again.'
-          : error.message || 'Failed to send message. Please try again.'
+      } catch (error) {
+        const serviceError = error as MessageServiceError
+        const status = typeof serviceError.status === 'number' ? serviceError.status : 500
+        const message =
+          process.env.NODE_ENV === 'production'
+            ? status >= 500
+              ? 'Failed to send message. Please try again.'
+              : serviceError.message
+            : serviceError.message || 'Failed to send message. Please try again.'
         return NextResponse.json(
           { success: false, error: message },
-          { status: 500 }
+          { status }
         )
       }
     }
@@ -316,13 +101,17 @@ async function handler(request: NextRequest, user: any) {
       { success: false, error: 'Method not allowed' },
       { status: 405 }
     )
-  } catch (error: any) {
+  } catch (error) {
+    const serviceError = error as MessageServiceError
+    const status = typeof serviceError.status === 'number' ? serviceError.status : 500
     const message = process.env.NODE_ENV === 'production'
-      ? 'Request failed'
-      : error.message || 'Request failed'
+      ? status >= 500
+        ? 'Request failed'
+        : serviceError.message
+      : serviceError.message || 'Request failed'
     return NextResponse.json(
       { success: false, error: message },
-      { status: 500 }
+      { status }
     )
   }
 }
