@@ -9,6 +9,8 @@ export interface GetMessagesQuery {
   conversationId?: string
   otherUserId?: string
   productId?: string
+  cursor?: string
+  limit: number
   page: number
   pageSize: number
 }
@@ -38,6 +40,8 @@ export function validateGetMessagesQuery(url: string): { data?: GetMessagesQuery
   const productId = searchParams.get('productId') ?? undefined
   const page = parsePositiveNumber(searchParams.get('page'), DEFAULT_PAGE)
   const pageSize = Math.min(parsePositiveNumber(searchParams.get('pageSize'), DEFAULT_PAGE_SIZE), MAX_PAGE_SIZE)
+  const cursor = searchParams.get('cursor') ?? undefined
+  const limit = Math.min(parsePositiveNumber(searchParams.get('limit'), pageSize), MAX_PAGE_SIZE)
 
   if (otherUserId && !isValidObjectId(otherUserId)) {
     return { error: 'Invalid other user ID format' }
@@ -47,11 +51,17 @@ export function validateGetMessagesQuery(url: string): { data?: GetMessagesQuery
     return { error: 'Invalid product ID format' }
   }
 
+  if (cursor && !isValidObjectId(cursor)) {
+    return { error: 'Invalid cursor format' }
+  }
+
   return {
     data: {
       conversationId,
       otherUserId,
       productId,
+      cursor,
+      limit,
       page,
       pageSize,
     },

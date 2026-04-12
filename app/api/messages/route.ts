@@ -29,12 +29,14 @@ async function handler(request: NextRequest, user: IUser) {
       }
 
       const userId = getUserObjectId(user)
-      const { conversationId, page, pageSize } = validation.data
+      const { conversationId, cursor, limit, page, pageSize } = validation.data
 
       if (conversationId) {
         const result = await getConversationMessages({
           conversationId,
           userId,
+          cursor,
+          limit,
           page,
           pageSize,
         })

@@ -33,6 +33,8 @@ export interface ConversationDTO {
 }
 
 export interface PaginationMeta {
+  cursor?: string | null
+  limit?: number
   page: number
   pageSize: number
   total: number

@@ -7,6 +7,7 @@ import ProductCard from './ProductCard'
 import BrowseTransition from './BrowseTransition'
 import { mapApiListingToProduct, withCsrfHeader } from '@/lib/utils'
 import { useAppStore } from '@/lib/store'
+import { getListings } from '@/lib/api/listings/client'
 
 interface Product {
   id: string
@@ -63,8 +64,7 @@ export default function PersonalizedFeed() {
   const fetchAllItems = useCallback(async () => {
     setIsLoading(true)
     try {
-      const params = new URLSearchParams({ sortBy: 'newest', limit: '16', page: '1', includeTotal: 'false' })
-      const listingsRes = await fetch(`/api/listings?${params}`, { credentials: 'include' })
+      const listingsRes = await getListings({ limit: 16, sort: 'createdAt:desc', includeTotal: false })
       const listingsData = await listingsRes.json()
       const rawListings = listingsData.data?.listings ?? listingsData.listings
       let listings: any[] = listingsData.success && Array.isArray(rawListings) ? rawListings : []

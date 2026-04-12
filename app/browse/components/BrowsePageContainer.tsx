@@ -13,12 +13,11 @@ import { useFilters } from '@/app/browse/hooks/useFilters'
 import { useListings } from '@/app/browse/hooks/useListings'
 import { DEFAULT_MAX_PRICE, DEFAULT_MIN_PRICE, DEFAULT_SORT, SORT_OPTIONS } from '@/app/browse/types'
 import { categories as apiCategories, subcategoriesByCategory, withCsrfHeader } from '@/lib/utils'
-import { useAppStore } from '@/lib/store'
+import { useFavorites } from '@/lib/hooks/useFavorites'
 
 export default function BrowsePageContainer() {
   const router = useRouter()
-  const addFavorite = useAppStore((s) => s.addFavorite)
-  const removeFavorite = useAppStore((s) => s.removeFavorite)
+  const { syncFavorite } = useFavorites()
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [showFilters, setShowFilters] = useState(false)
@@ -65,25 +64,9 @@ export default function BrowsePageContainer() {
       const nextFavorite = !product.isFavorite
       toggleLocalFavorite(id, nextFavorite)
 
-      if (nextFavorite) {
-        addFavorite(id)
-        fetch('/api/wishlist', {
-          method: 'POST',
-          headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
-          credentials: 'include',
-          body: JSON.stringify({ productId: id }),
-        }).catch(() => {})
-      } else {
-        removeFavorite(id)
-        fetch('/api/wishlist', {
-          method: 'DELETE',
-          headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
-          credentials: 'include',
-          body: JSON.stringify({ productId: id }),
-        }).catch(() => {})
-      }
+      void syncFavorite(id, nextFavorite)
     },
-    [addFavorite, products, removeFavorite, toggleLocalFavorite]
+    [products, syncFavorite, toggleLocalFavorite]
   )
 
   const applyNearMe = useCallback(async () => {

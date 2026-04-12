@@ -9,6 +9,7 @@ import {
 } from '@/app/api/messages/utils/message.mapper'
 import {
   createMessage,
+  findConversationMessagesByCursor,
   findConversationMessages,
   findMessageById,
   findMessagingUser,
@@ -66,6 +67,8 @@ export async function getUserConversations(params: {
 export async function getConversationMessages(params: {
   conversationId: string
   userId: Types.ObjectId
+  cursor?: string
+  limit?: number
   page: number
   pageSize: number
 }): Promise<{ messages: MessageDTO[]; pagination: PaginationMeta; markedReadCount: number }> {
@@ -77,6 +80,29 @@ export async function getConversationMessages(params: {
   }
 
   const markedReadCount = await markConversationRead(params.conversationId, params.userId)
+
+  const limit = params.limit || params.pageSize
+  const useCursor = Boolean(params.cursor) || !params.page || params.page <= 1
+
+  if (useCursor) {
+    const result = await findConversationMessagesByCursor(params.conversationId, {
+      cursor: params.cursor,
+      limit,
+    })
+
+    return {
+      messages: result.messages.map(mapMessageDocToDTO).reverse(),
+      markedReadCount,
+      pagination: {
+        page: params.page,
+        pageSize: limit,
+        limit,
+        cursor: result.nextCursor,
+        total: result.total,
+        hasMore: Boolean(result.nextCursor),
+      },
+    }
+  }
 
   const result = await findConversationMessages(params.conversationId, {
     page: params.page,

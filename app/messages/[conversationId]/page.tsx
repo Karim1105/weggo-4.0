@@ -1,286 +1,38 @@
-'use client'
+import { Types } from 'mongoose'
+import { cookies } from 'next/headers'
+import { redirect } from 'next/navigation'
+import { verifyToken } from '@/lib/auth'
+import { getConversationMessages } from '@/app/api/messages/services/message.service'
+import ConversationClient from '@/app/messages/[conversationId]/ConversationClient'
 
-import { useEffect, useRef, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { motion } from 'framer-motion'
-import { ArrowLeft, MessageCircle, User, Clock, Shield } from 'lucide-react'
-import { withCsrfHeader } from '@/lib/utils'
-import type { MessageDTO } from '@/types/messages'
-
-function getOutgoingStatus(message: MessageDTO): 'Sent' | 'Received' | 'Read' {
-  if (message.read || message.readAt) return 'Read'
-  if (message.receivedAt) return 'Received'
-  return 'Sent'
+type PageProps = {
+  params: Promise<{ conversationId: string }>
 }
 
-export default function ConversationPage() {
-  const params = useParams()
-  const router = useRouter()
-  const conversationId = params.conversationId as string
+export default async function ConversationPage({ params }: PageProps) {
+  const { conversationId } = await params
+  const token = (await cookies()).get('token')?.value
+  const payload = token ? verifyToken(token) : null
 
-  const [messages, setMessages] = useState<MessageDTO[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
-  const [replyText, setReplyText] = useState('')
-  const [sending, setSending] = useState(false)
-  const [sendError, setSendError] = useState<string | null>(null)
-  const [blocking, setBlocking] = useState(false)
-  const bottomRef = useRef<HTMLDivElement | null>(null)
-
-  useEffect(() => {
-    const load = async () => {
-      try {
-        const meRes = await fetch('/api/auth/me', { credentials: 'include' })
-        if (meRes.status === 401) {
-          router.push(`/login?redirect=/messages/${encodeURIComponent(conversationId)}`)
-          return
-        }
-        const meData = await meRes.json()
-        if (meData.success && meData.user) {
-          setCurrentUserId(meData.user.id || meData.user._id)
-        }
-
-        const res = await fetch(
-          `/api/messages?conversationId=${encodeURIComponent(conversationId)}`,
-          { credentials: 'include' }
-        )
-        const data = await res.json()
-        if (!data.success) {
-          setError(data.error || 'Failed to load conversation')
-          return
-        }
-        setMessages(data.messages || [])
-      } catch {
-        setError('Failed to load conversation')
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    load()
-  }, [conversationId, router])
-
-  useEffect(() => {
-    if (bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: 'smooth' })
-    }
-  }, [messages])
-
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!replyText.trim() || messages.length === 0 || !currentUserId) return
-
-    const first = messages[0]
-    const isSender = first.sender.id === currentUserId
-    const otherUser = isSender ? first.receiver : first.sender
-    if (otherUser.banned) {
-      setSendError('You cannot message a banned user.')
-      return
-    }
-    const product = first.product
-
-    setSending(true)
-    setSendError(null)
-    try {
-      const res = await fetch('/api/messages', {
-        method: 'POST',
-        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
-        credentials: 'include',
-        body: JSON.stringify({
-          receiverId: otherUser.id,
-          productId: product?.id,
-          content: replyText.trim(),
-        }),
-      })
-      const data = await res.json()
-      if (!data.success) {
-        setSendError(data.error || 'Failed to send message')
-        return
-      }
-      setMessages((prev) => [...prev, data.message])
-      setReplyText('')
-    } catch (err) {
-      setSendError('Failed to send message. Please check your connection.')
-      console.error('Send message error:', err)
-    } finally {
-      setSending(false)
-    }
+  if (!payload?.userId) {
+    redirect(`/login?redirect=/messages/${encodeURIComponent(conversationId)}`)
   }
 
-  const handleBlock = async () => {
-    if (!currentUserId || messages.length === 0) return
-    const first = messages[0]
-    const isSender = first.sender.id === currentUserId
-    const otherUser = isSender ? first.receiver : first.sender
-
-    if (!window.confirm(`Block ${otherUser.name || otherUser.email}? They won't be able to message you.`)) {
-      return
-    }
-
-    setBlocking(true)
-    try {
-      const res = await fetch('/api/blocks', {
-        method: 'POST',
-        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
-        credentials: 'include',
-        body: JSON.stringify({ userId: otherUser.id }),
-      })
-      const data = await res.json()
-      if (!data.success) return
-      router.push('/messages')
-      router.refresh()
-    } finally {
-      setBlocking(false)
-    }
-  }
-
-  if (loading) {
-    return (
-      <div className="min-h-screen pt-24 pb-12 px-4 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500" />
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen pt-24 pb-12 px-4 flex flex-col items-center justify-center">
-        <p className="text-red-600 mb-4">{error}</p>
-        <Link
-          href="/messages"
-          className="text-primary-600 hover:underline flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back to messages
-        </Link>
-      </div>
-    )
-  }
-
-  if (messages.length === 0) {
-    return (
-      <div className="min-h-screen pt-24 pb-12 px-4 flex flex-col items-center justify-center">
-        <p className="text-gray-600 mb-4">No messages in this conversation yet.</p>
-        <Link
-          href="/messages"
-          className="text-primary-600 hover:underline flex items-center gap-2"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back to messages
-        </Link>
-      </div>
-    )
-  }
-
-  const first = messages[0]
-  const isSender = currentUserId && first.sender.id === currentUserId
-  const otherUser = isSender ? first.receiver : first.sender
-  const isOtherUserBanned = Boolean(otherUser.banned)
+  const result = await getConversationMessages({
+    conversationId,
+    userId: new Types.ObjectId(payload.userId),
+    limit: 30,
+    page: 1,
+    pageSize: 30,
+  })
 
   return (
-    <div className="min-h-screen pt-24 pb-12 px-4 bg-gray-50">
-      <div className="max-w-3xl mx-auto flex flex-col h-[calc(100vh-8rem)]">
-        <div className="flex items-center justify-between mb-4">
-          <Link
-            href="/messages"
-            className="inline-flex items-center gap-2 text-gray-600 hover:text-primary-600"
-          >
-            <ArrowLeft className="w-4 h-4" /> Back
-          </Link>
-          <div className="flex items-center gap-2">
-            <User className="w-5 h-5 text-gray-500" />
-            <span className="font-semibold text-gray-900">
-              {otherUser.name || otherUser.email}
-            </span>
-            {isOtherUserBanned && (
-              <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
-                BANNED
-              </span>
-            )}
-            <button
-              type="button"
-              disabled={blocking}
-              onClick={handleBlock}
-              className="ml-2 inline-flex items-center gap-1 px-3 py-1.5 rounded-full border border-red-300 text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-60"
-              title="Block user"
-            >
-              <Shield className="w-4 h-4" />
-              {blocking ? 'Blocking...' : 'Block'}
-            </button>
-          </div>
-        </div>
-
-        <div className="card-modern flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-y-auto p-4 space-y-3">
-            {messages.map((msg) => {
-              const mine = currentUserId && msg.sender.id === currentUserId
-              const time = new Date(msg.createdAt).toLocaleTimeString([], {
-                hour: '2-digit',
-                minute: '2-digit',
-              })
-              return (
-                <div
-                  key={msg.id}
-                  className={`flex ${mine ? 'justify-end' : 'justify-start'}`}
-                >
-                  <div
-                    className={`max-w-xs rounded-2xl px-4 py-2 text-sm shadow-sm ${
-                      mine
-                        ? 'bg-primary-600 text-white rounded-br-none'
-                        : 'bg-gray-100 text-gray-900 rounded-bl-none'
-                    }`}
-                  >
-                    <p className="whitespace-pre-wrap break-words">{msg.content}</p>
-                    <div className="mt-1 flex items-center gap-1 text-[11px] opacity-80">
-                      <Clock className="w-3 h-3" />
-                      <span>{time}</span>
-                      {mine && <span>• {getOutgoingStatus(msg)}</span>}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-            <div ref={bottomRef} />
-          </div>
-
-          <form
-            onSubmit={handleSend}
-            className="border-t border-gray-200 p-3 bg-white flex flex-col gap-2"
-          >
-            {isOtherUserBanned && (
-              <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
-                You can no longer send messages because this user is banned.
-              </div>
-            )}
-            {sendError && (
-              <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
-                {sendError}
-              </div>
-            )}
-            <div className="flex items-center gap-2">
-              <textarea
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                rows={1}
-                placeholder="Type a message..."
-                disabled={isOtherUserBanned}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none disabled:bg-gray-100 disabled:text-gray-500"
-              />
-              <motion.button
-                type="submit"
-                disabled={isOtherUserBanned || sending || !replyText.trim()}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.96 }}
-                className="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary-600 text-white font-medium disabled:opacity-60"
-              >
-                <MessageCircle className="w-5 h-5 mr-1" />
-                {sending ? 'Sending...' : 'Send'}
-              </motion.button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
+    <ConversationClient
+      conversationId={conversationId}
+      initialMessages={result.messages}
+      initialCursor={result.pagination.cursor ?? null}
+      initialHasMore={result.pagination.hasMore}
+      currentUserId={payload.userId}
+    />
   )
 }
-

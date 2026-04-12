@@ -8,6 +8,7 @@ import ProductCard from './ProductCard'
 import { mapApiListingToProduct, withCsrfHeader } from '@/lib/utils'
 import { useAppStore } from '@/lib/store'
 import { useUserVerification } from '@/lib/useUserVerification'
+import { getListings } from '@/lib/api/listings/client'
 
 interface Product {
   id: string
@@ -37,8 +38,7 @@ export default function FeaturedListings() {
 
   const fetchFeatured = useCallback(async () => {
     try {
-      const params = new URLSearchParams({ sortBy: 'newest', limit: '8', page: '1', includeTotal: 'false' })
-      const listingsRes = await fetch(`/api/listings?${params}`, { credentials: 'include' })
+      const listingsRes = await getListings({ limit: 8, sort: 'createdAt:desc', includeTotal: false })
       const data = await listingsRes.json()
       const listings = data.data?.listings ?? data.listings
 

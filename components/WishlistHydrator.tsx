@@ -9,7 +9,7 @@ export default function WishlistHydrator() {
   useEffect(() => {
     const loadWishlist = async () => {
       try {
-        const res = await fetch('/api/wishlist?limit=100&page=1&idsOnly=true', { credentials: 'include' })
+        const res = await fetch('/api/wishlist?limit=100&idsOnly=true', { credentials: 'include' })
         if (!res.ok) {
           setFavorites([])
           return

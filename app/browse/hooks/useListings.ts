@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { mapApiListingToProduct } from '@/lib/utils'
+import { getListings } from '@/lib/api/listings/client'
+import { useFavorites } from '@/lib/hooks/useFavorites'
 import { ApiListing, ListingsResponsePayload, Product } from '@/app/browse/types'
 
 function parseListingsPayload(data: unknown): ListingsResponsePayload | null {
@@ -11,40 +13,8 @@ function parseListingsPayload(data: unknown): ListingsResponsePayload | null {
   return wrapped.data
 }
 
-async function fetchWishlistIds(signal?: AbortSignal): Promise<Set<string>> {
-  const ids = new Set<string>()
-
-  try {
-    const wishlistRes = await fetch('/api/wishlist', {
-      credentials: 'include',
-      signal,
-    })
-
-    if (!wishlistRes.ok) {
-      return ids
-    }
-
-    const payload = (await wishlistRes.json()) as { success?: boolean; wishlist?: { _id: string }[] }
-    if (payload?.success && Array.isArray(payload.wishlist)) {
-      payload.wishlist.forEach((item) => ids.add(item._id))
-    }
-  } catch {
-    return ids
-  }
-
-  return ids
-}
-
-function buildApiUrl(baseQueryString: string, sortQuery: string, cursor?: string | null): string {
-  const params = new URLSearchParams(baseQueryString)
-  params.delete('sortBy')
-  params.set('sort', sortQuery)
-  params.set('limit', '20')
-  if (cursor) params.set('cursor', cursor)
-  return `/api/listings?${params.toString()}`
-}
-
 export function useListings(baseQueryString: string, sortQuery: string) {
+  const { favoriteIdsSet, refreshFavorites } = useFavorites()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -54,10 +24,12 @@ export function useListings(baseQueryString: string, sortQuery: string) {
   const queryKey = useMemo(() => `${baseQueryString}|${sortQuery}`, [baseQueryString, sortQuery])
 
   const fetchPage = useCallback(
-    async (cursor: string | null, append: boolean, signal?: AbortSignal) => {
-      const listingsRes = await fetch(buildApiUrl(baseQueryString, sortQuery, cursor), {
-        credentials: 'include',
-        signal,
+    async (cursor: string | null, append: boolean) => {
+      const listingsRes = await getListings({
+        query: baseQueryString,
+        sort: sortQuery,
+        limit: 20,
+        cursor,
       })
 
       if (!listingsRes.ok) {
@@ -85,22 +57,25 @@ export function useListings(baseQueryString: string, sortQuery: string) {
       setHasMore(Boolean(payload.hasMore))
 
       if (!append) {
-        const favoriteIds = await fetchWishlistIds(signal)
-        setProducts(payload.listings.map((listing: ApiListing) => mapApiListingToProduct(listing, favoriteIds)))
+        await refreshFavorites()
+        setProducts(payload.listings.map((listing: ApiListing) => mapApiListingToProduct(listing, favoriteIdsSet)))
         return
       }
 
       setProducts((prev) => {
-        const favoriteIds = new Set(prev.filter((item) => item.isFavorite).map((item) => item.id))
         const existingIds = new Set(prev.map((item) => item.id))
         const mapped = payload.listings
-          .map((listing: ApiListing) => mapApiListingToProduct(listing, favoriteIds))
+          .map((listing: ApiListing) => mapApiListingToProduct(listing, favoriteIdsSet))
           .filter((item: Product) => !existingIds.has(item.id))
         return [...prev, ...mapped]
       })
     },
-    [baseQueryString, sortQuery]
+    [baseQueryString, favoriteIdsSet, refreshFavorites, sortQuery]
   )
+
+  useEffect(() => {
+    setProducts((prev) => prev.map((item) => ({ ...item, isFavorite: favoriteIdsSet.has(item.id) })))
+  }, [favoriteIdsSet])
 
   useEffect(() => {
     const controller = new AbortController()
@@ -108,7 +83,7 @@ export function useListings(baseQueryString: string, sortQuery: string) {
     const load = async () => {
       setLoading(true)
       try {
-        await fetchPage(null, false, controller.signal)
+        await fetchPage(null, false)
       } catch (error) {
         if ((error as DOMException).name !== 'AbortError') {
           setProducts([])

@@ -6,6 +6,8 @@ import { Search, Sparkles, TrendingUp, Shield, Heart, MapPin, Star } from 'lucid
 import Link from 'next/link'
 import { listingImageUrl } from '@/lib/utils'
 import { useUserVerification } from '@/lib/useUserVerification'
+import { getListings } from '@/lib/api/listings/client'
+import { getLocationLabel } from '@/lib/locations'
 
 interface FeaturedProduct {
   id: string
@@ -56,7 +58,7 @@ export default function Hero() {
   }, [])
 
   const fetchListings = () => {
-    fetch('/api/listings?limit=8&sortBy=newest&includeTotal=false', { credentials: 'include' })
+    getListings({ limit: 8, sort: 'createdAt:desc', includeTotal: false })
       .then((r) => r.json())
       .then((data) => {
         const listings = data.data?.listings ?? data.listings
@@ -66,7 +68,7 @@ export default function Hero() {
             id: p._id,
             title: p.title,
             price: p.price,
-            location: p.location,
+            location: getLocationLabel(p.location),
             condition: p.condition,
             image: listingImageUrl(p.images?.[0]),
             category: p.category,

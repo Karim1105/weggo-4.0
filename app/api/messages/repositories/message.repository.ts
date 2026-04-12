@@ -8,6 +8,11 @@ interface PaginationInput {
   pageSize: number
 }
 
+interface CursorPaginationInput {
+  cursor?: string
+  limit: number
+}
+
 export interface ConversationAggregateResult {
   conversationId: string
   unreadCount: number
@@ -51,6 +56,39 @@ export async function findConversationMessages(
   ])
 
   return { messages, total }
+}
+
+export async function findConversationMessagesByCursor(
+  conversationId: string,
+  pagination: CursorPaginationInput
+): Promise<{ messages: unknown[]; total: number; nextCursor: string | null }> {
+  const query: Record<string, unknown> = { conversationId }
+
+  if (pagination.cursor) {
+    query._id = { $lt: new Types.ObjectId(pagination.cursor) }
+  }
+
+  const [messages, total] = await Promise.all([
+    Message.find(query)
+      .populate('sender', 'name email avatar banned')
+      .populate('receiver', 'name email avatar banned')
+      .populate('product', 'title price images')
+      .sort({ _id: -1 })
+      .limit(pagination.limit + 1)
+      .lean(),
+    Message.countDocuments({ conversationId }),
+  ])
+
+  const hasMore = messages.length > pagination.limit
+  const visible = hasMore ? messages.slice(0, pagination.limit) : messages
+  const lastMessage = visible[visible.length - 1] as { _id?: Types.ObjectId | string } | undefined
+  const nextCursor = hasMore && lastMessage?._id ? String(lastMessage._id) : null
+
+  return {
+    messages: visible,
+    total,
+    nextCursor,
+  }
 }
 
 export async function findUserConversations(

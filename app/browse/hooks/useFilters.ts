@@ -43,7 +43,8 @@ export function useFilters() {
     const sub = searchParams.get('subcategory') || 'all'
     const loc = searchParams.get('location') || ''
     const search = searchParams.get('search') || ''
-    const urlSort = searchParams.get('sortBy') || DEFAULT_SORT
+    const legacySort = searchParams.get('sortBy')
+    const urlSort = searchParams.get('sort') || legacySort || DEFAULT_SORT
     const min = parsePrice(searchParams.get('minPrice'), DEFAULT_MIN_PRICE)
     const max = parsePrice(searchParams.get('maxPrice'), DEFAULT_MAX_PRICE)
 
@@ -66,7 +67,7 @@ export function useFilters() {
     if (filters.locationFilter.trim()) params.set('location', filters.locationFilter.trim().toLowerCase())
     params.set('minPrice', String(filters.priceRange[0]))
     params.set('maxPrice', String(filters.priceRange[1]))
-    params.set('sortBy', filters.sortBy)
+    params.set('sort', filters.sortBy)
     return params.toString()
   }, [debouncedSearch, filters])
 

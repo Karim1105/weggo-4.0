@@ -1,4 +1,5 @@
 import { type ClassValue, clsx } from 'clsx'
+import { getLocationLabel, LOCATIONS } from '@/lib/locations'
 
 export function cn(...inputs: ClassValue[]) {
   return clsx(inputs)
@@ -41,30 +42,7 @@ export function slugify(text: string): string {
     .replace(/\-\-+/g, '-')
 }
 
-export const egyptianCities = [
-  'Cairo',
-  'Giza',
-  'Alexandria',
-  'Sharm El Sheikh',
-  'Hurghada',
-  'Luxor',
-  'Aswan',
-  'Port Said',
-  'Suez',
-  'Mansoura',
-  'Tanta',
-  'Asyut',
-  'Ismailia',
-  'Faiyum',
-  'Zagazig',
-  'Damietta',
-  'Minya',
-  'Damanhur',
-  'Beni Suef',
-  'Qena',
-  'Sohag',
-  'Shibin El Kom'
-]
+export const egyptianCities = LOCATIONS.map((location) => location.label)
 
 export const categories = [
   { id: 'electronics', name: 'Electronics', nameAr: 'إلكترونيات' },
@@ -216,7 +194,7 @@ export function mapApiListingToProduct(
     id: listing._id,
     title: listing.title,
     price: listing.price,
-    location: listing.location,
+    location: getLocationLabel(listing.location),
     condition: listing.condition,
     image: listingImageUrl(listing.images?.[0]),
     category: listing.category,

@@ -67,6 +67,7 @@ export function parseListingsQuery(searchParams: URLSearchParams): Ok<ListingQue
   const requestedStatus = searchParams.get('status')
   const stateRaw = searchParams.get('state')?.trim().toLowerCase() || null
   const sortRaw = searchParams.get('sort')
+  const legacySortBy = searchParams.get('sortBy')
   const includeTotal = searchParams.get('includeTotal') !== 'false'
 
   const page = parseInteger(searchParams.get('page'), 1, 1, 1_000_000)
@@ -78,13 +79,6 @@ export function parseListingsQuery(searchParams: URLSearchParams): Ok<ListingQue
 
   if (page === null || limit === null) {
     return { ok: false, response: ApiErrors.badRequest('Invalid pagination values for page or limit') }
-  }
-
-  if (page > 1 && !cursor) {
-    return {
-      ok: false,
-      response: ApiErrors.badRequest('Cursor-based pagination is required. Provide cursor for pages after the first page'),
-    }
   }
 
   if (Number.isNaN(minPrice) || Number.isNaN(maxPrice)) {
@@ -111,7 +105,15 @@ export function parseListingsQuery(searchParams: URLSearchParams): Ok<ListingQue
     return { ok: false, response: ApiErrors.badRequest('Invalid state filter. Allowed value: state=!=deleted') }
   }
 
-  const sort = sortRaw?.trim() || null
+  const legacySortMap: Record<string, string> = {
+    newest: 'createdAt:desc',
+    oldest: 'createdAt:asc',
+    'price-low': 'price:asc,createdAt:desc',
+    'price-high': 'price:desc,createdAt:desc',
+    'rating-high': 'averageRating:desc,ratingCount:desc,createdAt:desc',
+  }
+
+  const sort = sortRaw?.trim() || (legacySortBy ? legacySortMap[legacySortBy.trim()] ?? legacySortMap.newest : null)
   const stateFilter: StateFilter = stateRaw === '!=deleted' ? '!=deleted' : null
 
   return {
