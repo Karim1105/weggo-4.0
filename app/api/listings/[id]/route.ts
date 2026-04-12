@@ -41,7 +41,7 @@ export async function GET(
       await ViewHistory.findOneAndUpdate(
         { user: user._id, product: id },
         { viewedAt: new Date() },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       )
     }
 

@@ -54,7 +54,7 @@ async function handler(request: NextRequest, user: any) {
     await User.findByIdAndUpdate(
       user._id,
       { $addToSet: { blockedUsers: userId } },
-      { new: true }
+      { returnDocument: 'after' }
     )
     return NextResponse.json({ success: true })
   }
@@ -63,7 +63,7 @@ async function handler(request: NextRequest, user: any) {
     await User.findByIdAndUpdate(
       user._id,
       { $pull: { blockedUsers: userId } },
-      { new: true }
+      { returnDocument: 'after' }
     )
     return NextResponse.json({ success: true })
   }

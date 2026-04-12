@@ -112,7 +112,7 @@ async function postHandler(
           bannedReason: null,
           bannedBy: null,
         },
-        { new: true }
+        { returnDocument: 'after' }
       )
 
       if (!user) {

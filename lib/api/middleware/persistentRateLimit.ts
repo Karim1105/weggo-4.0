@@ -53,7 +53,7 @@ export async function applyPersistentRateLimit(
     const activeRecord = await RateLimitModel.findOneAndUpdate(
       { key, expiresAt: { $gt: now } },
       { $inc: { count: 1 } },
-      { new: true }
+      { returnDocument: 'after' }
     )
 
     if (!activeRecord) {

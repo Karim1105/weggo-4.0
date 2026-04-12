@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
           seller: seller._id,
           status: 'active',
         },
-        { upsert: true, new: true }
+        { upsert: true, returnDocument: 'after' }
       )
       seeded.push(doc)
     }

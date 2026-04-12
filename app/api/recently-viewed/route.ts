@@ -39,7 +39,7 @@ async function handler(request: NextRequest, user: any) {
     await ViewHistory.findOneAndUpdate(
       { user: user._id, product: productId },
       { $set: { viewedAt: new Date() } },
-      { upsert: true, new: true }
+      { upsert: true, returnDocument: 'after' }
     )
 
     return NextResponse.json({
