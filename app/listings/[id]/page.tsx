@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -18,7 +18,8 @@ import toast from 'react-hot-toast'
 import ProductCard from '@/components/ProductCard'
 import ReviewSubmit from '@/components/ReviewSubmit'
 import ReviewsList from '@/components/ReviewsList'
-import { mapApiListingToProduct, listingImageUrl, withCsrfHeader } from '@/lib/utils'
+import { listingImageUrl, withCsrfHeader } from '@/lib/utils'
+import { buildSimilarCards, type RawListingLike } from './utils'
 
 interface Seller {
   _id: string
@@ -53,7 +54,7 @@ export default function ListingDetailPage() {
   const [isFavorite, setIsFavorite] = useState(false)
   const [favoriteIds, setFavoriteIds] = useState<Set<string>>(new Set())
   const [currentUser, setCurrentUser] = useState<{ _id: string; role?: string } | null>(null)
-  const [similar, setSimilar] = useState<any[]>([])
+  const [similarListings, setSimilarListings] = useState<RawListingLike[]>([])
   const [imageError, setImageError] = useState(false)
   const wishlistFetchedFor = useRef<string | null>(null)
 
@@ -105,18 +106,19 @@ export default function ListingDetailPage() {
         const data = await res.json()
         const listings = data.data?.listings ?? data.listings
         if (data.success && Array.isArray(listings)) {
-          const cards = listings
-            .filter((p: any) => p._id !== listing._id)
-            .slice(0, 4)
-            .map((p: any) => mapApiListingToProduct(p, favoriteIds))
-          setSimilar(cards)
+          setSimilarListings(listings)
         }
       } catch {
-        setSimilar([])
+        setSimilarListings([])
       }
     }
     void loadSimilar()
-  }, [listing, favoriteIds])
+  }, [listing])
+
+  const similar = useMemo(() => {
+    if (!listing?._id) return []
+    return buildSimilarCards(similarListings, listing._id, favoriteIds)
+  }, [favoriteIds, listing?._id, similarListings])
 
   useEffect(() => {
     const loadUser = async () => {
@@ -250,12 +252,6 @@ export default function ListingDetailPage() {
     if (!success) {
       return
     }
-
-    setSimilar((prev) =>
-      prev.map((item: any) => (
-        item.id === productId ? { ...item, isFavorite: nextFavorite } : item
-      ))
-    )
   }
 
   const sellerId = listing?.seller?._id || null

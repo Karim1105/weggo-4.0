@@ -14,6 +14,10 @@ interface ErrorResponse {
   error?: string
 }
 
+export function shouldFetchCurrentUser(mode: 'replace' | 'append', currentUserId: string | null): boolean {
+  return mode === 'replace' && !currentUserId
+}
+
 function upsertConversations(current: ConversationDTO[], incoming: ConversationDTO[]): ConversationDTO[] {
   const map = new Map<string, ConversationDTO>()
   current.forEach((item) => map.set(item.conversationId, item))
@@ -52,20 +56,22 @@ export function useMessages() {
       }
 
       try {
-        const [meRes, convRes] = await Promise.all([
-          fetch('/api/auth/me', { credentials: 'include' }),
-          fetch(`/api/messages?page=${page}&pageSize=20`, { credentials: 'include' }),
-        ])
+        const convPromise = fetch(`/api/messages?page=${page}&pageSize=20`, { credentials: 'include' })
+        const mePromise = shouldFetchCurrentUser(mode, currentUserId)
+          ? fetch('/api/auth/me', { credentials: 'include' })
+          : Promise.resolve<Response | null>(null)
 
-        if (meRes.status === 401 || convRes.status === 401) {
+        const [meRes, convRes] = await Promise.all([mePromise, convPromise])
+
+        if (meRes?.status === 401 || convRes.status === 401) {
           router.push('/login?redirect=/messages')
           return
         }
 
-        const meData = await safeJson<AuthMeResponse>(meRes, {})
+        const meData = meRes ? await safeJson<AuthMeResponse>(meRes, {}) : null
         const convData = await safeJson<ConversationsResponseDTO | ErrorResponse>(convRes, {})
 
-        if (meData.success && meData.user) {
+        if (meData?.success && meData.user) {
           setCurrentUserId(meData.user.id || meData.user._id || null)
         }
 
@@ -88,7 +94,7 @@ export function useMessages() {
         setIsRefetching(false)
       }
     },
-    [router]
+    [currentUserId, router]
   )
 
   useEffect(() => {

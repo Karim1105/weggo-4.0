@@ -21,10 +21,14 @@ import type { ListingFormValues } from './types'
 export default function SellPage() {
   const [showPricingSuggestion, setShowPricingSuggestion] = useState(false)
   const { register, control, handleSubmit, setValue, reset, formState: { errors } } = useForm<ListingFormValues>()
-  const watchTitle = useWatch({ control, name: 'title' }) || ''
-  const watchDescription = useWatch({ control, name: 'description' }) || ''
-  const watchCategory = useWatch({ control, name: 'category' }) || ''
-  const watchCondition = useWatch({ control, name: 'condition' }) || ''
+  const watchedFields = useWatch({
+    control,
+    name: ['title', 'description', 'category', 'condition'],
+  })
+  const watchTitle = watchedFields?.[0] ?? ''
+  const watchDescription = watchedFields?.[1] ?? ''
+  const watchCategory = watchedFields?.[2] ?? ''
+  const watchCondition = watchedFields?.[3] ?? ''
 
   const {
     showVerificationDialog,

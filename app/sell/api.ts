@@ -28,7 +28,7 @@ export async function uploadNationalIdRequest(nationalIdNumber: string): Promise
   }
 }
 
-function createListingFormData(payload: ListingApiPayload, imageFiles: File[]): FormData {
+export function createListingFormData(payload: ListingApiPayload, imageFiles: File[]): FormData {
   const formData = new FormData()
   formData.append('title', payload.title)
   formData.append('description', payload.description)
