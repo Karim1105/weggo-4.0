@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { mapApiListingToProduct } from '@/lib/utils'
 import { getListings } from '@/lib/api/listings/client'
 import { useFavorites } from '@/lib/hooks/useFavorites'
@@ -14,7 +14,8 @@ function parseListingsPayload(data: unknown): ListingsResponsePayload | null {
 }
 
 export function useListings(baseQueryString: string, sortQuery: string) {
-  const { favoriteIdsSet, refreshFavorites } = useFavorites()
+  const { favoriteIdsSet } = useFavorites()
+  const favoriteIdsRef = useRef<Set<string>>(favoriteIdsSet)
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
@@ -57,23 +58,23 @@ export function useListings(baseQueryString: string, sortQuery: string) {
       setHasMore(Boolean(payload.hasMore))
 
       if (!append) {
-        await refreshFavorites()
-        setProducts(payload.listings.map((listing: ApiListing) => mapApiListingToProduct(listing, favoriteIdsSet)))
+        setProducts(payload.listings.map((listing: ApiListing) => mapApiListingToProduct(listing, favoriteIdsRef.current)))
         return
       }
 
       setProducts((prev) => {
         const existingIds = new Set(prev.map((item) => item.id))
         const mapped = payload.listings
-          .map((listing: ApiListing) => mapApiListingToProduct(listing, favoriteIdsSet))
+          .map((listing: ApiListing) => mapApiListingToProduct(listing, favoriteIdsRef.current))
           .filter((item: Product) => !existingIds.has(item.id))
         return [...prev, ...mapped]
       })
     },
-    [baseQueryString, favoriteIdsSet, refreshFavorites, sortQuery]
+    [baseQueryString, sortQuery]
   )
 
   useEffect(() => {
+    favoriteIdsRef.current = favoriteIdsSet
     setProducts((prev) => prev.map((item) => ({ ...item, isFavorite: favoriteIdsSet.has(item.id) })))
   }, [favoriteIdsSet])
 
