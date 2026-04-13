@@ -302,6 +302,13 @@ export default function ProfilePage() {
                   <Heart className="w-5 h-5" />
                   <span>My Favorites</span>
                 </Link>
+                <Link
+                  href="/support"
+                  className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-gray-50 rounded-lg transition-colors text-left"
+                >
+                  <Settings className="w-5 h-5" />
+                  <span>Support tickets</span>
+                </Link>
                 <button
                   onClick={handleLogout}
                   className="w-full flex items-center space-x-3 px-4 py-3 hover:bg-red-50 rounded-lg transition-colors text-left text-red-600"

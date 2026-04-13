@@ -5,6 +5,7 @@ export type AdminTabKey =
   | 'users'
   | 'reports'
   | 'appeals'
+  | 'tickets'
   | 'listings'
   | 'categories'
   | 'activity'

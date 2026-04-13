@@ -1,4 +1,4 @@
-import { Activity, BarChart3, Flag, Layers3, Package, ShieldAlert, Tags, Users } from 'lucide-react'
+import { Activity, BarChart3, Flag, LifeBuoy, Package, ShieldAlert, Tags, Users } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 import { AdminNavItem, AdminTabKey } from '@/features/admin/types'
 
@@ -36,6 +36,13 @@ export const ADMIN_NAV_ITEMS: AdminNavConfigItem[] = [
     roles: ['admin'],
   },
   {
+    key: 'tickets',
+    label: 'Tickets',
+    description: 'Support inbox',
+    icon: LifeBuoy,
+    roles: ['admin'],
+  },
+  {
     key: 'listings',
     label: 'Listings',
     description: 'Seller listing controls',
@@ -63,6 +70,7 @@ export const TAB_TITLES: Record<AdminTabKey, string> = {
   users: 'User management',
   reports: 'Reports moderation',
   appeals: 'Appeals review',
+  tickets: 'Support tickets',
   listings: 'Listings management',
   categories: 'Categories management',
   activity: 'Activity logs',
@@ -73,6 +81,7 @@ export const TAB_SUBTITLES: Record<AdminTabKey, string> = {
   users: 'Search, review, and control user access securely.',
   reports: 'Review reports and apply moderation actions.',
   appeals: 'Approve or reject user ban appeals.',
+  tickets: 'Manage user support conversations and ticket status.',
   listings: 'Manage seller visibility and boosts.',
   categories: 'Review category distribution and discover gaps.',
   activity: 'Recent admin actions and notifications.',

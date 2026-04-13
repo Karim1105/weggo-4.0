@@ -10,6 +10,7 @@ const OverviewModule = dynamic(() => import('@/features/admin/modules/overview/O
 const UsersModule = dynamic(() => import('@/features/admin/modules/users/UsersModule'))
 const ReportsModule = dynamic(() => import('@/features/admin/modules/reports/ReportsModule'))
 const AppealsModule = dynamic(() => import('@/features/admin/modules/appeals/AppealsModule'))
+const TicketsModule = dynamic(() => import('@/features/admin/modules/tickets/TicketsModule'))
 const ListingsModule = dynamic(() => import('@/features/admin/modules/listings/ListingsModule'))
 const CategoriesModule = dynamic(() => import('@/features/admin/modules/categories/CategoriesModule'))
 const ActivityModule = dynamic(() => import('@/features/admin/modules/activity/ActivityModule'))
@@ -57,6 +58,7 @@ export default function AdminDashboardPage() {
       {activeTab === 'users' && <UsersModule refreshTick={refreshTick} onActivity={onActivity} onNotify={onNotify} />}
       {activeTab === 'reports' && <ReportsModule refreshTick={refreshTick} onActivity={onActivity} onNotify={onNotify} />}
       {activeTab === 'appeals' && <AppealsModule refreshTick={refreshTick} onActivity={onActivity} onNotify={onNotify} />}
+      {activeTab === 'tickets' && <TicketsModule refreshTick={refreshTick} />}
       {activeTab === 'listings' && <ListingsModule refreshTick={refreshTick} onActivity={onActivity} onNotify={onNotify} />}
       {activeTab === 'categories' && <CategoriesModule />}
       {activeTab === 'activity' && <ActivityModule logs={activityLogs} notifications={notifications} />}

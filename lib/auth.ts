@@ -73,13 +73,13 @@ export async function getAuthUser(request: NextRequest): Promise<IUser | null> {
   }
 }
 
-export function requireAuth(handler: (req: NextRequest, user: IUser) => Promise<Response>) {
-  return async (req: NextRequest) => {
+export function requireAuth(handler: (req: NextRequest, user: IUser, context?: any) => Promise<Response>) {
+  return async (req: NextRequest, context?: any) => {
     const user = await getAuthUser(req)
     if (!user) {
       return Response.json({ success: false, error: 'Unauthorized' }, { status: 401 })
     }
-    return handler(req, user)
+    return handler(req, user, context)
   }
 }
 
