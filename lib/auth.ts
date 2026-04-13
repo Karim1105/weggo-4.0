@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken'
 import { NextRequest } from 'next/server'
+import { cookies } from 'next/headers'
 import User, { IUser } from '@/models/User'
 import connectDB from './db'
 
@@ -35,6 +36,21 @@ export function verifyToken(token: string): JWTPayload | null {
   try {
     return jwt.verify(token, JWT_SECRET_FINAL) as JWTPayload
   } catch (error) {
+    return null
+  }
+}
+
+export async function getServerViewerRole(): Promise<'user' | 'admin' | null> {
+  try {
+    const cookieStore = await cookies()
+    const token = cookieStore.get('token')?.value
+    if (!token) return null
+
+    const payload = verifyToken(token)
+    if (!payload) return null
+
+    return payload.role === 'admin' ? 'admin' : 'user'
+  } catch {
     return null
   }
 }
