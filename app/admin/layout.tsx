@@ -24,5 +24,18 @@ export default async function AdminLayout({ children }: AdminLayoutProps) {
     notFound()
   }
 
-  return <>{children}</>
+  return (
+    <>
+      <style>{`
+        [data-global-navbar='true'] {
+          display: none !important;
+        }
+
+        [data-ai-chatbot='true'] {
+          display: none !important;
+        }
+      `}</style>
+      {children}
+    </>
+  )
 }

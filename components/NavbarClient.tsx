@@ -131,6 +131,7 @@ export default function NavbarClient({ initialUser, sellHref }: NavbarClientProp
 
   return (
     <motion.nav
+      data-global-navbar="true"
       initial={{ y: -100 }}
       animate={{ y: 0 }}
       transition={{ duration: 0.6, ease: "easeOut" }}
