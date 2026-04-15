@@ -1,221 +1,82 @@
-# Weggo Quick Start Guide
+# Weggo Quick Start
 
-## Installation (5 minutes)
+## 1. Install
 
-### Step 1: Install Dependencies
 ```bash
-cd weggo
 npm install
 ```
 
-### Step 2: Start Development Server
+## 2. Create `.env.local`
+
+Use this minimum local config:
+
+```env
+MONGODB_URI=mongodb://localhost:27017/weggo
+JWT_SECRET=replace-with-a-long-random-secret
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
+
+If you need a template, copy from [/.env.example](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/.env.example).
+
+## 3. Start the app
+
 ```bash
 npm run dev
 ```
 
-### Step 3: Open Browser
-Navigate to: **http://localhost:3000**
+Open `http://localhost:3000`.
 
----
+## 4. Try these flows
 
-## Try These Features Now!
+1. Register a user.
+2. Browse listings on `/browse`.
+3. Open a listing and try favorites, reviews, and seller messaging.
+4. Open the AI chatbot and ask something like `Show me phones`.
+5. Go to `/sell` and try the pricing helper.
+6. Visit `/support` and create a support ticket.
+7. Visit `/profile` to see your account shortcuts.
 
-### 1. AI Chatbot (30 seconds)
-1. Look for the **chat icon** in the bottom-right corner
-2. Click it to open the chatbot
-3. Try these questions:
-   - "Show me phones"
-   - "Find laptops"
-   - "How does pricing work?"
-4. See instant AI responses!
+## What is real right now
 
-### 2. AI Price Suggestion (2 minutes)
-1. Click **"Sell"** in the navbar
-2. Fill in:
-   - Title: "iPhone 13 Pro Max"
-   - Category: Electronics
-   - Condition: Like New
-3. Click **"Get AI Price Suggestion"**
-4. Watch the AI analyze market data!
-5. See pricing recommendations from multiple platforms
+- The AI chatbot is connected to `/api/ai-chat`.
+- The pricing flow is still mock/simulated.
+- Selling is gated behind seller verification.
+- Messaging, reviews, appeals, favorites, support tickets, and admin flows are implemented.
+- Arabic toggle and RTL switching exist, but translation coverage is still incomplete.
 
-### 3. Personalized Feed (1 minute)
-1. Scroll down on the home page
-2. Try different filters:
-   - **For You** (recommended)
-   - **Nearby** (location-based)
-   - **Trending** (popular items)
-3. Click the **heart icon** to favorite items
-4. Hover over cards to see animations
+## Common commands
 
-### 4. Language Toggle (10 seconds)
-1. Find the **globe icon** in the navbar
-2. Click to toggle English ⇄ Arabic
-3. Watch the layout flip to RTL for Arabic!
-
-### 5. Browse Categories (1 minute)
-1. Scroll to the "Browse by Category" section
-2. Click any category card
-3. See hover effects and animations
-
----
-
-## Project Structure (Quick Reference)
-
-```
-weggo/
-├── app/
-│   ├── page.tsx          ← Home page (START HERE)
-│   ├── sell/page.tsx     ← Sell page with AI pricing
-│   ├── profile/page.tsx  ← User profile
-│   └── favorites/page.tsx ← Saved items
-│
-├── components/
-│   ├── AIChatbot.tsx     ← Chatbot widget
-│   ├── AIPricingSuggestion.tsx ← Price AI
-│   ├── Navbar.tsx        ← Top navigation
-│   └── PersonalizedFeed.tsx ← Product feed
-│
-└── app/api/
-    ├── ai-chat/          ← Chatbot API
-    ├── pricing/          ← Pricing AI API
-    └── listings/         ← Products API
-```
-
----
-
-## Key Design Elements
-
-### Colors
-- **Primary Blue**: `#0ea5e9` - Trust, technology
-- **Purple**: `#d946ef` - Innovation
-- **Orange**: `#f97316` - Action, energy
-
-### Animations
-- **Float**: Smooth up/down motion
-- **Hover Lift**: Cards lift on hover
-- **Fade In**: Smooth page loads
-- **Slide Up**: Modals entrance
-
-### Fonts
-- **English**: Inter (Google Fonts)
-- **Arabic**: Cairo (Google Fonts)
-
----
-
-## Common Tasks
-
-### Add a New Component
 ```bash
-# Create in components/
-touch components/MyComponent.tsx
-```
-
-### Add a New Page
-```bash
-# Create in app/
-mkdir app/mypage
-touch app/mypage/page.tsx
-```
-
-### Modify Colors
-Edit `tailwind.config.ts` → `theme.extend.colors`
-
-### Add Animation
-Edit `app/globals.css` → `@layer utilities`
-
----
-
-## Troubleshooting
-
-### Port 3000 Already in Use
-```bash
-# Use a different port
-npm run dev -- -p 3001
-```
-
-### Module Not Found
-```bash
-# Reinstall dependencies
-rm -rf node_modules
-npm install
-```
-
-### Styles Not Updating
-```bash
-# Clear Next.js cache
-rm -rf .next
 npm run dev
-```
-
-### Build Errors
-```bash
-# Check for TypeScript errors
+npm run build
 npm run lint
+npm test
+npm run test:e2e
 ```
 
----
+## Common issues
 
-## Learn More
+Missing `JWT_SECRET` during build:
 
-### Documentation
-- **README.md** - Overview and installation
-- **FEATURES.md** - Detailed feature documentation
-- **SETUP.md** - Complete setup guide
+- make sure the file is named `.env.local`
+- make sure `JWT_SECRET` is actually set inside it
 
-### Next.js Resources
-- [Next.js Documentation](https://nextjs.org/docs)
-- [Learn Next.js](https://nextjs.org/learn)
+Warnings about `NEXT_PUBLIC_SITE_URL`:
 
-### Deployment
-- [Deploy on Vercel](https://vercel.com)
+- add `NEXT_PUBLIC_SITE_URL=http://localhost:3000` to `.env.local`
+- add `NEXT_PUBLIC_APP_URL=http://localhost:3000` too if you want the env warnings gone completely
 
----
+Warnings about `<img>`:
 
-## Next Steps
+- these are current lint warnings in the repo, not fatal build errors
 
-### For Development
-1. ✅ Explore the AI features
-2. ✅ Customize colors and animations
-3. ✅ Add your own content
-4. ⏭️ Integrate real database
-5. ⏭️ Add authentication
-6. ⏭️ Connect real AI APIs
+Bus error / `SIGBUS` during build:
 
-### For Production
-1. Set up environment variables (`.env.local`)
-2. Configure database (Prisma/MongoDB)
-3. Add authentication (NextAuth)
-4. Integrate OpenAI API
-5. Set up image storage (Cloudinary)
-6. Deploy to Vercel
+- this is usually an environment or filesystem issue, especially on mounted/shared drives
 
----
+## Read next
 
-## Pro Tips
-
-1. **Hot Reload**: Changes auto-refresh the browser
-2. **Component Library**: All components in `/components`
-3. **Tailwind**: Use Tailwind classes for styling
-4. **TypeScript**: Full type safety enabled
-5. **Mobile First**: Responsive design built-in
-
----
-
-## 🎉 You're Ready!
-
-Weggo is now running. Explore, customize, and build amazing features!
-
-**Questions?** Check out:
-- FEATURES.md for detailed documentation
-- README.md for comprehensive guide
-- SETUP.md for production deployment
-
----
-
-**Happy Coding! 🚀**
-
-Made with ❤️ in Egypt
-
-
-
+- [README.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/README.md)
+- [SETUP.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/SETUP.md)
+- [FEATURES.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/FEATURES.md)

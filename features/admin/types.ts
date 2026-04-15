@@ -1,4 +1,4 @@
-export type AdminRole = 'admin' | 'moderator'
+export type AdminRole = 'admin'
 
 export type AdminTabKey =
   | 'overview'

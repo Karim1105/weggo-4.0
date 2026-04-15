@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { withCsrfHeader } from '@/lib/utils'
 
-export type AdminRole = 'admin' | 'moderator' | 'user' | null
+export type AdminRole = 'admin' | 'user' | null
 
 interface UseAdminOptions {
   isAdmin: boolean

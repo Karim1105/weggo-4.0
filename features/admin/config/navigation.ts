@@ -12,7 +12,7 @@ export const ADMIN_NAV_ITEMS: AdminNavConfigItem[] = [
     label: 'Overview',
     description: 'Analytics and KPIs',
     icon: BarChart3,
-    roles: ['admin', 'moderator'],
+    roles: ['admin'],
   },
   {
     key: 'users',
@@ -26,7 +26,7 @@ export const ADMIN_NAV_ITEMS: AdminNavConfigItem[] = [
     label: 'Reports',
     description: 'Moderation queue',
     icon: Flag,
-    roles: ['admin', 'moderator'],
+    roles: ['admin'],
   },
   {
     key: 'appeals',
@@ -54,14 +54,14 @@ export const ADMIN_NAV_ITEMS: AdminNavConfigItem[] = [
     label: 'Categories',
     description: 'Category health',
     icon: Tags,
-    roles: ['admin', 'moderator'],
+    roles: ['admin'],
   },
   {
     key: 'activity',
     label: 'Activity',
     description: 'Action audit trail',
     icon: Activity,
-    roles: ['admin', 'moderator'],
+    roles: ['admin'],
   },
 ]
 

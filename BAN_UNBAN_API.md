@@ -1,132 +1,111 @@
-# Simple Ban/Unban API Documentation
+# Ban / Unban API Documentation
 
-## Ban User Endpoint
+This file documents the current simple admin ban endpoints.
 
-**Endpoint**: `POST /api/admin/ban-user`
+## Ban User
 
-**Access**: Admin only (returns 404 for non-admins)
+**Endpoint:** `POST /api/admin/ban-user`
 
-### Request Body
+**Access:** admin only
+
+### Request body
+
 ```json
 {
-  "userId": "507f1f77bcf86cd799439011",  // OR use email instead
-  "email": "user@example.com",            // Optional: use if userId not provided
+  "userId": "507f1f77bcf86cd799439011",
+  "email": "user@example.com",
   "reason": "Violating community guidelines"
 }
 ```
 
-### Parameters
-- **userId** (optional): MongoDB ObjectId of the user to ban
-- **email** (optional): Email of the user to ban
-- **reason** (required): Ban reason (max 500 characters)
+Rules:
 
-**Note**: Either `userId` or `email` must be provided
+- either `userId` or `email` must be provided
+- `reason` is required
+- `reason` max length is 500 characters
 
-### Response (Success - 200)
+Behavior:
+
+- bans the user
+- stores `bannedAt`, `bannedReason`, and `bannedBy`
+- soft-deletes that user’s non-deleted listings by setting `status: deleted`
+- sets `expiresAt` so Mongo TTL cleanup can eventually remove those listings
+- clears related listing caches
+
+### Success response
+
 ```json
 {
   "success": true,
-  "message": "User banned successfully",
+  "message": "User banned successfully and 3 listings marked as deleted",
   "data": {
     "userId": "507f1f77bcf86cd799439011",
     "email": "user@example.com",
     "name": "John Doe",
     "banned": true,
-    "bannedAt": "2024-01-15T10:30:00.000Z",
+    "bannedAt": "2026-04-15T10:30:00.000Z",
     "bannedReason": "Violating community guidelines",
-    "bannedBy": "507f1f77bcf86cd799439012"
+    "bannedBy": "507f1f77bcf86cd799439012",
+    "listingsDeleted": 3
   }
 }
 ```
 
-### Error Responses
-- **400**: Missing userId/email, missing reason, reason too long, user already banned
-- **403**: Attempting to ban an admin user
-- **404**: User not found
-- **500**: Server error
+### Common errors
 
-### Example cURL
-```bash
-curl -X POST http://localhost:3000/api/admin/ban-user \
-  -H "Content-Type: application/json" \
-  -H "Cookie: token=<admin_token>" \
-  -d '{
-    "userId": "507f1f77bcf86cd799439011",
-    "reason": "Spam and harassment"
-  }'
-```
+- `400`: missing user identifier, missing reason, reason too long, user already banned
+- `403`: attempt to ban an admin user
+- `404`: user not found
 
----
+## Unban User
 
-## Unban User Endpoint
+**Endpoint:** `POST /api/admin/unban-user`
 
-**Endpoint**: `POST /api/admin/unban-user`
+**Access:** admin only
 
-**Access**: Admin only (returns 404 for non-admins)
+### Request body
 
-### Request Body
 ```json
 {
-  "userId": "507f1f77bcf86cd799439011",  // OR use email instead
-  "email": "user@example.com"             // Optional: use if userId not provided
+  "userId": "507f1f77bcf86cd799439011",
+  "email": "user@example.com"
 }
 ```
 
-### Parameters
-- **userId** (optional): MongoDB ObjectId of the user to unban
-- **email** (optional): Email of the user to unban
+Rules:
 
-**Note**: Either `userId` or `email` must be provided
+- either `userId` or `email` must be provided
 
-### Response (Success - 200)
+Behavior:
+
+- clears the user’s ban state
+- restores listings that were soft-deleted by the ban flow
+- only restores listings that still have the ban-related `expiresAt`
+- clears related listing caches
+
+### Success response
+
 ```json
 {
   "success": true,
-  "message": "User unbanned successfully",
+  "message": "User unbanned successfully and 3 listings restored",
   "data": {
     "userId": "507f1f77bcf86cd799439011",
     "email": "user@example.com",
     "name": "John Doe",
-    "banned": false
+    "banned": false,
+    "listingsRestored": 3
   }
 }
 ```
 
-### Error Responses
-- **400**: Missing userId/email, user not banned
-- **404**: User not found
-- **500**: Server error
+### Common errors
 
-### Example cURL
-```bash
-curl -X POST http://localhost:3000/api/admin/unban-user \
-  -H "Content-Type: application/json" \
-  -H "Cookie: token=<admin_token>" \
-  -d '{
-    "email": "user@example.com"
-  }'
-```
+- `400`: missing user identifier, user is not banned
+- `404`: user not found
 
----
+## Notes
 
-## Features
-
-✅ **Simple & Direct**: No action parameter needed - just call ban or unban  
-✅ **Flexible Lookup**: Use userId or email  
-✅ **Admin Protection**: Can't ban other admins  
-✅ **Validation**: Ensures valid data and prevents double-banning  
-✅ **Audit Logging**: All ban/unban actions are logged  
-✅ **Security**: Admin-only access with 404 response for non-admins  
-
-## Comparison with Existing Endpoint
-
-### New Simple API (`/api/admin/ban-user`)
-- Direct action endpoint
-- Automatic validation
-- Clear error messages
-- Perfect for UI implementation
-
-### Existing API (`/api/admin/users/[id]/ban`)
-- Supports both ban and unban with action parameter
-- More flexible for bulk operations
-- Useful for advanced workflows
+- These endpoints are the simple admin moderation endpoints used by current admin flows.
+- They exist alongside appeal review endpoints, but they are not the same thing.
+- There is no separate admin login route; admin access uses the normal JWT auth system with `role: "admin"`.

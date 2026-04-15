@@ -313,7 +313,7 @@ export default function ListingDetailClient({ listingId, adminState }: ListingDe
 
   const imageUrl = listing.images?.[selectedImage] || listing.images?.[0] || ''
   const fullImageUrl = listingImageUrl(imageUrl || undefined)
-  const adminRole = adminState.role === 'admin' || adminState.role === 'moderator' ? adminState.role : null
+  const adminRole = adminState.role === 'admin' ? adminState.role : null
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-4 bg-gray-50">
@@ -332,12 +332,16 @@ export default function ListingDetailClient({ listingId, adminState }: ListingDe
             listing && adminRole ? (
               <AdminControls
                 listingId={listing._id}
-                role={adminRole}
                 editHref={`/listings/${listing._id}/edit`}
-                isVisible={listing.status !== 'deleted'}
+                status={listing.status || 'active'}
+                isVisible={listing.status === 'active'}
                 isFeatured={Boolean(listing.isBoosted)}
                 onVisibilityChange={(visible) =>
-                  setListing((prev) => (prev ? { ...prev, status: visible ? 'active' : 'deleted' } : prev))
+                  setListing((prev) =>
+                    prev && (prev.status === 'active' || prev.status === 'deleted')
+                      ? { ...prev, status: visible ? 'active' : 'deleted' }
+                      : prev
+                  )
                 }
                 onFeaturedChange={(featured) =>
                   setListing((prev) => (prev ? { ...prev, isBoosted: featured } : prev))

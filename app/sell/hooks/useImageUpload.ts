@@ -2,6 +2,20 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 import { IMAGE_QUALITY, MAX_IMAGE_DIMENSION } from '../constants'
 
+export function resolveImageOutput(file: Pick<File, 'type' | 'name'>) {
+  const inputType = file.type.toLowerCase()
+  const targetType =
+    inputType === 'image/png' || inputType === 'image/webp'
+      ? inputType
+      : 'image/jpeg'
+
+  return {
+    targetType,
+    extension: targetType === 'image/png' ? '.png' : targetType === 'image/webp' ? '.webp' : '.jpg',
+    quality: targetType === 'image/png' ? undefined : IMAGE_QUALITY,
+  }
+}
+
 async function compressAndStripMetadata(file: File): Promise<File> {
   if (!file.type.startsWith('image/')) return file
 
@@ -31,17 +45,18 @@ async function compressAndStripMetadata(file: File): Promise<File> {
     }
 
     context.drawImage(image, 0, 0, targetWidth, targetHeight)
+    const output = resolveImageOutput(file)
 
     const blob = await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob((result) => {
         if (result) resolve(result)
         else reject(new Error('Could not compress selected image'))
-      }, 'image/jpeg', IMAGE_QUALITY)
+      }, output.targetType, output.quality)
     })
 
     const normalizedName = file.name.replace(/\.[^/.]+$/, '') || 'image'
-    return new File([blob], `${normalizedName}.jpg`, {
-      type: 'image/jpeg',
+    return new File([blob], `${normalizedName}${output.extension}`, {
+      type: output.targetType,
       lastModified: Date.now(),
     })
   } finally {

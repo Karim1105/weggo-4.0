@@ -3,14 +3,14 @@
 import Link from 'next/link'
 import { useState } from 'react'
 import toast from 'react-hot-toast'
-import { Eye, EyeOff, Pencil, Sparkles, Trash2 } from 'lucide-react'
+import { Eye, EyeOff, Pencil, Sparkles } from 'lucide-react'
 import AdminActionButton from '@/components/admin/AdminActionButton'
 import { adminDeleteListing, adminSetFeatured, adminSetVisibility } from '@/features/admin-actions/listings'
 
 interface AdminControlsProps {
   listingId: string
-  role: 'admin' | 'moderator'
   editHref: string
+  status: 'active' | 'sold' | 'pending' | 'deleted'
   isVisible: boolean
   isFeatured: boolean
   onVisibilityChange: (visible: boolean) => void
@@ -20,8 +20,8 @@ interface AdminControlsProps {
 
 export default function AdminControls({
   listingId,
-  role,
   editHref,
+  status,
   isVisible,
   isFeatured,
   onVisibilityChange,
@@ -29,8 +29,14 @@ export default function AdminControls({
   onDeleted,
 }: AdminControlsProps) {
   const [loadingKey, setLoadingKey] = useState<string | null>(null)
+  const canToggleVisibility = status === 'active' || status === 'deleted'
 
   const handleToggleVisibility = async () => {
+    if (!canToggleVisibility) {
+      toast.error('Visibility can only be changed for active or hidden listings')
+      return
+    }
+
     const nextVisible = !isVisible
     setLoadingKey('visibility')
     try {
@@ -88,6 +94,7 @@ export default function AdminControls({
 
         <AdminActionButton
           label={isVisible ? 'Hide' : 'Unhide'}
+          disabled={!canToggleVisibility}
           loading={loadingKey === 'visibility'}
           onClick={handleToggleVisibility}
           variant="warning"
@@ -99,18 +106,12 @@ export default function AdminControls({
           onClick={handleToggleFeatured}
         />
 
-        {role === 'admin' ? (
-          <AdminActionButton
-            label="Delete"
-            loading={loadingKey === 'delete'}
-            onClick={handleDelete}
-            variant="danger"
-          />
-        ) : (
-          <span className="inline-flex items-center justify-center rounded-md border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-500">
-            Delete (admin only)
-          </span>
-        )}
+        <AdminActionButton
+          label="Delete"
+          loading={loadingKey === 'delete'}
+          onClick={handleDelete}
+          variant="danger"
+        />
       </div>
 
       <div className="mt-2 flex items-center gap-3 text-[11px] text-gray-500">
@@ -121,6 +122,11 @@ export default function AdminControls({
           <Sparkles className="h-3.5 w-3.5" /> Featured: {isFeatured ? 'Yes' : 'No'}
         </span>
       </div>
+      {!canToggleVisibility ? (
+        <p className="mt-2 text-[11px] text-amber-700">
+          Visibility toggle only applies to active or hidden listings.
+        </p>
+      ) : null}
     </div>
   )
 }

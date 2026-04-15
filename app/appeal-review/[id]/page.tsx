@@ -285,7 +285,7 @@ export default function AppealReviewPage() {
                 {userChats.map((conversation: any) => (
                   <a
                     key={conversation.conversationId}
-                    href={`/messages?conversationId=${conversation.conversationId}`}
+                    href={`/messages/${conversation.conversationId}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="block bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition"

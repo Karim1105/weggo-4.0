@@ -86,6 +86,16 @@ async function patchHandler(
       )
     }
 
+    if (!['active', 'deleted'].includes(product.status)) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'Visibility can only be changed for active or hidden listings',
+        },
+        { status: 409 }
+      )
+    }
+
     product.status = visible ? 'active' : 'deleted'
     ;(product as any).expiresAt = null
     await product.save()

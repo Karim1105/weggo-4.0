@@ -1,123 +1,133 @@
-## Ban State & Appeal System Implementation
+# Ban Appeal System
 
-### Files Created:
+This document reflects the current appeal system in the repo as of 2026-04-15.
 
-#### 1. `models/BanAppeal.ts`
-New MongoDB model for storing ban appeals/disputes with the following fields:
-- `userId`: Reference to the banned user
-- `bannedBy`: Reference to the admin who banned the user
-- `reason`: Original ban reason
-- `appealMessage`: User's dispute message (max 4096 chars)
-- `status`: pending | approved | rejected
-- `reviewedBy`: Admin who reviewed the appeal
-- `reviewedAt`: When the appeal was reviewed
-- `rejectionReason`: Reason if appeal was rejected
+## Main Pieces
 
-#### 2. `app/api/auth/ban-appeal/route.ts`
-Public API endpoint for banned users to submit appeals:
-- **Endpoint**: POST `/api/auth/ban-appeal`
-- **Rate Limit**: 5 requests per hour
-- **Input**:
-  - `email`: User's email
-  - `appealMessage`: Dispute message (10-4096 chars)
-- **Validations**:
-  - User must exist and be banned
-  - Appeal message length between 10 and 4096 characters
-  - User can only have one pending appeal at a time
-- **Response**: Returns appeal ID and status
+### Data Model
 
-#### 3. `app/api/admin/ban-appeals/route.ts`
-Admin API to view all ban appeals:
-- **Endpoint**: GET `/api/admin/ban-appeals`
-- **Access**: Admin only (returns 404 for non-admins)
-- **Query Parameters**:
-  - `page`: Pagination (default: 1)
-  - `limit`: Results per page (default: 20)
-  - `status`: Filter by status (pending, approved, rejected, or all)
-- **Response**: Appeals list with pagination and statistics
+`models/BanAppeal.ts` stores:
 
-#### 4. `app/api/admin/ban-appeals/[id]/route.ts`
-Admin API to review and approve/reject appeals:
-- **Endpoint**: POST `/api/admin/ban-appeals/[id]`
-- **Access**: Admin only (returns 404 for non-admins)
-- **Input**:
-  - `action`: 'approve' or 'reject'
-  - `rejectionReason`: Required if rejecting (max 1024 chars)
-- **Actions**:
-  - **Approve**: Unbans the user and updates appeal status
-  - **Reject**: Sets appeal status to rejected with reason
-- **Response**: Confirmation with appeal ID and reviewed timestamp
+- `userId`
+- `bannedBy`
+- `reason`
+- `appealMessage`
+- `status`
+- `reviewedBy`
+- `reviewedAt`
+- `rejectionReason`
 
-### Files Modified:
+## User-Facing Appeal Paths
 
-#### `app/api/auth/login/route.ts`
-Added ban check after password verification:
-- Checks if `user.banned` is true
-- If banned, redirects to login page with query params:
-  - `error=banned`
-  - `reason=<encoded ban reason>`
-- User can then submit appeal through `/api/auth/ban-appeal`
+### 1. Public appeal submission for banned users who cannot log in
 
-### How It Works:
+**Endpoint:** `POST /api/auth/ban-appeal`
 
-1. **User Login**:
-   - User enters credentials
-   - Password is verified
-   - System checks if user is banned
-   - If banned: Redirect to login with ban reason
-   - If not banned: Allow login
+Use this flow when a banned user is blocked at login and cannot access the authenticated app.
 
-2. **Submit Appeal**:
-   - Banned user navigates to appeal page
-   - Fills in dispute message (max 4096 chars)
-   - System validates and creates BanAppeal record
-   - Rate limit: 5 appeals per hour to prevent spam
+Input:
 
-3. **Admin Review**:
-   - Admin views pending appeals at `/api/admin/ban-appeals`
-   - Reviews user's appeal message and ban reason
-   - Can approve (unban user) or reject (with reason)
-   - Appeal history is maintained for audit trail
+- `email`
+- `appealMessage`
 
-### API Usage Examples:
+Behavior:
 
-**Submit Ban Appeal:**
-```bash
-POST /api/auth/ban-appeal
-Content-Type: application/json
+- rate limited to 5 requests per hour
+- validates email and appeal length
+- only creates a real appeal if the email belongs to a banned user with no pending appeal
+- intentionally returns a success-like `201` response even for unknown, non-banned, or already-pending users to reduce account enumeration
 
-{
-  "email": "user@example.com",
-  "appealMessage": "I believe this ban was a mistake. I was just trying to sell my used phone..."
-}
-```
+### 2. Authenticated appeal history
 
-**Get Ban Appeals (Admin):**
-```bash
-GET /api/admin/ban-appeals?status=pending&page=1&limit=20
-```
+**Endpoint:** `GET /api/users/ban-appeals`
 
-**Review Appeal (Admin):**
-```bash
-POST /api/admin/ban-appeals/[appealId]
-Content-Type: application/json
+Use this for the signed-in appeals page.
 
-{
-  "action": "approve"
-}
+Behavior:
 
-// OR
+- requires auth
+- returns the current user’s appeals
+- paginated with `page` and `limit`
 
-{
-  "action": "reject",
-  "rejectionReason": "Appeal does not address the original violations"
-}
-```
+### 3. Authenticated appeal submission
 
-### Security Features:
-- Ban appeals are only accessible via email verification (no auth required for submission)
-- Admin endpoints return 404 to non-admins
-- Rate limiting prevents appeal spam
-- Message length limits prevent abuse
-- Audit trail maintained with reviewer info and timestamps
-- Original ban reason is preserved with appeal
+**Endpoint:** `POST /api/users/ban-appeals/submit`
+
+Use this when a banned authenticated user is already inside the app and wants to submit an appeal from the appeals page.
+
+Input:
+
+- `appealMessage`
+
+Behavior:
+
+- requires auth
+- rate limited to 5 requests per hour
+- only works for banned users
+- blocks duplicate pending appeals
+
+## Admin Appeal APIs
+
+### List appeals
+
+**Endpoint:** `GET /api/admin/ban-appeals`
+
+Query params:
+
+- `page`
+- `limit`
+- `status` = `all | pending | approved | rejected`
+
+Returns:
+
+- paginated appeals
+- populated user/admin references
+- basic appeal stats
+
+### Appeal detail
+
+**Endpoint:** `GET /api/admin/ban-appeals/[id]`
+
+Returns:
+
+- one populated appeal record
+- banned-user details needed for review screens
+
+### Review an appeal
+
+**Endpoint:** `POST /api/admin/ban-appeals/[id]`
+
+Input:
+
+- `action`: `approve` or `reject`
+- `rejectionReason`: required when rejecting
+
+Behavior:
+
+- approve: unbans the user and marks the appeal approved
+- reject: stores a rejection reason and marks the appeal rejected
+- admin override of a previously reviewed appeal is allowed and tracked
+
+## Login Integration
+
+`app/api/auth/login/route.ts` checks `user.banned` after password verification.
+
+If the user is banned:
+
+- the login flow redirects back to `/login`
+- `error=banned` is included
+- ban reason is included in the query string
+- the login page can then direct the user toward the appeal flow
+
+## Current Admin / Page Flow
+
+- user sees banned login state
+- user submits public appeal or authenticated appeal depending on context
+- admin reviews appeals in the admin dashboard appeals module
+- admin can open appeal detail, related user listings, and related chats
+
+## Notes
+
+- The public route is deliberately written to avoid easy user enumeration.
+- The authenticated appeal routes are the main source of truth for the in-app appeals page.
+- The admin dashboard now uses modular admin screens rather than one large legacy page.

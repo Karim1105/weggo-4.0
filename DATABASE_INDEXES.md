@@ -1,183 +1,118 @@
-# MongoDB Performance Optimization
+# Database Indexes
 
-## Recommended Database Indexes
+This file documents the indexes currently declared in the codebase and the ones you should confirm exist in production.
 
-To improve query performance, add these indexes to your MongoDB collections. You can create them through MongoDB Atlas UI or using the MongoDB shell.
+## Important note
 
-### Products Collection
+The source of truth is the Mongoose model definitions in `models/`.
+If auto-indexing is disabled in a production environment, make sure these indexes are created manually in MongoDB.
+
+## Current model-defined indexes
+
+### `Product`
+
+Declared in [models/Product.ts](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/models/Product.ts):
+
+- text index on `title`, `description`
+- `{ category: 1, location: 1, price: 1 }`
+- `{ seller: 1 }`
+- `{ createdAt: -1 }`
+- `{ status: 1 }`
+- `{ isBoosted: -1 }`
+- `{ condition: 1 }`
+- `{ subcategory: 1 }`
+- `{ status: 1, isBoosted: -1, createdAt: -1 }`
+- `{ status: 1, category: 1, isBoosted: -1, createdAt: -1 }`
+- `{ status: 1, subcategory: 1, isBoosted: -1, createdAt: -1 }`
+- `{ status: 1, condition: 1, isBoosted: -1, createdAt: -1 }`
+- `{ status: 1, seller: 1, createdAt: -1 }`
+- `{ status: 1, views: -1, createdAt: -1 }`
+- `{ status: 1, averageRating: -1, ratingCount: -1, createdAt: -1 }`
+- TTL index on `expiresAt`
+
+### `Message`
+
+Declared in [models/Message.ts](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/models/Message.ts):
+
+- `{ conversationId: 1, createdAt: -1 }`
+- `{ sender: 1, receiver: 1 }`
+- `{ conversationId: 1, receiver: 1, read: 1 }`
+- `{ sender: 1, receiver: 1, product: 1, createdAt: -1 }`
+
+### `Ticket`
+
+Declared in [models/Ticket.ts](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/models/Ticket.ts):
+
+- `{ userId: 1, updatedAt: -1 }`
+- `{ status: 1, updatedAt: -1 }`
+- text index on `subject`
+
+### `TicketMessage`
+
+Declared in [models/TicketMessage.ts](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/models/TicketMessage.ts):
+
+- `{ ticketId: 1, createdAt: 1 }`
+
+### `Wishlist`
+
+Declared in `models/Wishlist.ts`:
+
+- unique `{ user: 1, product: 1 }`
+- `{ user: 1, createdAt: -1 }`
+
+### `ViewHistory`
+
+Declared in `models/ViewHistory.ts`:
+
+- `{ user: 1, viewedAt: -1 }`
+- `{ product: 1 }`
+- unique `{ user: 1, product: 1 }`
+
+### `SavedSearch`
+
+Declared in `models/SavedSearch.ts`:
+
+- `{ user: 1, createdAt: -1 }`
+
+### `Review`
+
+Declared in `models/Review.ts`:
+
+- `{ seller: 1, createdAt: -1 }`
+- `{ product: 1 }`
+
+### `Report`
+
+Declared in `models/Report.ts`:
+
+- `{ listing: 1 }`
+- `{ reporter: 1 }`
+
+### Persistent rate limit storage
+
+Declared in `lib/api/middleware/persistentRateLimit.ts`:
+
+- TTL index on `expiresAt`
+
+## Operational recommendation
+
+For an existing production database:
+
+1. verify the indexes above exist in MongoDB
+2. verify the TTL indexes are active
+3. re-check indexes after large schema or query refactors such as browse, messages, or ticketing changes
+
+## Useful shell checks
 
 ```javascript
-// 1. Category + Status + CreatedAt (for browse page filtering)
-db.products.createIndex({ category: 1, status: 1, createdAt: -1 })
-
-// 2. Subcategory + Status + CreatedAt (for subcategory filtering)
-db.products.createIndex({ subcategory: 1, status: 1, createdAt: -1 })
-
-// 3. Status + Price (for price range queries)
-db.products.createIndex({ status: 1, price: 1 })
-
-// 4. Status + Location (for location filtering)
-db.products.createIndex({ status: 1, location: 1 })
-
-// 5. Seller + Status (for "my listings" page)
-db.products.createIndex({ seller: 1, status: 1, createdAt: -1 })
-
-// 6. Text search index (for search functionality)
-db.products.createIndex({ title: "text", description: "text" })
-
-// 7. Boosted listings (for featured/promoted items)
-db.products.createIndex({ isBoosted: -1, createdAt: -1 })
+db.products.getIndexes()
+db.messages.getIndexes()
+db.tickets.getIndexes()
+db.ticketmessages.getIndexes()
 ```
 
-### Users Collection
+To inspect usage:
 
 ```javascript
-// 1. Email (unique, for login)
-db.users.createIndex({ email: 1 }, { unique: true })
-
-// 2. Name + Role (for admin user lookup)
-db.users.createIndex({ name: 1, role: 1 })
-
-// 3. Role (for admin queries)
-db.users.createIndex({ role: 1 })
+db.products.aggregate([{ $indexStats: {} }])
 ```
-
-### Messages Collection
-
-```javascript
-// 1. Receiver + CreatedAt (for inbox)
-db.messages.createIndex({ receiver: 1, createdAt: -1 })
-
-// 2. Sender + CreatedAt (for sent messages)
-db.messages.createIndex({ sender: 1, createdAt: -1 })
-
-// 3. Product + Participants (for conversation threads)
-db.messages.createIndex({ product: 1, sender: 1, receiver: 1 })
-```
-
-### ViewHistory Collection
-
-```javascript
-// 1. User + ViewedAt (for recently viewed)
-db.viewhistories.createIndex({ user: 1, viewedAt: -1 })
-
-// 2. User + Product (unique, for tracking views)
-db.viewhistories.createIndex({ user: 1, product: 1 }, { unique: true })
-```
-
-### Wishlists Collection
-
-```javascript
-// 1. User + CreatedAt (for user's wishlist)
-db.wishlists.createIndex({ user: 1, createdAt: -1 })
-
-// 2. User + Product (unique, prevent duplicates)
-db.wishlists.createIndex({ user: 1, product: 1 }, { unique: true })
-```
-
-### Reviews Collection
-
-```javascript
-// 1. Seller + CreatedAt (for seller reviews)
-db.reviews.createIndex({ seller: 1, createdAt: -1 })
-
-// 2. Reviewer (for user's reviews)
-db.reviews.createIndex({ reviewer: 1 })
-```
-
-### SavedSearches Collection
-
-```javascript
-// 1. User + CreatedAt (for user's saved searches)
-db.savedsearches.createIndex({ user: 1, createdAt: -1 })
-```
-
-## How to Apply These Indexes
-
-### Option 1: MongoDB Atlas UI
-1. Go to MongoDB Atlas → Your Cluster → Collections
-2. Select the collection (e.g., `products`)
-3. Click "Indexes" tab
-4. Click "Create Index"
-5. Paste the index definition (e.g., `{ "category": 1, "status": 1, "createdAt": -1 }`)
-6. Click "Review" → "Create"
-
-### Option 2: MongoDB Shell
-```bash
-# Connect to your database
-mongosh "mongodb+srv://your-connection-string"
-
-# Switch to weggo database (or 'test' if that's your production DB)
-use weggo
-
-# Run each createIndex command
-db.products.createIndex({ category: 1, status: 1, createdAt: -1 })
-# ... etc
-```
-
-### Option 3: Programmatically (One-time Script)
-Create a script `scripts/create-indexes.ts`:
-
-```typescript
-import mongoose from 'mongoose'
-import Product from '../models/Product'
-import User from '../models/User'
-import Message from '../models/Message'
-// ... import other models
-
-async function createIndexes() {
-  await mongoose.connect(process.env.MONGODB_URI!)
-  
-  console.log('Creating indexes...')
-  
-  // Products
-  await Product.collection.createIndex({ category: 1, status: 1, createdAt: -1 })
-  await Product.collection.createIndex({ subcategory: 1, status: 1, createdAt: -1 })
-  await Product.collection.createIndex({ status: 1, price: 1 })
-  await Product.collection.createIndex({ status: 1, location: 1 })
-  await Product.collection.createIndex({ seller: 1, status: 1, createdAt: -1 })
-  await Product.collection.createIndex({ title: 'text', description: 'text' })
-  await Product.collection.createIndex({ isBoosted: -1, createdAt: -1 })
-  
-  console.log('✅ All indexes created successfully')
-  process.exit(0)
-}
-
-createIndexes().catch(console.error)
-```
-
-Run with: `npx tsx scripts/create-indexes.ts`
-
-## Performance Impact
-
-**Before indexes:**
-- Browse page queries: 500-2000ms
-- Search queries: 1000-5000ms
-- "My listings" page: 300-1000ms
-
-**After indexes:**
-- Browse page queries: 10-50ms (10-40x faster)
-- Search queries: 50-200ms (20-25x faster)
-- "My listings" page: 5-20ms (60-200x faster)
-
-## Monitoring Index Usage
-
-Check which indexes are being used:
-```javascript
-// In MongoDB shell
-db.products.aggregate([
-  { $indexStats: {} }
-])
-```
-
-## Maintenance
-
-Indexes are automatically maintained by MongoDB. No manual maintenance required.
-
-## Storage Impact
-
-Each index adds approximately 5-15% to database size. For a database with 10,000 products:
-- Without indexes: ~50 MB
-- With indexes: ~60-65 MB
-
-The performance gains far outweigh the minimal storage cost.

@@ -1,6 +1,8 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { ArrowRight, MessageCircle } from 'lucide-react'
 import ConversationItem from '@/components/messages/ConversationItem'
 import { useMessages } from '@/app/messages/hooks/useMessages'
@@ -23,6 +25,8 @@ function MessagesSkeleton() {
 }
 
 export default function MessagesPage() {
+  const router = useRouter()
+  const [legacyConversationId, setLegacyConversationId] = useState<string | null>(null)
   const {
     loading,
     error,
@@ -36,6 +40,25 @@ export default function MessagesPage() {
     refetch,
     markConversationReadOptimistic,
   } = useMessages()
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const value = new URLSearchParams(window.location.search).get('conversationId')
+    setLegacyConversationId(value)
+  }, [])
+
+  useEffect(() => {
+    if (!legacyConversationId) return
+    router.replace(`/messages/${encodeURIComponent(legacyConversationId)}`)
+  }, [legacyConversationId, router])
+
+  if (legacyConversationId) {
+    return (
+      <div className="min-h-screen pt-24 pb-12 px-4 flex items-center justify-center text-sm text-gray-500">
+        Opening conversation...
+      </div>
+    )
+  }
 
   if (loading) {
     return (
@@ -119,4 +142,3 @@ export default function MessagesPage() {
     </div>
   )
 }
-

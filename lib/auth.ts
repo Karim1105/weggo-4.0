@@ -40,16 +40,27 @@ export function verifyToken(token: string): JWTPayload | null {
   }
 }
 
-export async function getServerViewerRole(): Promise<'user' | 'admin' | null> {
+export async function getServerAuthUser(): Promise<IUser | null> {
   try {
     const cookieStore = await cookies()
     const token = cookieStore.get('token')?.value
     if (!token) return null
 
     const payload = verifyToken(token)
-    if (!payload) return null
+    if (!payload?.userId) return null
 
-    return payload.role === 'admin' ? 'admin' : 'user'
+    await connectDB()
+    return await User.findById(payload.userId).select('-password')
+  } catch {
+    return null
+  }
+}
+
+export async function getServerViewerRole(): Promise<'user' | 'admin' | null> {
+  try {
+    const user = await getServerAuthUser()
+    if (!user) return null
+    return user.role === 'admin' ? 'admin' : 'user'
   } catch {
     return null
   }
@@ -110,5 +121,4 @@ export function requireAuthNotBanned(handler: (req: NextRequest, user: IUser) =>
     return handler(req, user)
   }
 }
-
 

@@ -2,6 +2,7 @@ import { Types } from 'mongoose'
 import connectDB from '@/lib/db'
 import Ticket from '@/models/Ticket'
 import TicketMessage from '@/models/TicketMessage'
+import { cleanupTicketAttachments } from '@/lib/tickets/attachments'
 
 let cleanupInProgress = false
 let lastCleanupRun = 0
@@ -35,6 +36,10 @@ export async function cleanupClosedTickets(force = false) {
     }
 
     const ids = staleTickets.map((item) => item._id)
+    const staleMessages = await TicketMessage.find({ ticketId: { $in: ids } })
+      .select('attachments')
+      .lean<{ attachments?: string[] }[]>()
+    await cleanupTicketAttachments(staleMessages.flatMap((message) => message.attachments || []))
     await TicketMessage.deleteMany({ ticketId: { $in: ids } })
     const result = await Ticket.deleteMany({ _id: { $in: ids }, status: 'closed', closedAt: { $lte: cutoff } })
 

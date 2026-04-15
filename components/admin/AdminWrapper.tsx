@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 
 export interface AdminWrapperState {
   isAdmin: boolean
-  role: 'admin' | 'moderator' | 'user' | null
+  role: 'admin' | 'user' | null
   initialViewEnabled: boolean
 }
 

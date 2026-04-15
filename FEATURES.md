@@ -1,336 +1,116 @@
-# Weggo Features Documentation
-
-## Core Features
-
-### 1. AI-Powered Chatbot
-
-**Location**: Bottom-right corner floating button
-
-**Capabilities**:
-- Helps buyers find products based on natural language queries
-- Provides intelligent recommendations
-- Supports both English and Arabic
-- Context-aware conversations
-- Quick question suggestions for common queries
-
-**Example Queries**:
-- "Show me phones in Cairo"
-- "Find laptops under 20,000 EGP"
-- "What furniture is available?"
-- "How does pricing work?"
-
-**Technical Implementation**:
-- Component: `components/AIChatbot.tsx`
-- API: `/api/ai-chat`
-- Features real-time message handling
-- Mock AI responses (ready for OpenAI integration)
-
----
-
-### 2. AI Price Suggestion System
-
-**Location**: Sell page (`/sell`)
-
-**Features**:
-- Analyzes market data from multiple Egyptian platforms
-- Scrapes OLX, Facebook Marketplace, Dubizzle, etc.
-- Provides confidence scores (80-95%)
-- Shows market trends (up/down/stable)
-- Offers three price points:
-  - Quick Sale (10% below market)
-  - Recommended (market price)
-  - Premium (10% above market)
-- Lists similar items with prices and sources
-
-**How It Works**:
-1. Fill in item details (title, description, category, condition)
-2. Click "Get AI Price Suggestion"
-3. AI analyzes market in real-time (simulated 3-second analysis)
-4. Receive detailed pricing report with recommendations
-5. Select your preferred price point
-
-**Technical Implementation**:
-- Component: `components/AIPricingSuggestion.tsx`
-- API: `/api/pricing`
-- Ready for Puppeteer integration for real scraping
-
----
-
-### 3. Personalized Feed
-
-**Location**: Home page
-
-**AI Personalization**:
-- Curates products based on user preferences
-- Location-aware recommendations
-- Trending items in your area
-- Recently viewed categories
-
-**Filter Options**:
-- **For You**: AI-recommended based on your activity
-- **All Items**: Browse everything
-- **Nearby**: Items in your city
-- **Trending**: Popular items right now
-
-**Features**:
-- Infinite scroll capability
-- Favorite/unfavorite items
-- Quick view buttons
-- Category badges
-- Condition indicators
-
----
-
-### 4. Innovative Design
-
-#### Glassmorphism UI
-- Frosted glass effects on cards and modals
-- Backdrop blur for depth
-- Semi-transparent backgrounds
-- Modern, premium feel
-
-#### Animations
-- **Floating cards**: Hero section product cards
-- **Hover effects**: Scale and lift on hover
-- **Smooth transitions**: 300ms transitions throughout
-- **Loading states**: Shimmer and pulse effects
-- **Page transitions**: Fade and slide animations
-
-#### Color Scheme
-- **Primary**: Blue (#0ea5e9) - Trust and technology
-- **Secondary**: Purple (#d946ef) - Innovation
-- **Accent**: Orange (#f97316) - Action and energy
-- **Gradients**: Multi-color gradients for visual interest
-
-#### Typography
-- **Latin**: Inter font - Modern, clean, professional
-- **Arabic**: Cairo font - Traditional yet modern
-- Responsive font sizes
-- Proper line heights and letter spacing
-
----
-
-### 5. Egyptian Market Features
-
-#### Localization
-- **Currency**: Egyptian Pounds (EGP)
-- **Cities**: 22 major Egyptian cities pre-loaded
-  - Cairo, Alexandria, Giza, Luxor, Aswan, etc.
-- **Bilingual Interface**: English ⇄ Arabic toggle
-- **RTL Support**: Automatic layout flip for Arabic
-- **Local Context**: Egyptian phone number validation
-
-#### Market-Specific
-- Categories popular in Egypt
-- Price ranges suitable for Egyptian market
-- Local platform integration ready (OLX, Dubizzle)
-- Egyptian payment methods placeholder (Fawry, PayMob)
-
----
-
-### 6. Product Listing System 📦
-
-**Sell Page Features**:
-- Multi-image upload
-- Drag and drop interface
-- Image preview with remove option
-- Category selection (10+ categories)
-- Condition assessment
-- Location picker
-- Price input with AI suggestion integration
-
-**Form Validation**:
-- Required fields marked
-- Real-time validation
-- Error messages
-- Success notifications
-
-**Categories Available**:
-- Electronics
-- Furniture
-- Vehicles
-- Fashion
-- Home & Garden
-- Sports & Outdoors
-- Books & Media
-- Toys & Games
-- Music
-- Gaming
-
----
-
-### 7. User Experience Features ⭐
-
-#### Navigation
-- Sticky navbar with scroll effects
-- Search bar (desktop and mobile)
-- Language toggle
-- Quick access to Sell, Favorites, Profile
-- Mobile-responsive hamburger menu
-
-#### Product Cards
-- High-quality images
-- Hover animations
-- Favorite button
-- Condition badge
-- Category tag
-- Location indicator
-- Time posted
-- Quick view option
-
-#### Responsive Design
-- Mobile-first approach
-- Tablet optimized
-- Desktop enhanced
-- Touch-friendly buttons
-- Accessible gestures
-
----
-
-### 8. Pages Overview 📄
-
-#### Home (`/`)
-- Hero section with CTAs
-- Category browser
-- Personalized feed
-- Featured listings
-- How it works section
-- Footer
-
-#### Sell (`/sell`)
-- Complete listing form
-- Image upload
-- AI pricing integration
-- Preview before posting
-
-#### Profile (`/profile`)
-- User statistics
-- Active listings
-- Quick actions
-- Settings access
-
-#### Favorites (`/favorites`)
-- Saved items grid
-- Empty state handling
-- Quick unfavorite
-
----
-
-## Technical Features
-
-### State Management
-- Zustand for global state
-- Persistent favorites
-- Language preferences
-- User session
-
-### API Architecture
-- RESTful endpoints
-- Type-safe with TypeScript
-- Error handling
-- Mock data for development
-
-### Performance
-- Next.js 14 App Router
-- Server components where possible
-- Image optimization
-- Code splitting
-- Lazy loading ready
-
-### Accessibility
-- Semantic HTML
-- ARIA labels
-- Keyboard navigation
-- Focus indicators
-- Screen reader friendly
-
----
-
-## 🔮 Future Enhancements
-
-### Phase 1 (MVP+)
-- [ ] User authentication
-- [ ] Real database integration
-- [ ] Image cloud storage
-- [ ] Email notifications
-
-### Phase 2
-- [ ] Real-time chat between users
-- [ ] Push notifications
-- [ ] Advanced search with filters
-- [ ] Seller ratings and reviews
-
-### Phase 3
-- [ ] Payment gateway integration
-- [ ] Delivery tracking
-- [ ] Mobile apps (iOS/Android)
-- [ ] Voice search
-- [ ] Image recognition for categorization
-
-### Phase 4
-- [ ] Virtual assistant with voice
-- [ ] AR product preview
-- [ ] Cryptocurrency payments
-- [ ] Social media integration
-- [ ] Referral program
-
----
-
-## 📊 Metrics & Analytics
-
-### Key Metrics to Track
-- User engagement
-- Time to list an item
-- Search success rate
-- AI pricing acceptance rate
-- Conversion rate (views to contacts)
-- User retention
-
-### AI Performance
-- Chatbot response accuracy
-- Price suggestion acceptance rate
-- Personalization effectiveness
-- User satisfaction scores
-
----
-
-## 🛡️ Security Features
-
-### Current
-- Input sanitization
-- XSS protection (React)
-- Type safety (TypeScript)
-- Environment variables
-
-### To Implement
-- User authentication
-- Rate limiting
-- CSRF protection
-- SQL injection prevention
-- Image validation
-- Content moderation
-
----
-
-## 📱 Mobile Experience
-
-### Optimizations
-- Touch targets 44px minimum
-- Swipeable carousels
-- Bottom navigation ready
-- Thumb-friendly zones
-- Progressive Web App ready
-
-### Native Features Ready
-- Camera access for photos
-- Geolocation
-- Push notifications
-- Offline mode
-- Share API
-
----
-
-Made with ❤️ for the Egyptian Market
+# Weggo Features
 
+This file describes the current product behavior in the codebase as of 2026-04-15.
 
+## Authentication
 
+- user registration
+- login and logout
+- JWT cookie-based auth
+- forgot password and reset password flows
+- auth-aware navbar, profile, and protected actions
+- banned-user handling plus appeal submission flows
+
+## Listings
+
+- create listings
+- edit listings
+- soft-delete listings
+- browse with search, category, subcategory, condition, location, and price filters
+- sort by newest, oldest, price, and rating-related fields
+- listing detail pages with seller info, reviews, and similar items
+- boosted listing controls in admin
+
+## Seller Verification
+
+- selling is gated behind seller verification
+- verification flow is wired into the UI
+- current implementation stores submitted verification data and marks the user as seller-verified
+- this is still not a full manual review or third-party verification system
+
+## Favorites and Recently Viewed
+
+- add/remove favorites
+- favorites page
+- recently viewed tracking for authenticated users
+
+## Messaging
+
+- conversations tied to listings
+- conversation list page
+- per-conversation pages with older-message loading
+- unread count handling in navbar
+- admin visibility into user chats
+- user blocking flow
+
+## Reviews
+
+- public seller reviews on listing pages
+- authenticated review submission
+- seller-level review aggregation
+
+## Appeals and Moderation
+
+- public ban appeal submission for banned users who cannot log in
+- authenticated appeal history and appeal submission for banned signed-in users
+- admin appeal review pages
+- admin user, seller, listing, report, ticket, and analytics screens
+- admin ban/unban flows
+- soft-delete based listing moderation
+
+## Support Tickets
+
+- user support inbox at `/support`
+- ticket detail page with replies and attachment uploads
+- ticket status lifecycle: `open`, `pending`, `resolved`, `closed`
+- admin ticket inbox inside the admin dashboard
+- cleanup of old closed tickets and their local attachments
+
+## AI Features
+
+### AI Chat
+
+- UI widget in the bottom-right corner
+- uses `/api/ai-chat`
+- can answer platform questions and return listing-aware responses for supported queries
+
+### AI Pricing
+
+- pricing helper exists on the sell page
+- current API behavior is simulated/mock
+- it should be treated as a placeholder product flow rather than real market analysis
+
+## Recommendations and Discovery
+
+- personalized feed sections on the homepage
+- nearby listings route
+- trending listings route
+- recommendations route
+- category browsing and counts
+
+## Localization
+
+- English / Arabic language toggle
+- RTL switching support
+- language persistence through Zustand store
+- translation coverage is partial, not complete
+
+## Uploads
+
+- listing images are stored locally and served through `/api/uploads/[...path]`
+- ticket attachments are also stored locally
+- the repo does not currently use Cloudinary or another hosted image provider
+
+## Testing and Tooling
+
+- `npm run lint` runs TypeScript checking plus ESLint
+- `npm test` runs Vitest
+- `npm run test:e2e` runs Playwright
+- the repo has focused regression coverage for several high-priority fixes and newer messaging/ticket behaviors
+
+## Known Non-Goals / Current Gaps
+
+- no payment integration
+- no real-time websocket chat
+- no full manual seller verification workflow
+- no real market-data-backed pricing engine yet

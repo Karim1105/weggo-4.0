@@ -1,3 +1,5 @@
+import fs from 'fs/promises'
+import path from 'path'
 import { saveImage } from '@/lib/imageUpload'
 
 const MAX_ATTACHMENTS_PER_MESSAGE = 4
@@ -18,4 +20,23 @@ export async function saveTicketAttachments(formData: FormData, userId: string, 
   }
 
   return saved
+}
+
+export async function cleanupTicketAttachments(attachmentPaths: string[]) {
+  const uniquePaths = [...new Set(attachmentPaths.filter(Boolean))]
+
+  await Promise.all(
+    uniquePaths.map(async (attachmentPath) => {
+      if (!attachmentPath.startsWith('/uploads/')) return
+
+      const cleanPath = attachmentPath.startsWith('/') ? attachmentPath.slice(1) : attachmentPath
+      const fullPath = path.join(process.cwd(), 'public', cleanPath)
+
+      try {
+        await fs.unlink(fullPath)
+      } catch {
+        return
+      }
+    })
+  )
 }

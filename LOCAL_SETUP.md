@@ -1,79 +1,79 @@
-# Run Weggo locally and check everything
+# Local Setup
 
-## 1. Start MongoDB
+## 1. Make sure MongoDB is running
 
-- **Windows:** Open "Services" or run MongoDB Compass / the MongoDB shell. Or from a terminal (if MongoDB is in PATH): `mongod`
-- **Mac:** `brew services start mongodb-community` (or `mongod` if installed manually)
-- **Linux:** `sudo systemctl start mongod` (or `mongod`)
+Example local URI:
 
-Make sure it's running on **localhost:27017** (default).
-
----
-
-## 2. Environment file
-
-In the project root (`weggo`), create a file named **`.env`** (copy from `.env.example`):
-
+```env
+mongodb://localhost:27017/weggo
 ```
+
+## 2. Create `.env.local`
+
+```env
 MONGODB_URI=mongodb://localhost:27017/weggo
-JWT_SECRET=any-secret-for-local-dev
+JWT_SECRET=replace-with-a-long-random-secret
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-You can leave the rest empty for now.
+Optional:
 
----
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3000
+SEED_ADMIN_SECRET=
+SEED_FEATURED_SECRET=
+```
 
 ## 3. Install and run
 
 ```bash
-cd weggo
 npm install
 npm run dev
 ```
 
-Then open: **http://localhost:3000**
+Open `http://localhost:3000`.
 
----
+## 4. Quick local smoke test
 
-## 4. Quick test flow
+1. Register a user
+2. Browse listings
+3. Open the chatbot
+4. Try the sell page
+5. Visit profile and favorites
+6. Open `/support` and verify the ticket UI loads
 
-1. **Register** – Click Sign up, create an account (name, email, password).
-2. **Browse** – Go to Browse; you’ll see no listings at first (empty DB).
-3. **Sell** – Go to Sell, add a listing (title, description, category, condition, price, location, at least one image). Submit.
-4. **Home** – Go back to Home; your listing should appear in the feed.
-5. **Listing page** – Click the listing; you should see the detail page with “Contact seller”.
-6. **Profile** – Profile should show your user and “My Active Listings”.
-7. **Favorites** – Add something to favorites (from browse or listing page); check Favorites page.
-8. **Admin** – To test admin:
-   - Create an admin user in MongoDB (see below), or
-   - In MongoDB Compass or `mongosh`, find your user and set `role: "admin"`, then go to `/admin` and log in with that email and password.
+## 5. Admin access
 
----
+There is no separate `/api/admin/login` route.
 
-## 5. Create an admin user (optional)
+To test admin locally:
 
-Using **MongoDB Compass** or **mongosh**:
+1. Register a normal user
+2. Change that user document in MongoDB to `role: "admin"`
+3. Log in with that user
+4. Open `/admin`
 
-1. Connect to `mongodb://localhost:27017`
-2. Open database **weggo**, collection **users**
-3. Find your user (by email) and edit: set **`role`** to **`"admin"**
-4. Save
-
-Or add a new document (password will be hashed on first login via the app; for a new admin you’d normally register in the app first, then change `role` to `admin` in the DB).
-
-Then go to **http://localhost:3000/admin** and log in with that user’s email and password.
-
----
-
-## 6. Health check
-
-- **http://localhost:3000/api/health** – Should return `{"success":true,"status":"ok","database":"connected"}` if MongoDB is connected.
-
----
+You can also use the admin seed route if you configure `SEED_ADMIN_SECRET`.
 
 ## Troubleshooting
 
-- **“MongoServerError” or “connect ECONNREFUSED”** – MongoDB is not running. Start it (step 1).
-- **Blank page or 500** – Check the terminal where `npm run dev` is running for errors. Ensure `.env` exists and has `MONGODB_URI`.
-- **Images not showing** – Uploaded images are stored in `public/uploads`. If the folder is missing, it’s created when you create your first listing with a photo.
+Mongo connection errors:
+
+- check that MongoDB is running
+- check `MONGODB_URI` in `.env.local`
+
+Build says `JWT_SECRET is required in production`:
+
+- check that the file name is `.env.local`
+- check that `JWT_SECRET` is present
+
+Images not showing:
+
+- uploads are stored under `public/uploads`
+- they are served through `/api/uploads/[...path]`
+
+Support attachment files not showing:
+
+- ticket attachments also resolve through the uploads serving route
+- confirm the file path stored in Mongo points to a real local file
