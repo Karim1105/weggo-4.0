@@ -250,6 +250,60 @@ describe('listings integration', () => {
     expect(json.data.listings.map((listing: any) => listing.status).sort()).toEqual(['active', 'sold'])
   }, 15000)
 
+  it('returns only active listings when activeOnly=true is requested', async () => {
+    const connectDB = (await loadConnectDB()).default
+    await connectDB()
+    const Product = (await loadProductModel()).default
+    const User = (await loadUserModel()).default
+    const { generateToken } = await loadAuth()
+
+    const me = await User.create({
+      name: 'Active Only Seller',
+      email: 'active-only@example.com',
+      password: 'Aa123456',
+      location: 'Cairo',
+    })
+
+    await Product.create([
+      {
+        title: 'Active Listing Only',
+        description: 'Still available',
+        price: 100,
+        category: 'electronics',
+        condition: 'Good',
+        location: 'Cairo',
+        images: ['/uploads/active-only.jpg'],
+        seller: me._id,
+        status: 'active',
+      },
+      {
+        title: 'Sold Listing Hidden',
+        description: 'Should be filtered out',
+        price: 200,
+        category: 'electronics',
+        condition: 'Good',
+        location: 'Cairo',
+        images: ['/uploads/sold-hidden.jpg'],
+        seller: me._id,
+        status: 'sold',
+      },
+    ])
+
+    const token = generateToken(me as any)
+    const { GET } = await loadListings()
+    const req = new NextRequest('http://localhost/api/listings?seller=me&status=all&activeOnly=true&limit=50', {
+      headers: new Headers({ cookie: `token=${token}` }),
+    })
+    const res = await GET(req)
+    const json = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(json.success).toBe(true)
+    expect(json.data.listings).toHaveLength(1)
+    expect(json.data.listings[0].status).toBe('active')
+    expect(json.data.listings[0].title).toBe('Active Listing Only')
+  }, 15000)
+
   it('handles location filters with regex special characters safely', async () => {
     const connectDB = (await loadConnectDB()).default
     await connectDB()

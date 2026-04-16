@@ -59,15 +59,36 @@ const categoryList: CategoryCard[] = sharedCategories.map((category) => ({
   }),
 }))
 
+const normalizeCountsBySlug = (counts: Record<string, number>) => {
+  const aliasToSlug = new Map<string, string>()
+
+  for (const category of categoryList) {
+    aliasToSlug.set(category.slug.toLowerCase(), category.slug)
+    aliasToSlug.set(category.name.toLowerCase(), category.slug)
+  }
+
+  const normalized: Record<string, number> = {}
+
+  for (const [key, value] of Object.entries(counts || {})) {
+    const normalizedKey = key.trim().toLowerCase()
+    const slug = aliasToSlug.get(normalizedKey) || normalizedKey
+    normalized[slug] = (normalized[slug] || 0) + (Number(value) || 0)
+  }
+
+  return normalized
+}
+
 export default function Categories() {
   const [categories, setCategories] = useState(categoryList)
   const [loading, setLoading] = useState(true)
 
   const applyCounts = (counts: Record<string, number>) => {
+    const normalizedCounts = normalizeCountsBySlug(counts)
+
     setCategories(
       categoryList.map((cat) => ({
         ...cat,
-        count: counts[cat.slug] || 0,
+        count: normalizedCounts[cat.slug] || 0,
       }))
     )
   }

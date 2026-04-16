@@ -74,6 +74,10 @@ function buildMatchQuery(params: ListingQueryParams): Record<string, unknown> {
     query.status = { $ne: 'deleted' }
   }
 
+  if (params.activeOnly) {
+    query.status = 'active'
+  }
+
   const searchTerm = params.search?.trim() || ''
   if (searchTerm) {
     query.$text = { $search: searchTerm }

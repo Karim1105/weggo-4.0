@@ -66,6 +66,7 @@ export function parseListingsQuery(searchParams: URLSearchParams): Ok<ListingQue
   const sellerParam = searchParams.get('seller')?.trim().toLowerCase()
   const sellerMe = sellerParam === 'me'
   const requestedStatus = searchParams.get('status')
+  const activeOnly = searchParams.get('activeOnly') === 'true'
   const stateRaw = searchParams.get('state')?.trim().toLowerCase() || null
   const sortRaw = searchParams.get('sort')
   const legacySortBy = searchParams.get('sortBy')
@@ -124,6 +125,7 @@ export function parseListingsQuery(searchParams: URLSearchParams): Ok<ListingQue
       subcategory,
       location,
       condition,
+      activeOnly,
       minPrice,
       maxPrice,
       search,

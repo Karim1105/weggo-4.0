@@ -1,4 +1,3 @@
-import 'server-only'
 
 import { ActivityLog } from '@/features/admin/types'
 import connectDB from '@/lib/db'

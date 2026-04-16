@@ -25,7 +25,7 @@ interface FeaturedProduct {
 }
 
 const CACHE_KEY = 'weggo_featured_listings'
-const CACHE_DURATION = 5 * 60 * 1000 // 5 minutes
+const CACHE_DURATION = 1 * 60 * 1000 // 1 minutes
 
 export default function Hero() {
   const { handleVerificationFlow } = useUserVerification()

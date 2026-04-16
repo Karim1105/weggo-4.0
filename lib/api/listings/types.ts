@@ -47,6 +47,7 @@ export interface ListingQueryParams {
   subcategory: string | null
   location: string | null
   condition: string | null
+  activeOnly: boolean
   minPrice: number | null
   maxPrice: number | null
   search: string | null
