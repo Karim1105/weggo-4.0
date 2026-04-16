@@ -32,6 +32,11 @@ export default function AdminDashboardPage() {
     setTimeout(() => setRefreshing(false), 450)
   }
 
+  const handleOpenNotifications = () => {
+    setActiveTab('activity')
+    setNotifications((prev) => prev.map((notification) => ({ ...notification, read: true })))
+  }
+
   const onNotify = (entry: Omit<AdminNotification, 'id' | 'createdAt' | 'read'>) => {
     setNotifications((prev) => [
       { id: crypto.randomUUID(), createdAt: new Date().toISOString(), read: false, ...entry },
@@ -53,6 +58,7 @@ export default function AdminDashboardPage() {
       onRefresh={handleRefresh}
       refreshing={refreshing}
       unreadNotifications={unreadNotifications}
+      onOpenNotifications={handleOpenNotifications}
     >
       {activeTab === 'overview' && <OverviewModule refreshTick={refreshTick} />}
       {activeTab === 'users' && <UsersModule refreshTick={refreshTick} onActivity={onActivity} onNotify={onNotify} />}
