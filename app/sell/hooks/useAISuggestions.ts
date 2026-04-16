@@ -46,6 +46,9 @@ export function useAISuggestions({ title, description, setValue }: UseAISuggesti
     if (!aiSuggestions) return
 
     setValue('category', aiSuggestions.category)
+    if (aiSuggestions.subcategory) {
+      setValue('subcategory', aiSuggestions.subcategory)
+    }
 
     if (aiSuggestions.brand) {
       const currentDesc = description || ''

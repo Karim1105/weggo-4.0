@@ -9,6 +9,7 @@ import {
   StateFilter,
   CreateListingInput,
 } from '@/lib/api/listings/types'
+import { isValidSubcategory, normalizeCategoryId, normalizeSubcategoryId } from '@/lib/taxonomy'
 import { normalizeCondition } from '@/lib/validators'
 
 interface Ok<T> {
@@ -142,14 +143,15 @@ export function parseListingsQuery(searchParams: URLSearchParams): Ok<ListingQue
 export function parseCreateListingForm(formData: FormData): Ok<CreateListingInput> | Fail {
   const title = safeText(formData.get('title'), 120)
   const description = safeText(formData.get('description'), MAX_TEXT_LENGTH)
-  const category = safeText(formData.get('category'), 80)
+  const category = normalizeCategoryId(safeText(formData.get('category'), 80))
   const location = safeText(formData.get('location'), MAX_FILTER_LENGTH)
 
   const subcategoryRaw = formData.get('subcategory')
-  const subcategory =
+  const subcategoryRawValue =
     typeof subcategoryRaw === 'string' && subcategoryRaw.trim()
       ? subcategoryRaw.trim().slice(0, 80)
       : undefined
+  const subcategory = subcategoryRawValue ? normalizeSubcategoryId(subcategoryRawValue) : undefined
 
   const conditionRaw = formData.get('condition')
   const condition = typeof conditionRaw === 'string' ? conditionRaw : ''
@@ -169,6 +171,13 @@ export function parseCreateListingForm(formData: FormData): Ok<CreateListingInpu
     return {
       ok: false,
       response: ApiErrors.badRequest('price must be a valid non-negative number'),
+    }
+  }
+
+  if (subcategory && !isValidSubcategory(category, subcategory)) {
+    return {
+      ok: false,
+      response: ApiErrors.badRequest('Invalid subcategory for selected category'),
     }
   }
 

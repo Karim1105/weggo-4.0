@@ -4,8 +4,9 @@ import connectDB from '@/lib/db'
 import Product from '@/models/Product'
 import ViewHistory from '@/models/ViewHistory'
 import { getAuthUser } from '@/lib/auth'
-import { normalizeCondition } from '@/lib/validators'
-import { clearCacheByPrefix } from '@/lib/cache'
+import { normalizeCondition, validateCategory, validateSubcategory } from '@/lib/validators'
+import { invalidateMarketplaceDiscoveryCaches } from '@/lib/cache'
+import { normalizeCategoryId, normalizeSubcategoryId } from '@/lib/taxonomy'
 
 export async function GET(
   request: NextRequest,
@@ -122,7 +123,7 @@ export async function DELETE(
     product.status = 'deleted'
     await product.save()
 
-    clearCacheByPrefix('listings')
+    invalidateMarketplaceDiscoveryCaches()
 
     return NextResponse.json({
       success: true,
@@ -225,11 +226,34 @@ export async function PUT(
           { status: 400 }
         )
       }
-      product.category = category.trim()
+      const normalizedCategory = normalizeCategoryId(category)
+      const categoryValidation = validateCategory(normalizedCategory)
+      if (!categoryValidation.valid) {
+        return NextResponse.json(
+          { success: false, error: categoryValidation.message },
+          { status: 400 }
+        )
+      }
+      product.category = normalizedCategory
+      if (product.subcategory) {
+        const currentSubcategoryValidation = validateSubcategory(product.category, product.subcategory)
+        if (!currentSubcategoryValidation.valid) {
+          product.subcategory = undefined
+        }
+      }
     }
 
     if (subcategory !== undefined) {
-      product.subcategory = subcategory && typeof subcategory === 'string' ? subcategory.trim() : undefined
+      const normalizedSubcategory = subcategory && typeof subcategory === 'string' ? normalizeSubcategoryId(subcategory) : undefined
+      const effectiveCategory = category !== undefined ? product.category : normalizeCategoryId(product.category)
+      const subcategoryValidation = validateSubcategory(effectiveCategory, normalizedSubcategory)
+      if (!subcategoryValidation.valid) {
+        return NextResponse.json(
+          { success: false, error: subcategoryValidation.message },
+          { status: 400 }
+        )
+      }
+      product.subcategory = normalizedSubcategory || undefined
     }
 
     if (condition !== undefined) {
@@ -256,7 +280,7 @@ export async function PUT(
 
     await product.save()
 
-    clearCacheByPrefix('listings')
+    invalidateMarketplaceDiscoveryCaches()
 
     return NextResponse.json({
       success: true,

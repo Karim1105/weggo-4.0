@@ -53,6 +53,7 @@ The current codebase includes:
 
 - register, log in, log out, forgot/reset password
 - browse listings with filters, categories, and search
+- browse inventory totals and load more through the structured browse page
 - open listing detail, reviews, similar listings, and contact seller
 - favorite listings and track recently viewed history
 - create, edit, and manage listings
@@ -61,6 +62,7 @@ The current codebase includes:
 - submit and track ban appeals
 - open support tickets and reply to them
 - use the admin dashboard for users, reports, appeals, tickets, listings, categories, and activity
+- use homepage discovery sections for category exploration, recommendations, trending, nearby, and fresh marketplace picks
 
 ## Environment Variables
 
@@ -137,7 +139,7 @@ The repo currently includes:
 
 - unit tests
 - integration tests for auth, listings, wishlist, uploads, messages, tickets, and regression fixes
-- Playwright coverage for key browse/login flows
+- Playwright coverage for key browse/login and discovery smoke flows
 
 Run:
 

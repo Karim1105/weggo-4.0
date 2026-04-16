@@ -2,6 +2,7 @@
  * Input validation utilities
  * Comprehensive validation for common data types
  */
+import { isValidCategoryId, isValidSubcategory } from '@/lib/taxonomy'
 
 export interface ValidationErrors {
   [field: string]: string
@@ -213,20 +214,15 @@ export function validateLocation(location: string): { valid: boolean; message?: 
  * Category validation
  */
 export function validateCategory(category: string): { valid: boolean; message?: string } {
-  const validCategories = [
-    'electronics',
-    'furniture',
-    'vehicles',
-    'fashion',
-    'home',
-    'sports',
-    'books',
-    'toys',
-    'music',
-    'gaming',
-  ]
-  if (!validCategories.includes(category)) {
+  if (!isValidCategoryId(category)) {
     return { valid: false, message: 'Invalid category' }
+  }
+  return { valid: true }
+}
+
+export function validateSubcategory(category: string, subcategory?: string): { valid: boolean; message?: string } {
+  if (!isValidSubcategory(category, subcategory)) {
+    return { valid: false, message: 'Invalid subcategory for selected category' }
   }
   return { valid: true }
 }

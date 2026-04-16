@@ -2,7 +2,7 @@
 
 This file now acts as the current audit summary and history note for the familiarization work done on the repo.
 
-## Status As Of 2026-04-15
+## Status As Of 2026-04-16
 
 The multi-pass familiarization and cleanup work is complete.
 
@@ -19,6 +19,13 @@ The multi-pass familiarization and cleanup work is complete.
   - moderator-role UI drift
   - forced-JPEG sell upload regression
   - ticket attachment cleanup
+- the later discovery/browse fixes around:
+  - stale homepage category counts
+  - browse URL/state jitter
+  - misleading loaded-count vs total-count behavior
+  - category/subcategory taxonomy drift
+  - weak recommendation fallback messaging
+  - brittle homepage carousel/discovery interactions
 
 ### Deferred / accepted for now
 
@@ -53,6 +60,7 @@ The multi-pass familiarization and cleanup work is complete.
 ### Highest-change areas
 
 - browse/listings
+- homepage discovery / recommendations
 - messaging
 - admin dashboard modules
 - appeals

@@ -4,6 +4,7 @@ export interface GetListingsParams {
   sort?: string
   query?: string | URLSearchParams
   includeTotal?: boolean
+  signal?: AbortSignal
 }
 
 function normalizeQuery(query?: string | URLSearchParams): URLSearchParams {
@@ -28,7 +29,7 @@ function normalizeQuery(query?: string | URLSearchParams): URLSearchParams {
   return params
 }
 
-export function getListings({ cursor = null, limit = 20, sort, query, includeTotal = false }: GetListingsParams = {}) {
+export function getListings({ cursor = null, limit = 20, sort, query, includeTotal = false, signal }: GetListingsParams = {}) {
   const params = normalizeQuery(query)
   params.set('limit', String(limit))
   params.set('includeTotal', String(includeTotal))
@@ -43,5 +44,5 @@ export function getListings({ cursor = null, limit = 20, sort, query, includeTot
     params.delete('cursor')
   }
 
-  return fetch(`/api/listings?${params.toString()}`, { credentials: 'include' })
+  return fetch(`/api/listings?${params.toString()}`, { credentials: 'include', signal })
 }

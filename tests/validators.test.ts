@@ -6,6 +6,7 @@ import {
   validateTitle,
   validateDescription,
   validateCategory,
+  validateSubcategory,
   validateCondition,
   normalizeCondition,
 } from '@/lib/validators'
@@ -36,6 +37,12 @@ describe('validators', () => {
   it('validates category list', () => {
     expect(validateCategory('electronics').valid).toBe(true)
     expect(validateCategory('invalid').valid).toBe(false)
+  })
+
+  it('validates subcategories against the selected category', () => {
+    expect(validateSubcategory('electronics', 'smartphones').valid).toBe(true)
+    expect(validateSubcategory('electronics', 'sofas').valid).toBe(false)
+    expect(validateSubcategory('electronics').valid).toBe(true)
   })
 
   it('normalizes and validates condition', () => {

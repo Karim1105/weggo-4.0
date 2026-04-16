@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { categories as sharedCategories } from '@/lib/utils'
@@ -63,56 +63,79 @@ export default function Categories() {
   const [categories, setCategories] = useState(categoryList)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const cachedRaw = localStorage.getItem(COUNTS_CACHE_KEY)
-    if (cachedRaw) {
-      try {
-        const parsed = JSON.parse(cachedRaw) as { timestamp: number; counts: Record<string, number> }
-        if (parsed?.counts && Date.now() - parsed.timestamp < COUNTS_CACHE_TTL) {
-          setCategories(
-            categoryList.map((cat) => ({
-              ...cat,
-              count: parsed.counts[cat.slug] || 0,
-            }))
-          )
-          setLoading(false)
-          return
-        }
-      } catch {
-        localStorage.removeItem(COUNTS_CACHE_KEY)
-      }
-    }
+  const applyCounts = (counts: Record<string, number>) => {
+    setCategories(
+      categoryList.map((cat) => ({
+        ...cat,
+        count: counts[cat.slug] || 0,
+      }))
+    )
+  }
 
-    const scheduleFetch = () => fetchCategoryCounts()
-    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
-      ;(window as any).requestIdleCallback(scheduleFetch, { timeout: 1200 })
-    } else {
-      setTimeout(scheduleFetch, 150)
-    }
-  }, [])
-
-  const fetchCategoryCounts = async () => {
+  const fetchCategoryCounts = useCallback(async () => {
     try {
       const res = await fetch('/api/categories/counts')
       const data = await res.json()
-      
+
       if (data.success) {
         localStorage.setItem(
           COUNTS_CACHE_KEY,
           JSON.stringify({ timestamp: Date.now(), counts: data.data.counts || {} })
         )
-        const updatedCategories = categoryList.map(cat => ({
-          ...cat,
-          count: data.data.counts[cat.slug] || 0
-        }))
-        setCategories(updatedCategories)
+        applyCounts(data.data.counts || {})
       }
     } catch (error) {
       console.error('Failed to fetch category counts:', error)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    const cachedRaw = localStorage.getItem(COUNTS_CACHE_KEY)
+    if (cachedRaw) {
+      try {
+        const parsed = JSON.parse(cachedRaw) as { timestamp: number; counts: Record<string, number> }
+        if (parsed?.counts) {
+          applyCounts(parsed.counts)
+          setLoading(false)
+        }
+      } catch {
+        localStorage.removeItem(COUNTS_CACHE_KEY)
+      }
+    }
+
+    const scheduleFetch = () => {
+      void fetchCategoryCounts()
+    }
+    if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
+      ;(window as any).requestIdleCallback(scheduleFetch, { timeout: 1200 })
+    } else {
+      setTimeout(scheduleFetch, 150)
+    }
+
+    const handleWindowFocus = () => {
+      const cachedRaw = localStorage.getItem(COUNTS_CACHE_KEY)
+      if (!cachedRaw) {
+        void fetchCategoryCounts()
+        return
+      }
+
+      try {
+        const parsed = JSON.parse(cachedRaw) as { timestamp: number }
+        if (!parsed?.timestamp || Date.now() - parsed.timestamp >= COUNTS_CACHE_TTL) {
+          void fetchCategoryCounts()
+        }
+      } catch {
+        void fetchCategoryCounts()
+      }
+    }
+
+    window.addEventListener('focus', handleWindowFocus)
+    return () => {
+      window.removeEventListener('focus', handleWindowFocus)
+    }
+  }, [fetchCategoryCounts])
 
   const formatCount = (count: number) => {
     if (count === 0) return '0'

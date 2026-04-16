@@ -1,6 +1,6 @@
 # Weggo Features
 
-This file describes the current product behavior in the codebase as of 2026-04-15.
+This file describes the current product behavior in the codebase as of 2026-04-16.
 
 ## Authentication
 
@@ -17,6 +17,8 @@ This file describes the current product behavior in the codebase as of 2026-04-1
 - edit listings
 - soft-delete listings
 - browse with search, category, subcategory, condition, location, and price filters
+- browse result totals that distinguish loaded items from total matching inventory
+- button-driven cursor pagination for loading more results
 - sort by newest, oldest, price, and rating-related fields
 - listing detail pages with seller info, reviews, and similar items
 - boosted listing controls in admin
@@ -82,11 +84,14 @@ This file describes the current product behavior in the codebase as of 2026-04-1
 
 ## Recommendations and Discovery
 
-- personalized feed sections on the homepage
+- personalized homepage feed sections with explicit fallback states
 - nearby listings route
 - trending listings route
-- recommendations route
-- category browsing and counts
+- recommendations route using wishlist, recent browsing, and location signals when available
+- signed-out or low-signal recommendation fallback to fresh listings
+- homepage category browsing and counts
+- category counts refresh through cache invalidation plus client refresh behavior
+- shared category/subcategory taxonomy across browse, sell, and AI categorization
 
 ## Localization
 
@@ -107,6 +112,7 @@ This file describes the current product behavior in the codebase as of 2026-04-1
 - `npm test` runs Vitest
 - `npm run test:e2e` runs Playwright
 - the repo has focused regression coverage for several high-priority fixes and newer messaging/ticket behaviors
+- Playwright includes discovery/browse smoke coverage for homepage recommendations, category counts, browse totals, and load-more behavior
 
 ## Known Non-Goals / Current Gaps
 

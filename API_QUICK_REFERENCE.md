@@ -23,8 +23,8 @@ This is the current quick route map for the main API surfaces.
 | `/api/listings/[id]` | `GET`, `PUT`, `DELETE` | listing detail/update/delete |
 | `/api/listings/nearby` | `GET` | nearby discovery |
 | `/api/listings/trending` | `GET` | trending discovery |
-| `/api/recommendations` | `GET` | recommendations |
-| `/api/categories/counts` | `GET` | category counts |
+| `/api/recommendations` | `GET` | recommendations with strategy/signal-aware fallback |
+| `/api/categories/counts` | `GET` | category counts for homepage discovery |
 
 ## User activity
 

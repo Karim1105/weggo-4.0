@@ -4,6 +4,7 @@ import User from '@/models/User'
 import Product from '@/models/Product'
 import { requireAdmin } from '@/lib/auth'
 import { logger, getRequestId } from '@/lib/logger'
+import { invalidateMarketplaceDiscoveryCaches } from '@/lib/cache'
 
 // POST /api/admin/unban-user - Simple endpoint to unban a user
 async function handler(request: NextRequest, admin: any) {
@@ -57,14 +58,7 @@ async function handler(request: NextRequest, admin: any) {
     )
 
     await user.save()
-    // Clear cache for listings and seller
-    try {
-      const { clearCacheByPrefix } = await import('@/lib/cache')
-      clearCacheByPrefix('listings')
-      clearCacheByPrefix(`seller_${user._id}`)
-    } catch (e) {
-      // ignore cache errors
-    }
+    invalidateMarketplaceDiscoveryCaches()
 
     logger.info('User unbanned successfully with listings restored', { userId: user._id, email: user.email, adminId: admin._id, listingsRestored: listingResult.modifiedCount }, requestId)
 

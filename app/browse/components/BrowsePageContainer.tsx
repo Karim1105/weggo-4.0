@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Filter, Grid, List } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -21,7 +21,6 @@ export default function BrowsePageContainer() {
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [showFilters, setShowFilters] = useState(false)
-  const loadMoreTriggerRef = useRef<HTMLDivElement | null>(null)
 
   const {
     searchInput,
@@ -37,7 +36,7 @@ export default function BrowsePageContainer() {
     clearFilters,
   } = useFilters()
 
-  const { products, loading, loadingMore, hasMore, loadMore, toggleLocalFavorite } = useListings(queryString, sortQuery)
+  const { products, loading, loadingMore, hasMore, totalCount, loadMore, toggleLocalFavorite } = useListings(queryString, sortQuery)
 
   const categories = useMemo(() => ['all', ...apiCategories.map((c) => c.id)], [])
   const categoryLabels: Record<string, string> = useMemo(() => {
@@ -122,27 +121,6 @@ export default function BrowsePageContainer() {
       toast.error('Failed to save')
     }
   }, [filters, router, searchInput])
-
-  useEffect(() => {
-    const target = loadMoreTriggerRef.current
-    if (!target || loading || loadingMore || !hasMore) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const first = entries[0]
-        if (first.isIntersecting) {
-          loadMore()
-        }
-      },
-      { root: null, rootMargin: '300px', threshold: 0 }
-    )
-
-    observer.observe(target)
-
-    return () => {
-      observer.disconnect()
-    }
-  }, [hasMore, loadMore, loading, loadingMore])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40">
@@ -268,6 +246,7 @@ export default function BrowsePageContainer() {
         <ResultsHeader
           loading={loading}
           products={products}
+          totalCount={totalCount}
           searchQuery={searchInput}
           selectedCategory={filters.selectedCategory}
           selectedSubcategory={filters.selectedSubcategory}
@@ -276,8 +255,6 @@ export default function BrowsePageContainer() {
         />
 
         <ProductGrid viewMode={viewMode} products={products} loading={loading} onToggleFavorite={toggleFavorite} />
-
-        {hasMore && <div ref={loadMoreTriggerRef} className="h-1 w-full" aria-hidden="true" />}
 
         <LoadMoreButton visible={!loading && products.length > 0 && hasMore} loading={loadingMore} onClick={loadMore} />
 

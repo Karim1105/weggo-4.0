@@ -4,6 +4,7 @@ import User from '@/models/User'
 import Product from '@/models/Product'
 import { requireAdmin } from '@/lib/auth'
 import { logger, getRequestId } from '@/lib/logger'
+import { invalidateMarketplaceDiscoveryCaches } from '@/lib/cache'
 
 // POST /api/admin/ban-user - Simple endpoint to ban a user
 async function handler(request: NextRequest, admin: any) {
@@ -81,14 +82,7 @@ async function handler(request: NextRequest, admin: any) {
 
     await user.save()
 
-    // Clear caches that may include this user's listings
-    try {
-      const { clearCacheByPrefix } = await import('@/lib/cache')
-      clearCacheByPrefix('listings')
-      clearCacheByPrefix(`seller_${user._id}`)
-    } catch (e) {
-      // ignore cache errors
-    }
+    invalidateMarketplaceDiscoveryCaches()
 
     logger.info('User banned successfully with listings deleted', { userId: user._id, email: user.email, adminId: admin._id, listingsDeleted: listingResult.modifiedCount }, requestId)
 

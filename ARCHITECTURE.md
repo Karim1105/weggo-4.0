@@ -76,12 +76,15 @@ The listing system centers on `Product`:
 
 - create/edit/delete listing routes
 - browse filters and sorting
+- browse totals and cursor-based load-more behavior
 - listing detail fetch
 - review and message integration
 - favorites, recently viewed, nearby, trending, and recommendations
 - admin visibility and boost controls
 
 Seller posting is gated by `sellerVerified`.
+
+Category and subcategory handling is centralized through `lib/taxonomy.ts`, and listing create/update paths now validate subcategories against the selected category.
 
 ## Messaging Flow
 
@@ -113,6 +116,7 @@ Current implementation notes:
 - cache is in-memory
 - uploads are local filesystem uploads
 - env validation warns on recommended public URLs in production
+- marketplace discovery invalidation now clears listing caches, recommendation caches, seller-facing cache slices, and category counts together when listing state changes
 
 ## AI Surfaces
 
@@ -127,6 +131,13 @@ Current implementation notes:
 - UI: sell-page pricing helper surfaces
 - API: `app/api/pricing/route.ts`
 - current state: simulated/mock analysis, not live external market data
+
+### Discovery / Recommendations
+
+- homepage discovery UI: `components/PersonalizedFeed.tsx`
+- recommendations API: `app/api/recommendations/route.ts`
+- current state: recommendations blend wishlist categories, recent browsing categories/subcategories, and location when available
+- fallback behavior is explicit: signed-out or low-signal users are shown fresh marketplace picks instead of silent pseudo-personalization
 
 ## Admin Surface
 
