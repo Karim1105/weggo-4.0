@@ -12,11 +12,110 @@ import User from '@/models/User'
 import ViewHistory from '@/models/ViewHistory'
 import Wishlist from '@/models/Wishlist'
 
-const COUNT = Math.max(1, Number(process.env.SEED_TRASH_COUNT || '10'))
+const COUNT = Math.max(1, Number(process.env.SEED_TRASH_COUNT || '50'))
+const BUYERS_COUNT = Math.max(
+  4,
+  Number(process.env.SEED_TRASH_BUYERS || String(Math.min(20, Math.ceil(COUNT / 2))))
+)
+const TICKETS_COUNT = Math.max(
+  20,
+  Math.min(BUYERS_COUNT, Number(process.env.SEED_TRASH_TICKETS || String(Math.ceil(COUNT / 3))))
+)
 const runId = Date.now().toString()
 const TRASH_PASSWORD = '123456'
+const TRASH_USER_EMAIL_REGEX = /^trash-.*@weggo\.local$/
 
 const pick = <T>(items: T[]): T => items[Math.floor(Math.random() * items.length)]
+
+async function deleteTrashData() {
+  await connectDB()
+
+  const trashUsers = await User.find({ email: TRASH_USER_EMAIL_REGEX }).select('_id')
+  const trashProducts = await Product.find({ title: /^Trash Product / }).select('_id')
+  const trashTickets = await Ticket.find({ subject: /^Trash Ticket / }).select('_id')
+
+  const userIds = trashUsers.map((u) => u._id)
+  const productIds = trashProducts.map((p) => p._id)
+  const ticketIds = trashTickets.map((t) => t._id)
+
+  const [
+    reviews,
+    reports,
+    messages,
+    savedSearches,
+    ticketMessages,
+    viewHistory,
+    wishlist,
+    banAppeals,
+    tickets,
+    products,
+    users,
+  ] = await Promise.all([
+    Review.deleteMany({
+      $or: [
+        { reviewer: { $in: userIds } },
+        { seller: { $in: userIds } },
+        { product: { $in: productIds } },
+        { comment: /^Trash review / },
+      ],
+    }),
+    Report.deleteMany({
+      $or: [
+        { listing: { $in: productIds } },
+        { reporter: { $in: userIds } },
+        { description: /^Trash report / },
+      ],
+    }),
+    Message.deleteMany({
+      $or: [
+        { sender: { $in: userIds } },
+        { receiver: { $in: userIds } },
+        { product: { $in: productIds } },
+        { content: /^Trash message / },
+      ],
+    }),
+    SavedSearch.deleteMany({
+      $or: [{ user: { $in: userIds } }, { name: /^Trash Search / }],
+    }),
+    TicketMessage.deleteMany({
+      $or: [{ ticketId: { $in: ticketIds } }, { message: /trash ticket/i }],
+    }),
+    ViewHistory.deleteMany({
+      $or: [{ user: { $in: userIds } }, { product: { $in: productIds } }],
+    }),
+    Wishlist.deleteMany({
+      $or: [{ user: { $in: userIds } }, { product: { $in: productIds } }],
+    }),
+    BanAppeal.deleteMany({
+      $or: [
+        { userId: { $in: userIds } },
+        { bannedBy: { $in: userIds } },
+        { appealMessage: /trash seed run/i },
+      ],
+    }),
+    Ticket.deleteMany({
+      $or: [{ _id: { $in: ticketIds } }, { userId: { $in: userIds } }, { subject: /^Trash Ticket / }],
+    }),
+    Product.deleteMany({
+      $or: [{ _id: { $in: productIds } }, { seller: { $in: userIds } }, { title: /^Trash Product / }],
+    }),
+    User.deleteMany({ email: TRASH_USER_EMAIL_REGEX }),
+  ])
+
+  return {
+    users: users.deletedCount,
+    products: products.deletedCount,
+    reviews: reviews.deletedCount,
+    reports: reports.deletedCount,
+    messages: messages.deletedCount,
+    savedSearches: savedSearches.deletedCount,
+    tickets: tickets.deletedCount,
+    ticketMessages: ticketMessages.deletedCount,
+    viewHistory: viewHistory.deletedCount,
+    wishlist: wishlist.deletedCount,
+    banAppeals: banAppeals.deletedCount,
+  }
+}
 
 async function seedTrashData() {
   await connectDB()
@@ -44,7 +143,7 @@ async function seedTrashData() {
   })
 
   const buyers = await Promise.all(
-    Array.from({ length: 4 }).map((_, index) =>
+    Array.from({ length: BUYERS_COUNT }).map((_, index) =>
       User.create({
         name: `Trash User ${index + 1} ${runId}`,
         email: `trash-user-${index + 1}-${runId}@weggo.local`,
@@ -87,7 +186,7 @@ async function seedTrashData() {
         title: `Trash Product ${index + 1} ${runId}`,
         description: `Auto-generated testing product #${index + 1} for run ${runId}`,
         price: 100 + index * 25,
-        category: pick(categories),
+        category: categories[Math.floor(Math.random() * categories.length)],
         subcategory: `Sub-${(index % 4) + 1}`,
         condition: pick(conditions),
         location: index % 2 === 0 ? 'Cairo' : 'Giza',
@@ -163,7 +262,7 @@ async function seedTrashData() {
   )
 
   const tickets = await Promise.all(
-    buyers.slice(0, 3).map((buyer, index) =>
+    buyers.slice(0, TICKETS_COUNT).map((buyer, index) =>
       Ticket.create({
         userId: buyer._id,
         subject: `Trash Ticket ${index + 1} ${runId}`,
@@ -226,7 +325,7 @@ async function seedTrashData() {
   })
 
   return {
-    users: 7,
+    users: buyers.length + 3,
     products: products.length,
     reviews: reviewCount,
     reports: Math.max(2, Math.floor(COUNT / 2)),
@@ -240,9 +339,11 @@ async function seedTrashData() {
   }
 }
 
-seedTrashData()
+const shouldDelete = process.argv.includes('--delete')
+
+;(shouldDelete ? deleteTrashData() : seedTrashData())
   .then((summary) => {
-    console.log('Trash seed completed:', summary)
+    console.log(shouldDelete ? 'Trash delete completed:' : 'Trash seed completed:', summary)
   })
   .catch((error: unknown) => {
     console.error('Trash seed failed:', error)
