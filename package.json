@@ -12,7 +12,8 @@
     "test": "vitest run",
     "test:integration": "vitest run tests/integration",
     "test:e2e": "playwright test",
-    "seed:featured": "tsx scripts/seed-featured.ts"
+    "seed:featured": "tsx scripts/seed-featured.ts",
+    "seed:trash": "tsx scripts/seed-trash.ts"
   },
   "dependencies": {
     "@types/node": "^25.6.0",
