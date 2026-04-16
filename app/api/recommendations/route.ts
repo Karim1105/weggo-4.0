@@ -31,22 +31,50 @@ export async function GET(request: NextRequest) {
     const viewHistory = await ViewHistory.find({ user: user._id })
       .sort({ viewedAt: -1 })
       .limit(20)
+      .populate('product', 'category subcategory')
       .lean()
 
-    const viewedProductIds = viewHistory.map((v) => v.product)
+    const viewedProductIds = viewHistory
+      .map((entry: any) => {
+        if (!entry?.product) return null
+        return typeof entry.product === 'object' && entry.product?._id ? entry.product._id : entry.product
+      })
+      .filter(Boolean)
+
+    const recentCategories = [
+      ...new Set(
+        viewHistory
+          .map((entry: any) =>
+            entry?.product && typeof entry.product === 'object' ? entry.product.category : null
+          )
+          .filter(Boolean)
+      ),
+    ]
+
+    const recentSubcategories = [
+      ...new Set(
+        viewHistory
+          .map((entry: any) =>
+            entry?.product && typeof entry.product === 'object' ? entry.product.subcategory : null
+          )
+          .filter(Boolean)
+      ),
+    ]
 
     // Get user's wishlist categories
     const wishlist = await Wishlist.find({ user: user._id })
       .populate('product', 'category')
       .lean()
 
-    const preferredCategories = [
-      ...new Set(wishlist.map((w: any) => w.product?.category).filter(Boolean)),
-    ]
+    const wishlistCategories = wishlist.map((w: any) => w.product?.category).filter(Boolean)
+    const preferredCategories = [...new Set([...wishlistCategories, ...recentCategories])]
 
     const recommendationOr: any[] = []
     if (preferredCategories.length > 0) {
       recommendationOr.push({ category: { $in: preferredCategories } })
+    }
+    if (recentSubcategories.length > 0) {
+      recommendationOr.push({ subcategory: { $in: recentSubcategories } })
     }
 
     // Use an anchored regex to improve performance and leverage indexes if possible
@@ -108,6 +136,14 @@ export async function GET(request: NextRequest) {
     const result = {
       success: true,
       recommendations,
+      strategy: recommendationOr.length > 0 ? 'preference-based' : 'popular-fallback',
+      signals: {
+        wishlistCategories,
+        recentCategories,
+        recentSubcategories,
+        locationMatched: Boolean(locationTerm),
+        recentViewCount: viewHistory.length,
+      },
     }
 
     setCache(cacheKey, result, 600) // Cache for 10 minutes
@@ -120,5 +156,4 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
 

@@ -1,6 +1,6 @@
 # API Data Documentation
 
-This is the current high-level API data map for the repo as of 2026-04-15.
+This is the current high-level API data map for the repo as of 2026-04-16.
 
 For exact contracts, use the route handlers in `app/api/` as the source of truth.
 
@@ -35,6 +35,9 @@ Common patterns:
 - list routes trim images for card/list contexts
 - detail routes return richer listing data
 - detail fetches integrate seller, review, and message-entry context
+- browse list responses can return total counts plus cursor pagination metadata
+- recommendation responses include both recommendations and the strategy/signals used to explain whether the feed is truly personalized or in fallback mode
+- category counts are cached but now tied into marketplace-discovery cache invalidation when listing state changes
 
 ## Messages
 

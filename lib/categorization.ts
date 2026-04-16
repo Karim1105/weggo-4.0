@@ -1,4 +1,5 @@
 // Smart categorization system with brand detection and AI-powered classification
+import { getSubcategoryOptions } from '@/lib/taxonomy'
 
 export interface ProductCategory {
   id: string
@@ -157,6 +158,86 @@ const CATEGORIES: ProductCategory[] = [
   }
 ]
 
+const SUBCATEGORY_KEYWORDS: Record<string, Array<{ id: string; keywords: string[] }>> = {
+  electronics: [
+    { id: 'smartphones', keywords: ['phone', 'mobile', 'iphone', 'android', 'galaxy', 'smartphone'] },
+    { id: 'laptops', keywords: ['laptop', 'macbook', 'notebook', 'thinkpad', 'vivobook'] },
+    { id: 'cameras', keywords: ['camera', 'dslr', 'canon', 'nikon', 'sony alpha'] },
+    { id: 'tablets', keywords: ['tablet', 'ipad'] },
+    { id: 'audio', keywords: ['speaker', 'headphones', 'earbuds', 'microphone', 'amp', 'amplifier'] },
+    { id: 'tv-monitors', keywords: ['tv', 'monitor', 'display', 'screen'] },
+  ],
+  furniture: [
+    { id: 'sofas', keywords: ['sofa', 'couch'] },
+    { id: 'tables', keywords: ['table', 'desk', 'dining table'] },
+    { id: 'chairs', keywords: ['chair', 'stool'] },
+    { id: 'beds', keywords: ['bed', 'mattress'] },
+    { id: 'storage', keywords: ['cabinet', 'wardrobe', 'dresser', 'shelf', 'storage'] },
+  ],
+  vehicles: [
+    { id: 'cars', keywords: ['car', 'sedan', 'hatchback', 'suv'] },
+    { id: 'motorcycles', keywords: ['motorcycle', 'motorbike', 'bike'] },
+    { id: 'bicycles', keywords: ['bicycle', 'cycle'] },
+    { id: 'parts', keywords: ['part', 'tire', 'tyre', 'rim', 'engine', 'battery'] },
+  ],
+  fashion: [
+    { id: 'clothing', keywords: ['shirt', 'dress', 'pants', 'jacket', 'jeans', 'clothes'] },
+    { id: 'shoes', keywords: ['shoe', 'sneaker', 'boots', 'sandals'] },
+    { id: 'bags', keywords: ['bag', 'backpack', 'purse', 'handbag'] },
+    { id: 'watches', keywords: ['watch'] },
+    { id: 'accessories', keywords: ['accessory', 'belt', 'hat', 'scarf', 'glasses'] },
+  ],
+  home: [
+    { id: 'kitchen', keywords: ['kitchen', 'cookware', 'fridge', 'oven', 'microwave'] },
+    { id: 'garden', keywords: ['garden', 'plant', 'outdoor'] },
+    { id: 'decor', keywords: ['decor', 'lamp', 'rug', 'curtain', 'mirror'] },
+    { id: 'tools', keywords: ['tool', 'drill', 'hammer', 'screwdriver'] },
+  ],
+  sports: [
+    { id: 'fitness', keywords: ['fitness', 'gym', 'dumbbell', 'barbell', 'treadmill'] },
+    { id: 'outdoor', keywords: ['outdoor', 'camping', 'hiking'] },
+    { id: 'cycling', keywords: ['cycling', 'bike', 'helmet'] },
+  ],
+  books: [
+    { id: 'books', keywords: ['book', 'novel', 'textbook'] },
+    { id: 'magazines', keywords: ['magazine'] },
+    { id: 'media', keywords: ['dvd', 'cd', 'vinyl', 'movie'] },
+  ],
+  gaming: [
+    { id: 'consoles', keywords: ['console', 'playstation', 'xbox', 'switch'] },
+    { id: 'games', keywords: ['game disc', 'game', 'fifa', 'controller game'] },
+    { id: 'accessories', keywords: ['controller', 'headset', 'keyboard', 'mouse', 'vr'] },
+  ],
+  toys: [
+    { id: 'toys', keywords: ['toy', 'doll', 'figure'] },
+    { id: 'games', keywords: ['game', 'board game', 'puzzle'] },
+  ],
+  music: [
+    { id: 'instruments', keywords: ['guitar', 'piano', 'drums', 'violin', 'instrument'] },
+    { id: 'equipment', keywords: ['microphone', 'mixer', 'speaker', 'audio interface', 'equipment'] },
+  ],
+}
+
+function detectSubcategory(text: string, categoryId: string): string {
+  const categoryCandidates = SUBCATEGORY_KEYWORDS[categoryId] || []
+  let bestId: string | null = null
+  let bestScore = 0
+
+  categoryCandidates.forEach((candidate) => {
+    const score = candidate.keywords.reduce((count, keyword) => count + (text.includes(keyword) ? 1 : 0), 0)
+    if (score > bestScore) {
+      bestId = candidate.id
+      bestScore = score
+    }
+  })
+
+  if (bestId) {
+    return bestId
+  }
+
+  return getSubcategoryOptions(categoryId)[0]?.id || 'general'
+}
+
 // AI-powered categorization function
 export function categorizeProduct(title: string, description: string): CategorizationResult {
   const text = `${title} ${description}`.toLowerCase()
@@ -203,7 +284,7 @@ export function categorizeProduct(title: string, description: string): Categoriz
   
   // Find subcategory
   const category = CATEGORIES.find(c => c.id === bestCategory)
-  const subcategory = category?.subcategories[0] || 'general'
+  const subcategory = detectSubcategory(text, bestCategory)
   
   // Generate suggested tags
   const suggestedTags: string[] = []
@@ -301,5 +382,4 @@ export function getBrandSuggestions(query: string): string[] {
 }
 
 export { CATEGORIES, BRAND_DATABASE }
-
 

@@ -3,7 +3,7 @@ import { isValidObjectId } from 'mongoose'
 import connectDB from '@/lib/db'
 import Product from '@/models/Product'
 import { requireAdmin } from '@/lib/auth'
-import { clearCacheByPrefix } from '@/lib/cache'
+import { invalidateMarketplaceDiscoveryCaches } from '@/lib/cache'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -42,9 +42,7 @@ async function handler(
     await product.save()
 
     // Clear cache
-    clearCacheByPrefix('listings')
-    clearCacheByPrefix('seller_')
-    clearCacheByPrefix('admin_analytics')
+    invalidateMarketplaceDiscoveryCaches()
 
     return NextResponse.json({
       success: true,
@@ -100,9 +98,7 @@ async function patchHandler(
     ;(product as any).expiresAt = null
     await product.save()
 
-    clearCacheByPrefix('listings')
-    clearCacheByPrefix('seller_')
-    clearCacheByPrefix('admin_analytics')
+    invalidateMarketplaceDiscoveryCaches()
 
     return NextResponse.json({
       success: true,

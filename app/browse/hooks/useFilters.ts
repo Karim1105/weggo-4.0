@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useRef } from 'react'
 import { DEFAULT_MAX_PRICE, DEFAULT_MIN_PRICE, DEFAULT_SORT } from '@/app/browse/types'
 import { useDebouncedValue } from '@/app/browse/hooks/useDebouncedValue'
 
@@ -32,6 +33,9 @@ const parsePrice = (value: string | null, fallback: number) => {
 export function useFilters() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const searchParamsString = searchParams.toString()
+  const initializedRef = useRef(false)
+  const lastAppliedQueryRef = useRef('')
 
   const [filters, setFilters] = useState<FiltersState>(INITIAL_FILTERS)
   const [searchInput, setSearchInput] = useState('')
@@ -48,6 +52,10 @@ export function useFilters() {
     const min = parsePrice(searchParams.get('minPrice'), DEFAULT_MIN_PRICE)
     const max = parsePrice(searchParams.get('maxPrice'), DEFAULT_MAX_PRICE)
 
+    if (initializedRef.current && searchParamsString === lastAppliedQueryRef.current) {
+      return
+    }
+
     setSearchInput(search)
     setFilters({
       selectedCategory: cat,
@@ -57,7 +65,9 @@ export function useFilters() {
       priceRange: [Math.min(min, max), Math.max(min, max)],
       sortBy: urlSort,
     })
-  }, [searchParams])
+    initializedRef.current = true
+    lastAppliedQueryRef.current = searchParamsString
+  }, [searchParams, searchParamsString])
 
   const queryString = useMemo(() => {
     const params = new URLSearchParams()
@@ -83,12 +93,15 @@ export function useFilters() {
   }, [filters.sortBy])
 
   useEffect(() => {
-    const current = searchParams.toString()
+    if (!initializedRef.current) return
+
+    const current = searchParamsString
     if (queryString !== current) {
+      lastAppliedQueryRef.current = queryString
       const nextUrl = queryString ? `?${queryString}` : window.location.pathname
       router.replace(nextUrl, { scroll: false })
     }
-  }, [queryString, router, searchParams])
+  }, [queryString, router, searchParamsString])
 
   const setSelectedCategory = useCallback((value: string) => {
     setFilters((prev) => ({ ...prev, selectedCategory: value, selectedSubcategory: 'all' }))

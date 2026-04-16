@@ -48,6 +48,14 @@ export function clearCacheByPrefix(prefix: string): void {
   }
 }
 
+export function invalidateMarketplaceDiscoveryCaches(): void {
+  clearCacheByPrefix('listings')
+  clearCacheByPrefix('seller_')
+  clearCacheByPrefix('recommendations_')
+  clearCacheByPrefix('admin_analytics')
+  deleteCache('categories:counts')
+}
+
 export function getCacheStats() {
   return cache.getStats()
 }
@@ -83,4 +91,3 @@ export function resetCacheMetrics() {
   metrics = { hits: 0, misses: 0, sets: 0, deletes: 0, evictions: 0 }
   return previous
 }
-

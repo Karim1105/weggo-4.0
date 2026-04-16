@@ -12,6 +12,7 @@ import { cleanupUploadedImages, uploadListingImages } from '@/lib/api/listings/i
 import { buildListingsPipeline, sanitizeListing } from '@/lib/api/listings/pipeline'
 import { parseCreateListingForm, parseListingsQuery } from '@/lib/api/listings/query'
 import { ListingQueryParams, ListingsResult } from '@/lib/api/listings/types'
+import { invalidateMarketplaceDiscoveryCaches } from '@/lib/cache'
 
 function mapCreateListingError(error: unknown) {
   if (error instanceof Error) {
@@ -157,6 +158,7 @@ export async function createListingService(request: NextRequest, requestId: stri
       return ApiErrors.serverError()
     }
 
+    invalidateMarketplaceDiscoveryCaches()
     revalidateTag('listings', 'max')
 
     logger.info('Listing created successfully', { listingId: product._id, userId: user._id }, requestId)

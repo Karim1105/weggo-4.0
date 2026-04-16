@@ -7,7 +7,7 @@ describe('sell api helpers', () => {
       title: 'iPhone 13',
       description: 'Great condition with box and charger',
       category: 'electronics',
-      subcategory: 'phones',
+      subcategory: 'smartphones',
       condition: 'Excellent',
       price: 15000,
       location: 'Cairo',

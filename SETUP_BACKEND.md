@@ -76,6 +76,12 @@ DEBUG=
 - `GET /api/recommendations`
 - `GET /api/categories/counts`
 
+Notes:
+
+- `/api/listings` browse responses can include total counts and cursor metadata for the structured browse page.
+- `/api/recommendations` may return true preference-based results or an explicit fallback state depending on available signals.
+- `/api/categories/counts` is part of homepage discovery and is invalidated alongside marketplace discovery caches when listings change.
+
 ### User activity
 
 - `GET/POST/DELETE /api/wishlist`

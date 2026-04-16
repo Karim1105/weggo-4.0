@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db'
 import Product from '@/models/Product'
 import { requireAdmin } from '@/lib/auth'
-import { clearCacheByPrefix } from '@/lib/cache'
+import { invalidateMarketplaceDiscoveryCaches } from '@/lib/cache'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -46,9 +46,7 @@ async function handler(request: NextRequest, admin: any) {
     )
 
     // Clear cache
-    clearCacheByPrefix('listings')
-    clearCacheByPrefix('seller_')
-    clearCacheByPrefix('admin_analytics')
+    invalidateMarketplaceDiscoveryCaches()
 
     return NextResponse.json({
       success: true,

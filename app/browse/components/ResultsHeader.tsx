@@ -6,6 +6,7 @@ import { Product } from '@/app/browse/types'
 interface ResultsHeaderProps {
   loading: boolean
   products: Product[]
+  totalCount: number | null
   searchQuery: string
   selectedCategory: string
   selectedSubcategory: string
@@ -16,19 +17,24 @@ interface ResultsHeaderProps {
 export default function ResultsHeader({
   loading,
   products,
+  totalCount,
   searchQuery,
   selectedCategory,
   selectedSubcategory,
   categoryLabels,
   subcategories,
 }: ResultsHeaderProps) {
+  const visibleCount = products.length
+  const resolvedTotal = totalCount ?? visibleCount
+
   return (
     <div className="flex items-center justify-between mb-8 min-h-[80px]">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">
-          {loading ? 'Loading...' : `${products.length} items found`}
+          {loading ? 'Loading...' : `${resolvedTotal} items found`}
         </h1>
         <p className="text-gray-600 min-h-[24px]">
+          {!loading && resolvedTotal > visibleCount && `Showing ${visibleCount} loaded items so far`}
           {!loading && searchQuery && `Search results for "${searchQuery}"`}
           {!loading && selectedCategory !== 'all' && !searchQuery && (
             <span>

@@ -21,16 +21,19 @@ export function useListings(baseQueryString: string, sortQuery: string) {
   const [loadingMore, setLoadingMore] = useState(false)
   const [nextCursor, setNextCursor] = useState<string | null>(null)
   const [hasMore, setHasMore] = useState(false)
+  const [totalCount, setTotalCount] = useState<number | null>(null)
 
   const queryKey = useMemo(() => `${baseQueryString}|${sortQuery}`, [baseQueryString, sortQuery])
 
   const fetchPage = useCallback(
-    async (cursor: string | null, append: boolean) => {
+    async (cursor: string | null, append: boolean, signal?: AbortSignal) => {
       const listingsRes = await getListings({
         query: baseQueryString,
         sort: sortQuery,
         limit: 20,
         cursor,
+        includeTotal: !append,
+        signal,
       })
 
       if (!listingsRes.ok) {
@@ -38,6 +41,7 @@ export function useListings(baseQueryString: string, sortQuery: string) {
           setProducts([])
           setNextCursor(null)
           setHasMore(false)
+          setTotalCount(null)
         }
         return
       }
@@ -50,10 +54,14 @@ export function useListings(baseQueryString: string, sortQuery: string) {
           setProducts([])
           setNextCursor(null)
           setHasMore(false)
+          setTotalCount(null)
         }
         return
       }
 
+      if (typeof payload.total === 'number') {
+        setTotalCount(payload.total)
+      }
       setNextCursor(payload.nextCursor ?? null)
       setHasMore(Boolean(payload.hasMore))
 
@@ -84,12 +92,13 @@ export function useListings(baseQueryString: string, sortQuery: string) {
     const load = async () => {
       setLoading(true)
       try {
-        await fetchPage(null, false)
+        await fetchPage(null, false, controller.signal)
       } catch (error) {
         if ((error as DOMException).name !== 'AbortError') {
           setProducts([])
           setNextCursor(null)
           setHasMore(false)
+          setTotalCount(null)
         }
       } finally {
         if (!controller.signal.aborted) {
@@ -122,6 +131,7 @@ export function useListings(baseQueryString: string, sortQuery: string) {
     loading,
     loadingMore,
     hasMore,
+    totalCount,
     loadMore,
     toggleLocalFavorite,
   }
