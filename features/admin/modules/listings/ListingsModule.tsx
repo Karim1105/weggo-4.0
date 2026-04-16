@@ -178,7 +178,7 @@ export default function ListingsModule({ refreshTick, onActivity, onNotify }: Li
                           {listing.isBoosted ? 'Unboost' : 'Boost'}
                         </button>
                         <button
-                          onClick={() => router.push(`/listing/${listing._id}`)}
+                          onClick={() => router.push(`/listings/${listing._id}`)}
                           className="rounded-md bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-700"
                         >
                           Open
