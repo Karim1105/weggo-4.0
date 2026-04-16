@@ -77,6 +77,7 @@ The listing system centers on `Product`:
 - create/edit/delete listing routes
 - browse filters and sorting
 - browse totals and cursor-based load-more behavior
+- browse cursor sorting normalizes boosted state for older listings so pagination stays stable across legacy rows
 - listing detail fetch
 - review and message integration
 - favorites, recently viewed, nearby, trending, and recommendations

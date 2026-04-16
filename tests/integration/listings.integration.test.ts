@@ -58,6 +58,84 @@ describe('listings integration', () => {
     expect(json.data.listings[0].title).toBe('iPhone 14 Plus')
   }, 15000)
 
+  it('paginates correctly even when older listings are missing isBoosted', async () => {
+    const connectDB = (await loadConnectDB()).default
+    await connectDB()
+    const Product = (await loadProductModel()).default
+
+    const sellerId = new mongoose.Types.ObjectId()
+
+    await Product.collection.insertMany([
+      {
+        _id: new mongoose.Types.ObjectId(),
+        title: 'Legacy Listing 1',
+        description: 'Old row without explicit boost field',
+        price: 100,
+        category: 'electronics',
+        condition: 'Good',
+        location: 'Cairo',
+        images: ['/uploads/legacy-1.jpg'],
+        seller: sellerId,
+        status: 'active',
+        createdAt: new Date('2026-04-10T10:00:00.000Z'),
+        updatedAt: new Date('2026-04-10T10:00:00.000Z'),
+      },
+      {
+        _id: new mongoose.Types.ObjectId(),
+        title: 'Legacy Listing 2',
+        description: 'Second old row without explicit boost field',
+        price: 200,
+        category: 'electronics',
+        condition: 'Good',
+        location: 'Cairo',
+        images: ['/uploads/legacy-2.jpg'],
+        seller: sellerId,
+        status: 'active',
+        createdAt: new Date('2026-04-09T10:00:00.000Z'),
+        updatedAt: new Date('2026-04-09T10:00:00.000Z'),
+      },
+      {
+        _id: new mongoose.Types.ObjectId(),
+        title: 'Legacy Listing 3',
+        description: 'Third old row without explicit boost field',
+        price: 300,
+        category: 'electronics',
+        condition: 'Good',
+        location: 'Cairo',
+        images: ['/uploads/legacy-3.jpg'],
+        seller: sellerId,
+        status: 'active',
+        createdAt: new Date('2026-04-08T10:00:00.000Z'),
+        updatedAt: new Date('2026-04-08T10:00:00.000Z'),
+      },
+    ])
+
+    const { GET } = await loadListings()
+
+    const firstReq = new NextRequest('http://localhost/api/listings?limit=2&sort=createdAt:desc&includeTotal=true')
+    const firstRes = await GET(firstReq)
+    const firstJson = await firstRes.json()
+
+    expect(firstRes.status).toBe(200)
+    expect(firstJson.success).toBe(true)
+    expect(firstJson.data.listings).toHaveLength(2)
+    expect(firstJson.data.total).toBe(3)
+    expect(firstJson.data.hasMore).toBe(true)
+    expect(firstJson.data.nextCursor).toBeTruthy()
+
+    const secondReq = new NextRequest(
+      `http://localhost/api/listings?limit=2&sort=createdAt:desc&cursor=${encodeURIComponent(firstJson.data.nextCursor)}&includeTotal=false`
+    )
+    const secondRes = await GET(secondReq)
+    const secondJson = await secondRes.json()
+
+    expect(secondRes.status).toBe(200)
+    expect(secondJson.success).toBe(true)
+    expect(secondJson.data.listings).toHaveLength(1)
+    expect(secondJson.data.listings[0].title).toBe('Legacy Listing 3')
+    expect(secondJson.data.hasMore).toBe(false)
+  }, 15000)
+
   it('returns only authenticated user listings for seller=me and disables shared caching', async () => {
     const connectDB = (await loadConnectDB()).default
     await connectDB()

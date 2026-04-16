@@ -23,6 +23,7 @@ The multi-pass familiarization and cleanup work is complete.
   - stale homepage category counts
   - browse URL/state jitter
   - misleading loaded-count vs total-count behavior
+  - load-more failure on legacy listings due to cursor pagination over missing `isBoosted` values
   - category/subcategory taxonomy drift
   - weak recommendation fallback messaging
   - brittle homepage carousel/discovery interactions

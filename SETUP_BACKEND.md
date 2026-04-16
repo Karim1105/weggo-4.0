@@ -79,6 +79,7 @@ DEBUG=
 Notes:
 
 - `/api/listings` browse responses can include total counts and cursor metadata for the structured browse page.
+- browse cursor pagination normalizes boosted-state values so legacy listings without explicit `isBoosted` data do not break load-more behavior.
 - `/api/recommendations` may return true preference-based results or an explicit fallback state depending on available signals.
 - `/api/categories/counts` is part of homepage discovery and is invalidated alongside marketplace discovery caches when listings change.
 
