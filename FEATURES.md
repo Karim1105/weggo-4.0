@@ -19,6 +19,7 @@ This file describes the current product behavior in the codebase as of 2026-04-1
 - browse with search, category, subcategory, condition, location, and price filters
 - browse result totals that distinguish loaded items from total matching inventory
 - button-driven cursor pagination for loading more results
+- browse cursor pagination is normalized for legacy listings that may be missing newer boost fields
 - sort by newest, oldest, price, and rating-related fields
 - listing detail pages with seller info, reviews, and similar items
 - boosted listing controls in admin

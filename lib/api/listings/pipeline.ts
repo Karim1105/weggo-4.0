@@ -92,9 +92,17 @@ export function buildListingsPipeline(params: ListingQueryParams): ListingsQuery
 
   const pipeline: PipelineStage[] = [{ $match: query }]
 
-  if (useTextScore) {
-    pipeline.push({ $addFields: { relevanceScore: { $meta: 'textScore' } } })
+  const addFields: Record<string, unknown> = {
+    // Normalize older rows that may not have isBoosted persisted yet so
+    // boost ordering and cursor pagination use the same effective value.
+    isBoosted: { $cond: [{ $eq: ['$isBoosted', true] }, 1, 0] },
   }
+
+  if (useTextScore) {
+    addFields.relevanceScore = { $meta: 'textScore' }
+  }
+
+  pipeline.push({ $addFields: addFields })
 
   if (cursor) {
     pipeline.push({ $match: buildCursorMatch(cursor, fields) as PipelineStage.Match['$match'] })

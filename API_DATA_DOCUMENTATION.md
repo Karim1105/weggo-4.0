@@ -36,6 +36,7 @@ Common patterns:
 - detail routes return richer listing data
 - detail fetches integrate seller, review, and message-entry context
 - browse list responses can return total counts plus cursor pagination metadata
+- cursor pagination normalizes boosted-state sort values so older listings without explicit `isBoosted` data still paginate correctly
 - recommendation responses include both recommendations and the strategy/signals used to explain whether the feed is truly personalized or in fallback mode
 - category counts are cached but now tied into marketplace-discovery cache invalidation when listing state changes
 
