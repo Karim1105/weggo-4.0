@@ -170,7 +170,7 @@ async function seedTrashData() {
     bannedReason: 'Auto-generated trash seed data',
   })
 
-  const categories = ['Electronics', 'Fashion', 'Home', 'Gaming', 'Sports']
+  const categories = ['electronics', 'fashion', 'home', 'gaming', 'sports']
   const conditions: Array<'New' | 'Like New' | 'Excellent' | 'Good' | 'Fair' | 'Poor'> = [
     'New',
     'Like New',
