@@ -1,11 +1,42 @@
+import { useEffect, useMemo, useState } from 'react'
 import { ActivityLog, AdminNotification } from '@/features/admin/types'
 
 interface ActivityModuleProps {
   logs: ActivityLog[]
   notifications: AdminNotification[]
+  refreshTick: number
 }
 
-export default function ActivityModule({ logs, notifications }: ActivityModuleProps) {
+export default function ActivityModule({ logs, notifications, refreshTick }: ActivityModuleProps) {
+  const [serverLogs, setServerLogs] = useState<ActivityLog[]>([])
+
+  useEffect(() => {
+    const loadActivityLogs = async () => {
+      try {
+        const response = await fetch('/api/admin/activity-logs?limit=100', { cache: 'no-store' })
+        const payload = await response.json()
+
+        if (!response.ok || !payload?.success) return
+
+        setServerLogs(payload.data?.logs ?? [])
+      } catch {}
+    }
+
+    void loadActivityLogs()
+  }, [refreshTick])
+
+  const mergedLogs = useMemo(() => {
+    const byId = new Map<string, ActivityLog>()
+
+    for (const log of [...logs, ...serverLogs]) {
+      byId.set(log.id, log)
+    }
+
+    return Array.from(byId.values()).sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+  }, [logs, serverLogs])
+
   return (
     <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
       <section className="rounded-xl border bg-white p-4">
@@ -25,8 +56,8 @@ export default function ActivityModule({ logs, notifications }: ActivityModulePr
       <section className="rounded-xl border bg-white p-4">
         <h2 className="text-sm font-semibold text-gray-900">Activity logs</h2>
         <div className="mt-4 space-y-3">
-          {logs.length === 0 && <p className="text-sm text-gray-500">No activity records yet.</p>}
-          {logs.map((log) => (
+          {mergedLogs.length === 0 && <p className="text-sm text-gray-500">No activity records yet.</p>}
+          {mergedLogs.map((log) => (
             <div key={log.id} className="rounded-lg border p-3">
               <p className="text-sm font-semibold text-gray-900">{log.action}</p>
               <p className="text-xs text-gray-500">{log.details}</p>

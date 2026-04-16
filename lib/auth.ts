@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken'
 import { NextRequest } from 'next/server'
 import { cookies } from 'next/headers'
 import User, { IUser } from '@/models/User'
+import { createAdminActivityLog } from '@/features/admin/db/activity-log'
 import connectDB from './db'
 
 const JWT_SECRET = process.env.JWT_SECRET
@@ -105,7 +106,45 @@ export function requireAdmin(handler: (req: NextRequest, user: IUser, context?: 
       // Hide the existence of admin APIs from non-admin users
       return Response.json({ success: false, error: 'Not found' }, { status: 404 })
     }
-    return handler(req, user, context)
+
+    const actor = user.name || user.email || user._id?.toString() || 'admin'
+    const path = req.nextUrl.pathname
+    const method = req.method
+    const pathParts = path.split('/').filter(Boolean)
+    const apiName = pathParts[0] === 'api' && pathParts[1] === 'admin' ? (pathParts[2] || 'admin') : (pathParts[1] || 'admin')
+
+    const buildLogMessage = (statusCode: number) => {
+      const timestamp = new Date().toISOString()
+      return `${timestamp}(${apiName}): admin requested ${method}, got (${statusCode})`
+    }
+
+    try {
+      const response = await handler(req, user, context)
+
+      try {
+        await createAdminActivityLog({
+          action: `${method} ${apiName}`,
+          details: buildLogMessage(response.status),
+          actor,
+        })
+      } catch (logError) {
+        console.error('Admin API activity log error:', logError)
+      }
+
+      return response
+    } catch (error) {
+      try {
+        await createAdminActivityLog({
+          action: `${method} ${apiName}`,
+          details: buildLogMessage(500),
+          actor,
+        })
+      } catch (logError) {
+        console.error('Admin API activity log error:', logError)
+      }
+
+      throw error
+    }
   }
 }
 

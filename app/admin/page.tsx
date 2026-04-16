@@ -67,7 +67,9 @@ export default function AdminDashboardPage() {
       {activeTab === 'tickets' && <TicketsModule refreshTick={refreshTick} />}
       {activeTab === 'listings' && <ListingsModule refreshTick={refreshTick} onActivity={onActivity} onNotify={onNotify} />}
       {activeTab === 'categories' && <CategoriesModule />}
-      {activeTab === 'activity' && <ActivityModule logs={activityLogs} notifications={notifications} />}
+      {activeTab === 'activity' && (
+        <ActivityModule logs={activityLogs} notifications={notifications} refreshTick={refreshTick} />
+      )}
     </AdminShell>
   )
 }
