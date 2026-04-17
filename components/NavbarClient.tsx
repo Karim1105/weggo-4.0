@@ -184,7 +184,7 @@ export default function NavbarClient({ initialUser, sellHref }: NavbarClientProp
               <img
                 src="/weggo-logo.png"
                 alt="Weggo logo"
-                className="block h-17 md:h-12 w-auto object-contain"
+                className="block h-10 sm:h-11 md:h-12 w-auto max-w-[120px] sm:max-w-[140px] md:max-w-[170px] object-contain"
               />
             </motion.div>
           </Link>
