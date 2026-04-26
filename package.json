@@ -12,6 +12,10 @@
     "test": "vitest run",
     "test:integration": "vitest run tests/integration",
     "test:e2e": "playwright test",
+    "dataset:products:preview": "tsx scripts/generate-products-dataset.ts --mode preview",
+    "dataset:products:full": "tsx scripts/generate-products-dataset.ts --mode full",
+    "scrape:prices:preview": "tsx scripts/scrape-pricing-dataset.ts --input private/data/products-preview.json --out private/data/products-preview-scraped.json --limit 20",
+    "scrape:prices:full": "tsx scripts/scrape-pricing-dataset.ts --input private/data/products-full.json --out private/data/products-full-scraped.json --limit 500",
     "seed:featured": "tsx scripts/seed-featured.ts",
     "seed:trash": "tsx scripts/seed-trash.ts",
     "seed:trash:delete": "tsx scripts/seed-trash.ts --delete"

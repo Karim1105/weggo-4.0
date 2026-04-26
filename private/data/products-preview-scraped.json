@@ -1,0 +1,877 @@
+{
+  "generatedAt": "2026-04-26T13:24:18.571Z",
+  "inputPath": "private/data/products-preview.json",
+  "totalInputItems": 100,
+  "scrapedItems": 20,
+  "delayMs": 900,
+  "items": [
+    {
+      "title": "Sony Smartphones max 2020 well kept #1 well kept",
+      "description": "Smartphones listing in Excellent condition, used for personal use. Main points: no major scratches, battery health 92%, and stored carefully in Sharm El Sheikh. Age: around 26 months, without receipt. Selling because switching category.",
+      "price": 8570,
+      "category": "electronics",
+      "subcategory": "smartphones",
+      "condition": "Excellent",
+      "location": "Sharm El Sheikh",
+      "images": [],
+      "status": "active",
+      "market": {
+        "query": "Sony Smartphones max 2020 well kept #1 well electronics smartphones Sharm El Sheikh price EGP Egypt 2026 2025",
+        "sourceCount": 3,
+        "priceSampleCount": 10,
+        "newestDetectedYear": 2026,
+        "medianPrice": 6250,
+        "minPrice": 2520,
+        "maxPrice": 14500,
+        "observations": [
+          {
+            "provider": "Amazon Egypt",
+            "url": "https://www.amazon.eg/s?k=Sony%20Smartphones%20max%202020%20well%20kept%20%231%20well%20electronics%20smartphones%20Sharm%20El%20Sheikh%20price%20EGP%20Egypt%202026%202025",
+            "title": "Amazon.eg : Sony Smartphones max 2020 well kept #1 well electronics smartphones Sharm El Sheikh price EGP Egypt 2026 2025",
+            "sampleCount": 3
+          },
+          {
+            "provider": "Sigma Computer",
+            "url": "https://sigma-computer.com/search?q=Sony%20Smartphones%20max%202020%20well%20kept%20%231%20well%20electronics%20smartphones%20Sharm%20El%20Sheikh%20price%20EGP%20Egypt%202026%202025",
+            "title": "Sigma Computer",
+            "sampleCount": 1
+          },
+          {
+            "provider": "OpenSooq Egypt",
+            "url": "https://eg.opensooq.com/en/find?term=Sony%20Smartphones%20max%202020%20well%20kept%20%231%20well%20electronics%20smartphones%20Sharm%20El%20Sheikh%20price%20EGP%20Egypt%202026%202025",
+            "title": "Buy &amp; Sell Anything in Egypt Sony Smartphones max 2020 well kept #1 well electronics smartphones Sharm El Sheikh price EGP Egypt 2026 2025 | OpenSooq",
+            "sampleCount": 19
+          }
+        ]
+      },
+      "trainingTargetPrice": 7178
+    },
+    {
+      "title": "Xiaomi Other Electronics plus 2020 ready #2 great shape",
+      "description": "Other Electronics listing in Good condition, used for student use. Main points: clean screen, all ports working, and stored carefully in Suez. Age: around 11 months, with receipt. Selling because upgrading to newer model.",
+      "price": 22205,
+      "category": "electronics",
+      "subcategory": "other-electronics",
+      "condition": "Good",
+      "location": "Suez",
+      "images": [],
+      "status": "active",
+      "market": {
+        "query": "Xiaomi Other Electronics plus 2020 ready #2 great electronics other-electronics Suez price EGP Egypt 2026 2025",
+        "sourceCount": 3,
+        "priceSampleCount": 15,
+        "newestDetectedYear": 2026,
+        "medianPrice": 15000,
+        "minPrice": 6000,
+        "maxPrice": 33999,
+        "observations": [
+          {
+            "provider": "Amazon Egypt",
+            "url": "https://www.amazon.eg/s?k=Xiaomi%20Other%20Electronics%20plus%202020%20ready%20%232%20great%20electronics%20other-electronics%20Suez%20price%20EGP%20Egypt%202026%202025",
+            "title": "Amazon.eg : Xiaomi Other Electronics plus 2020 ready #2 great electronics other-electronics Suez price EGP Egypt 2026 2025",
+            "sampleCount": 3
+          },
+          {
+            "provider": "Sigma Computer",
+            "url": "https://sigma-computer.com/search?q=Xiaomi%20Other%20Electronics%20plus%202020%20ready%20%232%20great%20electronics%20other-electronics%20Suez%20price%20EGP%20Egypt%202026%202025",
+            "title": "Sigma Computer",
+            "sampleCount": 1
+          },
+          {
+            "provider": "OpenSooq Egypt",
+            "url": "https://eg.opensooq.com/en/find?term=Xiaomi%20Other%20Electronics%20plus%202020%20ready%20%232%20great%20electronics%20other-electronics%20Suez%20price%20EGP%20Egypt%202026%202025",
+            "title": "Buy &amp; Sell Anything in Egypt Xiaomi Other Electronics plus 2020 ready #2 great electronics other-electronics Suez price EGP Egypt 2026 2025 | OpenSooq",
+            "sampleCount": 25
+          }
+        ]
+      },
+      "trainingTargetPrice": 17882
+    },
+    {
+      "title": "Samsung Cameras pro 2024 verified #3 ready",
+      "description": "Cameras listing in Excellent condition, used for student use. Main points: fast performance, clean screen, and stored carefully in Giza. Age: around 4 months, without receipt. Selling because no longer needed.",
+      "price": 23950,
+      "category": "electronics",
+      "subcategory": "cameras",
+      "condition": "Excellent",
+      "location": "Giza",
+      "images": [],
+      "status": "active",
+      "market": {
+        "query": "Samsung Cameras pro 2024 verified #3 ready electronics cameras Giza price EGP Egypt 2026 2025",
+        "sourceCount": 3,
+        "priceSampleCount": 15,
+        "newestDetectedYear": 2026,
+        "medianPrice": 15000,
+        "minPrice": 6000,
+        "maxPrice": 37000,
+        "observations": [
+          {
+            "provider": "Amazon Egypt",
+            "url": "https://www.amazon.eg/s?k=Samsung%20Cameras%20pro%202024%20verified%20%233%20ready%20electronics%20cameras%20Giza%20price%20EGP%20Egypt%202026%202025",
+            "title": "Amazon.eg : Samsung Cameras pro 2024 verified #3 ready electronics cameras Giza price EGP Egypt 2026 2025",
+            "sampleCount": 3
+          },
+          {
+            "provider": "Sigma Computer",
+            "url": "https://sigma-computer.com/search?q=Samsung%20Cameras%20pro%202024%20verified%20%233%20ready%20electronics%20cameras%20Giza%20price%20EGP%20Egypt%202026%202025",
+            "title": "Sigma Computer",
+            "sampleCount": 1
+          },
+          {
+            "provider": "OpenSooq Egypt",
+            "url": "https://eg.opensooq.com/en/find?term=Samsung%20Cameras%20pro%202024%20verified%20%233%20ready%20electronics%20cameras%20Giza%20price%20EGP%20Egypt%202026%202025",
+            "title": "Buy &amp; Sell Anything in Egypt Samsung Cameras pro 2024 verified #3 ready electronics cameras Giza price EGP Egypt 2026 2025 | OpenSooq",
+            "sampleCount": 25
+          }
+        ]
+      },
+      "trainingTargetPrice": 18580
+    },
+    {
+      "title": "Xiaomi Cameras plus 2023 lightly used #4 well kept",
+      "description": "Cameras listing in Excellent condition, used for personal use. Main points: fast performance, battery health 92%, and stored carefully in Shibin El Kom. Age: around 8 months, with original accessories. Selling because moving and clearing space.",
+      "price": 38665,
+      "category": "electronics",
+      "subcategory": "cameras",
+      "condition": "Excellent",
+      "location": "Shibin El Kom",
+      "images": [],
+      "status": "active",
+      "market": {
+        "query": "Xiaomi Cameras plus 2023 lightly used #4 well electronics cameras Shibin El Kom price EGP Egypt 2026 2025",
+        "sourceCount": 3,
+        "priceSampleCount": 4,
+        "newestDetectedYear": 2026,
+        "medianPrice": 13200,
+        "minPrice": 10500,
+        "maxPrice": 16500,
+        "observations": [
+          {
+            "provider": "Amazon Egypt",
+            "url": "https://www.amazon.eg/s?k=Xiaomi%20Cameras%20plus%202023%20lightly%20used%20%234%20well%20electronics%20cameras%20Shibin%20El%20Kom%20price%20EGP%20Egypt%202026%202025",
+            "title": "Amazon.eg : Xiaomi Cameras plus 2023 lightly used #4 well electronics cameras Shibin El Kom price EGP Egypt 2026 2025",
+            "sampleCount": 3
+          },
+          {
+            "provider": "Sigma Computer",
+            "url": "https://sigma-computer.com/search?q=Xiaomi%20Cameras%20plus%202023%20lightly%20used%20%234%20well%20electronics%20cameras%20Shibin%20El%20Kom%20price%20EGP%20Egypt%202026%202025",
+            "title": "Sigma Computer",
+            "sampleCount": 1
+          },
+          {
+            "provider": "OpenSooq Egypt",
+            "url": "https://eg.opensooq.com/en/find?term=Xiaomi%20Cameras%20plus%202023%20lightly%20used%20%234%20well%20electronics%20cameras%20Shibin%20El%20Kom%20price%20EGP%20Egypt%202026%202025",
+            "title": "Buy &amp; Sell Anything in Egypt Xiaomi Cameras plus 2023 lightly used #4 well electronics cameras Shibin El Kom price EGP Egypt 2026 2025 | OpenSooq",
+            "sampleCount": 25
+          }
+        ]
+      },
+      "trainingTargetPrice": 23386
+    },
+    {
+      "title": "Samsung Other Electronics plus 2017 lightly used #5 verified",
+      "description": "Other Electronics listing in Excellent condition, used for office use. Main points: battery health 92%, clean screen, and stored carefully in Damanhur. Age: around 26 months, with box. Selling because moving and clearing space.",
+      "price": 29465,
+      "category": "electronics",
+      "subcategory": "other-electronics",
+      "condition": "Excellent",
+      "location": "Damanhur",
+      "images": [],
+      "status": "active",
+      "market": {
+        "query": "Samsung Other Electronics plus 2017 lightly used #5 electronics other-electronics Damanhur price EGP Egypt 2026 2025",
+        "sourceCount": 3,
+        "priceSampleCount": 8,
+        "newestDetectedYear": 2026,
+        "medianPrice": 20750,
+        "minPrice": 7800,
+        "maxPrice": 37000,
+        "observations": [
+          {
+            "provider": "Amazon Egypt",
+            "url": "https://www.amazon.eg/s?k=Samsung%20Other%20Electronics%20plus%202017%20lightly%20used%20%235%20electronics%20other-electronics%20Damanhur%20price%20EGP%20Egypt%202026%202025",
+            "title": "Amazon.eg : Samsung Other Electronics plus 2017 lightly used #5 electronics other-electronics Damanhur price EGP Egypt 2026 2025",
+            "sampleCount": 3
+          },
+          {
+            "provider": "Sigma Computer",
+            "url": "https://sigma-computer.com/search?q=Samsung%20Other%20Electronics%20plus%202017%20lightly%20used%20%235%20electronics%20other-electronics%20Damanhur%20price%20EGP%20Egypt%202026%202025",
+            "title": "Sigma Computer",
+            "sampleCount": 1
+          },
+          {
+            "provider": "OpenSooq Egypt",
+            "url": "https://eg.opensooq.com/en/find?term=Samsung%20Other%20Electronics%20plus%202017%20lightly%20used%20%235%20electronics%20other-electronics%20Damanhur%20price%20EGP%20Egypt%202026%202025",
+            "title": "Buy &amp; Sell Anything in Egypt Samsung Other Electronics plus 2017 lightly used #5 electronics other-electronics Damanhur price EGP Egypt 2026 2025 | OpenSooq",
+            "sampleCount": 25
+          }
+        ]
+      },
+      "trainingTargetPrice": 24236
+    },
+    {
+      "title": "Samsung Smartphones standard 2017 clean #6 well kept",
+      "description": "Smartphones listing in Excellent condition, used for office use. Main points: fast performance, battery health 92%, and stored carefully in Beni Suef. Age: around 36 months, with box. Selling because switching category.",
+      "price": 35575,
+      "category": "electronics",
+      "subcategory": "smartphones",
+      "condition": "Excellent",
+      "location": "Beni Suef",
+      "images": [],
+      "status": "active",
+      "market": {
+        "query": "Samsung Smartphones standard 2017 clean #6 well kept electronics smartphones Beni Suef price EGP Egypt 2026 2025",
+        "sourceCount": 3,
+        "priceSampleCount": 6,
+        "newestDetectedYear": 2026,
+        "medianPrice": 20500,
+        "minPrice": 9000,
+        "maxPrice": 29000,
+        "observations": [
+          {
+            "provider": "Amazon Egypt",
+            "url": "https://www.amazon.eg/s?k=Samsung%20Smartphones%20standard%202017%20clean%20%236%20well%20kept%20electronics%20smartphones%20Beni%20Suef%20price%20EGP%20Egypt%202026%202025",
+            "title": "Amazon.eg : Samsung Smartphones standard 2017 clean #6 well kept electronics smartphones Beni Suef price EGP Egypt 2026 2025",
+            "sampleCount": 3
+          },
+          {
+            "provider": "Sigma Computer",
+            "url": "https://sigma-computer.com/search?q=Samsung%20Smartphones%20standard%202017%20clean%20%236%20well%20kept%20electronics%20smartphones%20Beni%20Suef%20price%20EGP%20Egypt%202026%202025",
+            "title": "Sigma Computer",
+            "sampleCount": 1
+          },
+          {
+            "provider": "OpenSooq Egypt",
+            "url": "https://eg.opensooq.com/en/find?term=Samsung%20Smartphones%20standard%202017%20clean%20%236%20well%20kept%20electronics%20smartphones%20Beni%20Suef%20price%20EGP%20Egypt%202026%202025",
+            "title": "Buy &amp; Sell Anything in Egypt Samsung Smartphones standard 2017 clean #6 well kept electronics smartphones Beni Suef price EGP Egypt 2026 2025 | OpenSooq",
+            "sampleCount": 25
+          }
+        ]
+      },
+      "trainingTargetPrice": 26530
+    },
+    {
+      "title": "Sony Other Electronics standard 2019 well kept #7 ready",
+      "description": "Other Electronics listing in Good condition, used for light use. Main points: clean screen, fast performance, and stored carefully in Alexandria. Age: around 3 months, with original accessories. Selling because moving and clearing space.",
+      "price": 16065,
+      "category": "electronics",
+      "subcategory": "other-electronics",
+      "condition": "Good",
+      "location": "Alexandria",
+      "images": [],
+      "status": "active",
+      "market": {
+        "query": "Sony Other Electronics standard 2019 well kept #7 electronics other-electronics Alexandria price EGP Egypt 2026 2025",
+        "sourceCount": 3,
+        "priceSampleCount": 15,
+        "newestDetectedYear": 2026,
+        "medianPrice": 11500,
+        "minPrice": 4900,
+        "maxPrice": 18000,
+        "observations": [
+          {
+            "provider": "Amazon Egypt",
+            "url": "https://www.amazon.eg/s?k=Sony%20Other%20Electronics%20standard%202019%20well%20kept%20%237%20electronics%20other-electronics%20Alexandria%20price%20EGP%20Egypt%202026%202025",
+            "title": "Amazon.eg : Sony Other Electronics standard 2019 well kept #7 electronics other-electronics Alexandria price EGP Egypt 2026 2025",
+            "sampleCount": 3
+          },
+          {
+            "provider": "Sigma Computer",
+            "url": "https://sigma-computer.com/search?q=Sony%20Other%20Electronics%20standard%202019%20well%20kept%20%237%20electronics%20other-electronics%20Alexandria%20price%20EGP%20Egypt%202026%202025",
+            "title": "Sigma Computer",
+            "sampleCount": 1
+          },
+          {
+            "provider": "OpenSooq Egypt",
+            "url": "https://eg.opensooq.com/en/find?term=Sony%20Other%20Electronics%20standard%202019%20well%20kept%20%237%20electronics%20other-electronics%20Alexandria%20price%20EGP%20Egypt%202026%202025",
+            "title": "Buy &amp; Sell Anything in Egypt Sony Other Electronics standard 2019 well kept #7 electronics other-electronics Alexandria price EGP Egypt 2026 2025 | OpenSooq",
+            "sampleCount": 23
+          }
+        ]
+      },
+      "trainingTargetPrice": 13326
+    },
+    {
+      "title": "Xiaomi Smartphones pro 2019 lightly used #8 ready",
+      "description": "Smartphones listing in Excellent condition, used for light use. Main points: no major scratches, all ports working, and stored carefully in Cairo. Age: around 16 months, without box. Selling because upgrading to newer model.",
+      "price": 32660,
+      "category": "electronics",
+      "subcategory": "smartphones",
+      "condition": "Excellent",
+      "location": "Cairo",
+      "images": [],
+      "status": "active",
+      "market": {
+        "query": "Xiaomi Smartphones pro 2019 lightly used #8 ready electronics smartphones Cairo price EGP Egypt 2026 2025",
+        "sourceCount": 4,
+        "priceSampleCount": 14,
+        "newestDetectedYear": 2030,
+        "medianPrice": 13000,
+        "minPrice": 8499,
+        "maxPrice": 37000,
+        "observations": [
+          {
+            "provider": "Amazon Egypt",
+            "url": "https://www.amazon.eg/s?k=Xiaomi%20Smartphones%20pro%202019%20lightly%20used%20%238%20ready%20electronics%20smartphones%20Cairo%20price%20EGP%20Egypt%202026%202025",
+            "title": "Amazon.eg : Xiaomi Smartphones pro 2019 lightly used #8 ready electronics smartphones Cairo price EGP Egypt 2026 2025",
+            "sampleCount": 3
+          },
+          {
+            "provider": "Sigma Computer",
+            "url": "https://sigma-computer.com/search?q=Xiaomi%20Smartphones%20pro%202019%20lightly%20used%20%238%20ready%20electronics%20smartphones%20Cairo%20price%20EGP%20Egypt%202026%202025",
+            "title": "Sigma Computer",
+            "sampleCount": 1
+          },
+          {
+            "provider": "Dubizzle Egypt",
+            "url": "https://www.dubizzle.com.eg/en/ads/?q=Xiaomi%20Smartphones%20pro%202019%20lightly%20used%20%238%20ready%20electronics%20smartphones%20Cairo%20price%20EGP%20Egypt%202026%202025",
+            "title": "Classifieds in Egypt, classified ads in Egypt (For Sale in Egypt, Vehicles in Egypt, Real Estate in Egypt, Community in Egypt,...)",
+            "sampleCount": 25
+          },
+          {
+            "provider": "OpenSooq Egypt",
+            "url": "https://eg.opensooq.com/en/find?term=Xiaomi%20Smartphones%20pro%202019%20lightly%20used%20%238%20ready%20electronics%20smartphones%20Cairo%20price%20EGP%20Egypt%202026%202025",
+            "title": "Buy &amp; Sell Anything in Egypt Xiaomi Smartphones pro 2019 lightly used #8 ready electronics smartphones Cairo price EGP Egypt 2026 2025 | OpenSooq",
+            "sampleCount": 25
+          }
+        ]
+      },
+      "trainingTargetPrice": 20864
+    },
+    {
+      "title": "Samsung Tv Monitors pro 2022 verified #9 clean",
+      "description": "Tv Monitors listing in New condition, used for personal use. Main points: fast performance, battery health 92%, and stored carefully in Cairo. Age: around 2 months, with receipt. Selling because upgrading to newer model.",
+      "price": 42930,
+      "category": "electronics",
+      "subcategory": "tv-monitors",
+      "condition": "New",
+      "location": "Cairo",
+      "images": [],
+      "status": "active",
+      "market": {
+        "query": "Samsung Tv Monitors pro 2022 verified #9 clean electronics tv-monitors Cairo price EGP Egypt 2026 2025",
+        "sourceCount": 4,
+        "priceSampleCount": 10,
+        "newestDetectedYear": 2030,
+        "medianPrice": 19000,
+        "minPrice": 12000,
+        "maxPrice": 80000,
+        "observations": [
+          {
+            "provider": "Amazon Egypt",
+            "url": "https://www.amazon.eg/s?k=Samsung%20Tv%20Monitors%20pro%202022%20verified%20%239%20clean%20electronics%20tv-monitors%20Cairo%20price%20EGP%20Egypt%202026%202025",
+            "title": "Amazon.eg : Samsung Tv Monitors pro 2022 verified #9 clean electronics tv-monitors Cairo price EGP Egypt 2026 2025",
+            "sampleCount": 3
+          },
+          {
+            "provider": "Sigma Computer",
+            "url": "https://sigma-computer.com/search?q=Samsung%20Tv%20Monitors%20pro%202022%20verified%20%239%20clean%20electronics%20tv-monitors%20Cairo%20price%20EGP%20Egypt%202026%202025",
+            "title": "Sigma Computer",
+            "sampleCount": 1
+          },
+          {
+            "provider": "Dubizzle Egypt",
+            "url": "https://www.dubizzle.com.eg/en/ads/?q=Samsung%20Tv%20Monitors%20pro%202022%20verified%20%239%20clean%20electronics%20tv-monitors%20Cairo%20price%20EGP%20Egypt%202026%202025",
+            "title": "Classifieds in Egypt, classified ads in Egypt (For Sale in Egypt, Vehicles in Egypt, Real Estate in Egypt, Community in Egypt,...)",
+            "sampleCount": 25
+          },
+          {
+            "provider": "OpenSooq Egypt",
+            "url": "https://eg.opensooq.com/en/find?term=Samsung%20Tv%20Monitors%20pro%202022%20verified%20%239%20clean%20electronics%20tv-monitors%20Cairo%20price%20EGP%20Egypt%202026%202025",
+            "title": "Buy &amp; Sell Anything in Egypt Samsung Tv Monitors pro 2022 verified #9 clean electronics tv-monitors Cairo price EGP Egypt 2026 2025 | OpenSooq",
+            "sampleCount": 25
+          }
+        ]
+      },
+      "trainingTargetPrice": 28572
+    },
+    {
+      "title": "Apple Laptops max 2024 lightly used #10 verified",
+      "description": "Laptops listing in Excellent condition, used for personal use. Main points: fast performance, all ports working, and stored carefully in Port Said. Age: around 31 months, with box. Selling because switching category.",
+      "price": 22540,
+      "category": "electronics",
+      "subcategory": "laptops",
+      "condition": "Excellent",
+      "location": "Port Said",
+      "images": [],
+      "status": "active",
+      "market": {
+        "query": "Apple Laptops max 2024 lightly used #10 verified electronics laptops Port Said price EGP Egypt 2026 2025",
+        "sourceCount": 4,
+        "priceSampleCount": 43,
+        "newestDetectedYear": 2030,
+        "medianPrice": 66300,
+        "minPrice": 7650,
+        "maxPrice": 73000,
+        "observations": [
+          {
+            "provider": "Amazon Egypt",
+            "url": "https://www.amazon.eg/s?k=Apple%20Laptops%20max%202024%20lightly%20used%20%2310%20verified%20electronics%20laptops%20Port%20Said%20price%20EGP%20Egypt%202026%202025",
+            "title": "Amazon.eg : Apple Laptops max 2024 lightly used #10 verified electronics laptops Port Said price EGP Egypt 2026 2025",
+            "sampleCount": 25
+          },
+          {
+            "provider": "Sigma Computer",
+            "url": "https://sigma-computer.com/search?q=Apple%20Laptops%20max%202024%20lightly%20used%20%2310%20verified%20electronics%20laptops%20Port%20Said%20price%20EGP%20Egypt%202026%202025",
+            "title": "Sigma Computer",
+            "sampleCount": 1
+          },
+          {
+            "provider": "Dubizzle Egypt",
+            "url": "https://www.dubizzle.com.eg/en/ads/?q=Apple%20Laptops%20max%202024%20lightly%20used%20%2310%20verified%20electronics%20laptops%20Port%20Said%20price%20EGP%20Egypt%202026%202025",
+            "title": "Classifieds in Egypt, classified ads in Egypt (For Sale in Egypt, Vehicles in Egypt, Real Estate in Egypt, Community in Egypt,...)",
+            "sampleCount": 25
+          },
+          {
+            "provider": "OpenSooq Egypt",
+            "url": "https://eg.opensooq.com/en/find?term=Apple%20Laptops%20max%202024%20lightly%20used%20%2310%20verified%20electronics%20laptops%20Port%20Said%20price%20EGP%20Egypt%202026%202025",
+            "title": "Buy &amp; Sell Anything in Egypt Apple Laptops max 2024 lightly used #10 verified electronics laptops Port Said price EGP Egypt 2026 2025 | OpenSooq",
+            "sampleCount": 25
+          }
+        ]
+      },
+      "trainingTargetPrice": 48796
+    },
+    {
+      "title": "Local Carpentry Tables plus 2023 clean #1 well kept",
+      "description": "Tables listing in New condition, used for family use. Main points: solid frame, clean fabric, and stored carefully in Ismailia. Age: around 33 months, without receipt. Selling because bought recently but unused.",
+      "price": 5020,
+      "category": "furniture",
+      "subcategory": "tables",
+      "condition": "New",
+      "location": "Ismailia",
+      "images": [],
+      "status": "active",
+      "market": {
+        "query": "Local Carpentry Tables plus 2023 clean #1 well furniture tables Ismailia price EGP Egypt 2026 2025",
+        "sourceCount": 3,
+        "priceSampleCount": 8,
+        "newestDetectedYear": 2026,
+        "medianPrice": 6250,
+        "minPrice": 2520,
+        "maxPrice": 13700,
+        "observations": [
+          {
+            "provider": "Amazon Egypt",
+            "url": "https://www.amazon.eg/s?k=Local%20Carpentry%20Tables%20plus%202023%20clean%20%231%20well%20furniture%20tables%20Ismailia%20price%20EGP%20Egypt%202026%202025",
+            "title": "Amazon.eg : Local Carpentry Tables plus 2023 clean #1 well furniture tables Ismailia price EGP Egypt 2026 2025",
+            "sampleCount": 3
+          },
+          {
+            "provider": "Sigma Computer",
+            "url": "https://sigma-computer.com/search?q=Local%20Carpentry%20Tables%20plus%202023%20clean%20%231%20well%20furniture%20tables%20Ismailia%20price%20EGP%20Egypt%202026%202025",
+            "title": "Sigma Computer",
+            "sampleCount": 1
+          },
+          {
+            "provider": "OpenSooq Egypt",
+            "url": "https://eg.opensooq.com/en/find?term=Local%20Carpentry%20Tables%20plus%202023%20clean%20%231%20well%20furniture%20tables%20Ismailia%20price%20EGP%20Egypt%202026%202025",
+            "title": "Buy &amp; Sell Anything in Egypt Local Carpentry Tables plus 2023 clean #1 well furniture tables Ismailia price EGP Egypt 2026 2025 | OpenSooq",
+            "sampleCount": 25
+          }
+        ]
+      },
+      "trainingTargetPrice": 5758
+    },
+    {
+      "title": "IKEA Other Furniture plus 2017 verified #2 ready",
+      "description": "Other Furniture listing in Good condition, used for guest room use. Main points: solid frame, strong storage, and stored carefully in Shibin El Kom. Age: around 27 months, without box. Selling because bought recently but unused.",
+      "price": 6990,
+      "category": "furniture",
+      "subcategory": "other-furniture",
+      "condition": "Good",
+      "location": "Shibin El Kom",
+      "images": [],
+      "status": "active",
+      "market": {
+        "query": "IKEA Other Furniture plus 2017 verified #2 ready furniture other-furniture Shibin El Kom price EGP Egypt 2026 2025",
+        "sourceCount": 4,
+        "priceSampleCount": 11,
+        "newestDetectedYear": 2030,
+        "medianPrice": 3200,
+        "minPrice": 1833,
+        "maxPrice": 17000,
+        "observations": [
+          {
+            "provider": "Amazon Egypt",
+            "url": "https://www.amazon.eg/s?k=IKEA%20Other%20Furniture%20plus%202017%20verified%20%232%20ready%20furniture%20other-furniture%20Shibin%20El%20Kom%20price%20EGP%20Egypt%202026%202025",
+            "title": "Amazon.eg : IKEA Other Furniture plus 2017 verified #2 ready furniture other-furniture Shibin El Kom price EGP Egypt 2026 2025",
+            "sampleCount": 4
+          },
+          {
+            "provider": "Sigma Computer",
+            "url": "https://sigma-computer.com/search?q=IKEA%20Other%20Furniture%20plus%202017%20verified%20%232%20ready%20furniture%20other-furniture%20Shibin%20El%20Kom%20price%20EGP%20Egypt%202026%202025",
+            "title": "Sigma Computer",
+            "sampleCount": 1
+          },
+          {
+            "provider": "Dubizzle Egypt",
+            "url": "https://www.dubizzle.com.eg/en/ads/?q=IKEA%20Other%20Furniture%20plus%202017%20verified%20%232%20ready%20furniture%20other-furniture%20Shibin%20El%20Kom%20price%20EGP%20Egypt%202026%202025",
+            "title": "Classifieds in Egypt, classified ads in Egypt (For Sale in Egypt, Vehicles in Egypt, Real Estate in Egypt, Community in Egypt,...)",
+            "sampleCount": 25
+          },
+          {
+            "provider": "OpenSooq Egypt",
+            "url": "https://eg.opensooq.com/en/find?term=IKEA%20Other%20Furniture%20plus%202017%20verified%20%232%20ready%20furniture%20other-furniture%20Shibin%20El%20Kom%20price%20EGP%20Egypt%202026%202025",
+            "title": "Buy &amp; Sell Anything in Egypt IKEA Other Furniture plus 2017 verified #2 ready furniture other-furniture Shibin El Kom price EGP Egypt 2026 2025 | OpenSooq",
+            "sampleCount": 25
+          }
+        ]
+      },
+      "trainingTargetPrice": 4716
+    },
+    {
+      "title": "Homzmart Chairs pro 2024 well kept #3 verified",
+      "description": "Chairs listing in Like New condition, used for office use. Main points: fresh polish, solid frame, and stored carefully in Cairo. Age: around 24 months, with receipt. Selling because no longer needed.",
+      "price": 7085,
+      "category": "furniture",
+      "subcategory": "chairs",
+      "condition": "Like New",
+      "location": "Cairo",
+      "images": [],
+      "status": "active",
+      "market": {
+        "query": "Homzmart Chairs pro 2024 well kept #3 verified furniture chairs Cairo price EGP Egypt 2026 2025",
+        "sourceCount": 4,
+        "priceSampleCount": 16,
+        "newestDetectedYear": 2030,
+        "medianPrice": 15450,
+        "minPrice": 2000,
+        "maxPrice": 28000,
+        "observations": [
+          {
+            "provider": "Amazon Egypt",
+            "url": "https://www.amazon.eg/s?k=Homzmart%20Chairs%20pro%202024%20well%20kept%20%233%20verified%20furniture%20chairs%20Cairo%20price%20EGP%20Egypt%202026%202025",
+            "title": "Amazon.eg : Homzmart Chairs pro 2024 well kept #3 verified furniture chairs Cairo price EGP Egypt 2026 2025",
+            "sampleCount": 3
+          },
+          {
+            "provider": "Sigma Computer",
+            "url": "https://sigma-computer.com/search?q=Homzmart%20Chairs%20pro%202024%20well%20kept%20%233%20verified%20furniture%20chairs%20Cairo%20price%20EGP%20Egypt%202026%202025",
+            "title": "Sigma Computer",
+            "sampleCount": 1
+          },
+          {
+            "provider": "Dubizzle Egypt",
+            "url": "https://www.dubizzle.com.eg/en/ads/?q=Homzmart%20Chairs%20pro%202024%20well%20kept%20%233%20verified%20furniture%20chairs%20Cairo%20price%20EGP%20Egypt%202026%202025",
+            "title": "Classifieds in Egypt, classified ads in Egypt (For Sale in Egypt, Vehicles in Egypt, Real Estate in Egypt, Community in Egypt,...)",
+            "sampleCount": 25
+          },
+          {
+            "provider": "OpenSooq Egypt",
+            "url": "https://eg.opensooq.com/en/find?term=Homzmart%20Chairs%20pro%202024%20well%20kept%20%233%20verified%20furniture%20chairs%20Cairo%20price%20EGP%20Egypt%202026%202025",
+            "title": "Buy &amp; Sell Anything in Egypt Homzmart Chairs pro 2024 well kept #3 verified furniture chairs Cairo price EGP Egypt 2026 2025 | OpenSooq",
+            "sampleCount": 23
+          }
+        ]
+      },
+      "trainingTargetPrice": 12104
+    },
+    {
+      "title": "Homzmart Other Furniture max 2020 clean #4 ready",
+      "description": "Other Furniture listing in Good condition, used for studio use. Main points: clean fabric, strong storage, and stored carefully in Mansoura. Age: around 3 months, without box. Selling because no longer needed.",
+      "price": 4615,
+      "category": "furniture",
+      "subcategory": "other-furniture",
+      "condition": "Good",
+      "location": "Mansoura",
+      "images": [],
+      "status": "active",
+      "market": {
+        "query": "Homzmart Other Furniture max 2020 clean #4 ready furniture other-furniture Mansoura price EGP Egypt 2026 2025",
+        "sourceCount": 3,
+        "priceSampleCount": 11,
+        "newestDetectedYear": 2026,
+        "medianPrice": 3000,
+        "minPrice": 1200,
+        "maxPrice": 8500,
+        "observations": [
+          {
+            "provider": "Amazon Egypt",
+            "url": "https://www.amazon.eg/s?k=Homzmart%20Other%20Furniture%20max%202020%20clean%20%234%20ready%20furniture%20other-furniture%20Mansoura%20price%20EGP%20Egypt%202026%202025",
+            "title": "Amazon.eg : Homzmart Other Furniture max 2020 clean #4 ready furniture other-furniture Mansoura price EGP Egypt 2026 2025",
+            "sampleCount": 3
+          },
+          {
+            "provider": "Sigma Computer",
+            "url": "https://sigma-computer.com/search?q=Homzmart%20Other%20Furniture%20max%202020%20clean%20%234%20ready%20furniture%20other-furniture%20Mansoura%20price%20EGP%20Egypt%202026%202025",
+            "title": "Sigma Computer",
+            "sampleCount": 1
+          },
+          {
+            "provider": "OpenSooq Egypt",
+            "url": "https://eg.opensooq.com/en/find?term=Homzmart%20Other%20Furniture%20max%202020%20clean%20%234%20ready%20furniture%20other-furniture%20Mansoura%20price%20EGP%20Egypt%202026%202025",
+            "title": "Buy &amp; Sell Anything in Egypt Homzmart Other Furniture max 2020 clean #4 ready furniture other-furniture Mansoura price EGP Egypt 2026 2025 | OpenSooq",
+            "sampleCount": 25
+          }
+        ]
+      },
+      "trainingTargetPrice": 3646
+    },
+    {
+      "title": "Local Carpentry Chairs standard 2024 verified #5 great shape",
+      "description": "Chairs listing in Like New condition, used for family use. Main points: stable legs, clean fabric, and stored carefully in Port Said. Age: around 35 months, with box. Selling because bought recently but unused.",
+      "price": 5310,
+      "category": "furniture",
+      "subcategory": "chairs",
+      "condition": "Like New",
+      "location": "Port Said",
+      "images": [],
+      "status": "active",
+      "market": {
+        "query": "Local Carpentry Chairs standard 2024 verified #5 great furniture chairs Port Said price EGP Egypt 2026 2025",
+        "sourceCount": 4,
+        "priceSampleCount": 3,
+        "newestDetectedYear": 2030,
+        "medianPrice": 7500,
+        "minPrice": 2520,
+        "maxPrice": 15000,
+        "observations": [
+          {
+            "provider": "Amazon Egypt",
+            "url": "https://www.amazon.eg/s?k=Local%20Carpentry%20Chairs%20standard%202024%20verified%20%235%20great%20furniture%20chairs%20Port%20Said%20price%20EGP%20Egypt%202026%202025",
+            "title": "Amazon.eg : Local Carpentry Chairs standard 2024 verified #5 great furniture chairs Port Said price EGP Egypt 2026 2025",
+            "sampleCount": 3
+          },
+          {
+            "provider": "Sigma Computer",
+            "url": "https://sigma-computer.com/search?q=Local%20Carpentry%20Chairs%20standard%202024%20verified%20%235%20great%20furniture%20chairs%20Port%20Said%20price%20EGP%20Egypt%202026%202025",
+            "title": "Sigma Computer",
+            "sampleCount": 1
+          },
+          {
+            "provider": "Dubizzle Egypt",
+            "url": "https://www.dubizzle.com.eg/en/ads/?q=Local%20Carpentry%20Chairs%20standard%202024%20verified%20%235%20great%20furniture%20chairs%20Port%20Said%20price%20EGP%20Egypt%202026%202025",
+            "title": "Classifieds in Egypt, classified ads in Egypt (For Sale in Egypt, Vehicles in Egypt, Real Estate in Egypt, Community in Egypt,...)",
+            "sampleCount": 25
+          },
+          {
+            "provider": "OpenSooq Egypt",
+            "url": "https://eg.opensooq.com/en/find?term=Local%20Carpentry%20Chairs%20standard%202024%20verified%20%235%20great%20furniture%20chairs%20Port%20Said%20price%20EGP%20Egypt%202026%202025",
+            "title": "Buy &amp; Sell Anything in Egypt Local Carpentry Chairs standard 2024 verified #5 great furniture chairs Port Said price EGP Egypt 2026 2025 | OpenSooq",
+            "sampleCount": 25
+          }
+        ]
+      },
+      "trainingTargetPrice": 6624
+    },
+    {
+      "title": "IKEA Storage standard 2017 ready #6 ready",
+      "description": "Storage listing in Like New condition, used for guest room use. Main points: stable legs, solid frame, and stored carefully in Cairo. Age: around 17 months, without box. Selling because bought recently but unused.",
+      "price": 13550,
+      "category": "furniture",
+      "subcategory": "storage",
+      "condition": "Like New",
+      "location": "Cairo",
+      "images": [],
+      "status": "active",
+      "market": {
+        "query": "IKEA Storage standard 2017 ready #6 ready furniture storage Cairo price EGP Egypt 2026 2025",
+        "sourceCount": 3,
+        "priceSampleCount": 3,
+        "newestDetectedYear": 2028,
+        "medianPrice": 9124,
+        "minPrice": 8500,
+        "maxPrice": 10000,
+        "observations": [
+          {
+            "provider": "Amazon Egypt",
+            "url": "https://www.amazon.eg/s?k=IKEA%20Storage%20standard%202017%20ready%20%236%20ready%20furniture%20storage%20Cairo%20price%20EGP%20Egypt%202026%202025",
+            "title": "Amazon.eg : IKEA Storage standard 2017 ready #6 ready furniture storage Cairo price EGP Egypt 2026 2025",
+            "sampleCount": 12
+          },
+          {
+            "provider": "Sigma Computer",
+            "url": "https://sigma-computer.com/search?q=IKEA%20Storage%20standard%202017%20ready%20%236%20ready%20furniture%20storage%20Cairo%20price%20EGP%20Egypt%202026%202025",
+            "title": "Sigma Computer",
+            "sampleCount": 1
+          },
+          {
+            "provider": "OpenSooq Egypt",
+            "url": "https://eg.opensooq.com/en/find?term=IKEA%20Storage%20standard%202017%20ready%20%236%20ready%20furniture%20storage%20Cairo%20price%20EGP%20Egypt%202026%202025",
+            "title": "Buy &amp; Sell Anything in Egypt IKEA Storage standard 2017 ready #6 ready furniture storage Cairo price EGP Egypt 2026 2025 | OpenSooq",
+            "sampleCount": 25
+          }
+        ]
+      },
+      "trainingTargetPrice": 10894
+    },
+    {
+      "title": "Local Carpentry Chairs standard 2017 ready #7 well kept",
+      "description": "Chairs listing in Excellent condition, used for office use. Main points: solid frame, fresh polish, and stored carefully in Alexandria. Age: around 10 months, with receipt. Selling because no longer needed.",
+      "price": 11150,
+      "category": "furniture",
+      "subcategory": "chairs",
+      "condition": "Excellent",
+      "location": "Alexandria",
+      "images": [],
+      "status": "active",
+      "market": {
+        "query": "Local Carpentry Chairs standard 2017 ready #7 well furniture chairs Alexandria price EGP Egypt 2026 2025",
+        "sourceCount": 4,
+        "priceSampleCount": 4,
+        "newestDetectedYear": 2030,
+        "medianPrice": 27000,
+        "minPrice": 7000,
+        "maxPrice": 40000,
+        "observations": [
+          {
+            "provider": "Amazon Egypt",
+            "url": "https://www.amazon.eg/s?k=Local%20Carpentry%20Chairs%20standard%202017%20ready%20%237%20well%20furniture%20chairs%20Alexandria%20price%20EGP%20Egypt%202026%202025",
+            "title": "Amazon.eg : Local Carpentry Chairs standard 2017 ready #7 well furniture chairs Alexandria price EGP Egypt 2026 2025",
+            "sampleCount": 3
+          },
+          {
+            "provider": "Sigma Computer",
+            "url": "https://sigma-computer.com/search?q=Local%20Carpentry%20Chairs%20standard%202017%20ready%20%237%20well%20furniture%20chairs%20Alexandria%20price%20EGP%20Egypt%202026%202025",
+            "title": "Sigma Computer",
+            "sampleCount": 1
+          },
+          {
+            "provider": "Dubizzle Egypt",
+            "url": "https://www.dubizzle.com.eg/en/ads/?q=Local%20Carpentry%20Chairs%20standard%202017%20ready%20%237%20well%20furniture%20chairs%20Alexandria%20price%20EGP%20Egypt%202026%202025",
+            "title": "Classifieds in Egypt, classified ads in Egypt (For Sale in Egypt, Vehicles in Egypt, Real Estate in Egypt, Community in Egypt,...)",
+            "sampleCount": 25
+          },
+          {
+            "provider": "OpenSooq Egypt",
+            "url": "https://eg.opensooq.com/en/find?term=Local%20Carpentry%20Chairs%20standard%202017%20ready%20%237%20well%20furniture%20chairs%20Alexandria%20price%20EGP%20Egypt%202026%202025",
+            "title": "Buy &amp; Sell Anything in Egypt Local Carpentry Chairs standard 2017 ready #7 well furniture chairs Alexandria price EGP Egypt 2026 2025 | OpenSooq",
+            "sampleCount": 25
+          }
+        ]
+      },
+      "trainingTargetPrice": 20660
+    },
+    {
+      "title": "Nefertiti Home Tables plus 2021 verified #8 verified",
+      "description": "Tables listing in Good condition, used for guest room use. Main points: clean fabric, strong storage, and stored carefully in Minya. Age: around 5 months, with receipt. Selling because no longer needed.",
+      "price": 12115,
+      "category": "furniture",
+      "subcategory": "tables",
+      "condition": "Good",
+      "location": "Minya",
+      "images": [],
+      "status": "active",
+      "market": {
+        "query": "Nefertiti Home Tables plus 2021 verified #8 verified furniture tables Minya price EGP Egypt 2026 2025",
+        "sourceCount": 4,
+        "priceSampleCount": 13,
+        "newestDetectedYear": 2030,
+        "medianPrice": 13700,
+        "minPrice": 4000,
+        "maxPrice": 34500,
+        "observations": [
+          {
+            "provider": "Amazon Egypt",
+            "url": "https://www.amazon.eg/s?k=Nefertiti%20Home%20Tables%20plus%202021%20verified%20%238%20verified%20furniture%20tables%20Minya%20price%20EGP%20Egypt%202026%202025",
+            "title": "Amazon.eg : Nefertiti Home Tables plus 2021 verified #8 verified furniture tables Minya price EGP Egypt 2026 2025",
+            "sampleCount": 3
+          },
+          {
+            "provider": "Sigma Computer",
+            "url": "https://sigma-computer.com/search?q=Nefertiti%20Home%20Tables%20plus%202021%20verified%20%238%20verified%20furniture%20tables%20Minya%20price%20EGP%20Egypt%202026%202025",
+            "title": "Sigma Computer",
+            "sampleCount": 1
+          },
+          {
+            "provider": "Dubizzle Egypt",
+            "url": "https://www.dubizzle.com.eg/en/ads/?q=Nefertiti%20Home%20Tables%20plus%202021%20verified%20%238%20verified%20furniture%20tables%20Minya%20price%20EGP%20Egypt%202026%202025",
+            "title": "Classifieds in Egypt, classified ads in Egypt (For Sale in Egypt, Vehicles in Egypt, Real Estate in Egypt, Community in Egypt,...)",
+            "sampleCount": 25
+          },
+          {
+            "provider": "OpenSooq Egypt",
+            "url": "https://eg.opensooq.com/en/find?term=Nefertiti%20Home%20Tables%20plus%202021%20verified%20%238%20verified%20furniture%20tables%20Minya%20price%20EGP%20Egypt%202026%202025",
+            "title": "Buy &amp; Sell Anything in Egypt Nefertiti Home Tables plus 2021 verified #8 verified furniture tables Minya price EGP Egypt 2026 2025 | OpenSooq",
+            "sampleCount": 25
+          }
+        ]
+      },
+      "trainingTargetPrice": 13066
+    },
+    {
+      "title": "Homzmart Sofas max 2022 well kept #9 verified",
+      "description": "Sofas listing in New condition, used for guest room use. Main points: strong storage, solid frame, and stored carefully in Alexandria. Age: around 29 months, without box. Selling because no longer needed.",
+      "price": 9275,
+      "category": "furniture",
+      "subcategory": "sofas",
+      "condition": "New",
+      "location": "Alexandria",
+      "images": [],
+      "status": "active",
+      "market": {
+        "query": "Homzmart Sofas max 2022 well kept #9 verified furniture sofas Alexandria price EGP Egypt 2026 2025",
+        "sourceCount": 3,
+        "priceSampleCount": 14,
+        "newestDetectedYear": 2026,
+        "medianPrice": 11125,
+        "minPrice": 2520,
+        "maxPrice": 23000,
+        "observations": [
+          {
+            "provider": "Amazon Egypt",
+            "url": "https://www.amazon.eg/s?k=Homzmart%20Sofas%20max%202022%20well%20kept%20%239%20verified%20furniture%20sofas%20Alexandria%20price%20EGP%20Egypt%202026%202025",
+            "title": "Amazon.eg : Homzmart Sofas max 2022 well kept #9 verified furniture sofas Alexandria price EGP Egypt 2026 2025",
+            "sampleCount": 25
+          },
+          {
+            "provider": "Sigma Computer",
+            "url": "https://sigma-computer.com/search?q=Homzmart%20Sofas%20max%202022%20well%20kept%20%239%20verified%20furniture%20sofas%20Alexandria%20price%20EGP%20Egypt%202026%202025",
+            "title": "Sigma Computer",
+            "sampleCount": 1
+          },
+          {
+            "provider": "OpenSooq Egypt",
+            "url": "https://eg.opensooq.com/en/find?term=Homzmart%20Sofas%20max%202022%20well%20kept%20%239%20verified%20furniture%20sofas%20Alexandria%20price%20EGP%20Egypt%202026%202025",
+            "title": "Buy &amp; Sell Anything in Egypt Homzmart Sofas max 2022 well kept #9 verified furniture sofas Alexandria price EGP Egypt 2026 2025 | OpenSooq",
+            "sampleCount": 25
+          }
+        ]
+      },
+      "trainingTargetPrice": 10385
+    },
+    {
+      "title": "Homzmart Chairs edition 2021 well kept #10 clean",
+      "description": "Chairs listing in Poor condition, used for studio use. Main points: fresh polish, strong storage, and stored carefully in Port Said. Age: around 17 months, without box. Selling because no longer needed.",
+      "price": 2485,
+      "category": "furniture",
+      "subcategory": "chairs",
+      "condition": "Poor",
+      "location": "Port Said",
+      "images": [],
+      "status": "active",
+      "market": {
+        "query": "Homzmart Chairs edition 2021 well kept #10 clean furniture chairs Port Said price EGP Egypt 2026 2025",
+        "sourceCount": 3,
+        "priceSampleCount": 11,
+        "newestDetectedYear": 2026,
+        "medianPrice": 2700,
+        "minPrice": 800,
+        "maxPrice": 5999,
+        "observations": [
+          {
+            "provider": "Amazon Egypt",
+            "url": "https://www.amazon.eg/s?k=Homzmart%20Chairs%20edition%202021%20well%20kept%20%2310%20clean%20furniture%20chairs%20Port%20Said%20price%20EGP%20Egypt%202026%202025",
+            "title": "Amazon.eg : Homzmart Chairs edition 2021 well kept #10 clean furniture chairs Port Said price EGP Egypt 2026 2025",
+            "sampleCount": 3
+          },
+          {
+            "provider": "Sigma Computer",
+            "url": "https://sigma-computer.com/search?q=Homzmart%20Chairs%20edition%202021%20well%20kept%20%2310%20clean%20furniture%20chairs%20Port%20Said%20price%20EGP%20Egypt%202026%202025",
+            "title": "Sigma Computer",
+            "sampleCount": 1
+          },
+          {
+            "provider": "OpenSooq Egypt",
+            "url": "https://eg.opensooq.com/en/find?term=Homzmart%20Chairs%20edition%202021%20well%20kept%20%2310%20clean%20furniture%20chairs%20Port%20Said%20price%20EGP%20Egypt%202026%202025",
+            "title": "Buy &amp; Sell Anything in Egypt Homzmart Chairs edition 2021 well kept #10 clean furniture chairs Port Said price EGP Egypt 2026 2025 | OpenSooq",
+            "sampleCount": 25
+          }
+        ]
+      },
+      "trainingTargetPrice": 2614
+    }
+  ]
+}
