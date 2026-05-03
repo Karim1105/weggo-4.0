@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Heart, MapPin, Clock } from 'lucide-react'
 import ProductCard from '@/components/ProductCard'
+import ListingAdminMenu from '@/components/admin/ListingAdminMenu'
 import { Product } from '@/app/browse/types'
 
 interface ProductGridProps {
@@ -11,9 +12,22 @@ interface ProductGridProps {
   products: Product[]
   loading: boolean
   onToggleFavorite: (id: string) => void
+  isAdmin: boolean
+  adminControlsEnabled: boolean
+  onAdminProductUpdate: (id: string, updates: Partial<Product>) => void
+  onAdminProductRemove: (id: string) => void
 }
 
-export default function ProductGrid({ viewMode, products, loading, onToggleFavorite }: ProductGridProps) {
+export default function ProductGrid({
+  viewMode,
+  products,
+  loading,
+  onToggleFavorite,
+  isAdmin,
+  adminControlsEnabled,
+  onAdminProductUpdate,
+  onAdminProductRemove,
+}: ProductGridProps) {
   if (loading && products.length === 0) {
     return (
       <div key="loading-skeleton" className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 min-h-[400px]">
@@ -35,7 +49,15 @@ export default function ProductGrid({ viewMode, products, loading, onToggleFavor
             transition={{ delay: 0.05 + index * 0.03 }}
             layout="position"
           >
-            <ProductCard product={product} index={index} onToggleFavorite={onToggleFavorite} />
+            <ProductCard
+              product={product}
+              index={index}
+              onToggleFavorite={onToggleFavorite}
+              isAdmin={isAdmin}
+              adminControlsEnabled={adminControlsEnabled}
+              onAdminUpdate={onAdminProductUpdate}
+              onAdminRemove={onAdminProductRemove}
+            />
           </motion.div>
         ))}
       </div>
@@ -75,13 +97,26 @@ export default function ProductGrid({ viewMode, products, loading, onToggleFavor
               </div>
             </Link>
             <div className="flex items-start">
-              <button
-                onClick={() => onToggleFavorite(product.id)}
-                aria-label={product.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
-                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
-              >
-                <Heart className={`w-5 h-5 ${product.isFavorite ? 'text-red-500 fill-current' : 'text-gray-400'}`} />
-              </button>
+              {isAdmin && adminControlsEnabled ? (
+                <div className="relative">
+                  <ListingAdminMenu
+                    product={product}
+                    onUpdate={onAdminProductUpdate}
+                    onRemove={onAdminProductRemove}
+                    buttonClassName="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                    iconClassName="w-5 h-5 text-gray-600"
+                    menuClassName="absolute right-0 top-10 bg-white rounded-lg shadow-xl z-50 overflow-hidden"
+                  />
+                </div>
+              ) : (
+                <button
+                  onClick={() => onToggleFavorite(product.id)}
+                  aria-label={product.isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <Heart className={`w-5 h-5 ${product.isFavorite ? 'text-red-500 fill-current' : 'text-gray-400'}`} />
+                </button>
+              )}
             </div>
           </div>
         </motion.div>

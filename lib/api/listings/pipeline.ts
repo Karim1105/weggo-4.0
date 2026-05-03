@@ -31,14 +31,16 @@ export function sanitizeListing(product: ListingsAggregateItem): SanitizedListin
     seller: product.seller,
     images: imagesArr.length ? [imagesArr[0]] : [],
     description,
+    isBoosted: Boolean(product.isBoosted),
   }
 }
 
 function buildMatchQuery(params: ListingQueryParams): Record<string, unknown> {
   const query: Record<string, unknown> = { status: 'active' }
+  const isSellerScoped = Boolean(params.sellerId)
 
-  if (params.sellerId) {
-    query.seller = new mongoose.Types.ObjectId(params.sellerId)
+  if (isSellerScoped) {
+    query.seller = new mongoose.Types.ObjectId(params.sellerId as string)
     if (params.status === 'all') {
       delete query.status
     } else {
@@ -70,7 +72,7 @@ function buildMatchQuery(params: ListingQueryParams): Record<string, unknown> {
     query.condition = params.condition
   }
 
-  if (params.stateFilter === '!=deleted') {
+  if (isSellerScoped && params.stateFilter === '!=deleted') {
     query.status = { $ne: 'deleted' }
   }
 

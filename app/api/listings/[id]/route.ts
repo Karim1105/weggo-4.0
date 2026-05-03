@@ -57,10 +57,12 @@ export async function GET(
       avatar: (product.seller as any).avatar,
     } : undefined
 
-    const { status, views, createdAt, ...rest } = product as any
+    const { views, createdAt, ...rest } = product as any
 
     const sanitizedProduct = {
       ...rest,
+      status: product.status,
+      isBoosted: Boolean(product.isBoosted),
       images,
       seller: sanitizedSeller,
     }

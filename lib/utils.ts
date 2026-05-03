@@ -114,6 +114,8 @@ export function mapApiListingToProduct(
     subcategory?: string
     images?: string[]
     createdAt: string
+    status?: 'active' | 'sold' | 'pending' | 'deleted'
+    isBoosted?: boolean
     seller?: { _id?: string; name?: string; isVerified?: boolean; rating?: number; totalSales?: number }
   },
   favoriteIds: Set<string>
@@ -130,6 +132,8 @@ export function mapApiListingToProduct(
     subcategory: listing.subcategory,
     postedAt: formatDate(listing.createdAt || new Date().toString()),
     isFavorite: favoriteIds.has(listing._id),
+    status: listing.status,
+    isBoosted: listing.isBoosted,
     seller: listing.seller
         ? {
           id: listing.seller._id,

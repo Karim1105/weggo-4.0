@@ -9,8 +9,12 @@ export interface Product {
   subcategory?: string
   postedAt: string
   isFavorite: boolean
+  status?: 'active' | 'sold' | 'pending' | 'deleted'
+  isBoosted?: boolean
   seller?: {
+    id?: string
     name: string
+    verified?: boolean
     rating?: number
     totalSales?: number
   }
@@ -26,9 +30,12 @@ export interface ApiListing {
   subcategory?: string
   images?: string[]
   createdAt: string
+  status?: 'active' | 'sold' | 'pending' | 'deleted'
+  isBoosted?: boolean
   seller?: {
     _id?: string
     name?: string
+    isVerified?: boolean
     rating?: number
     totalSales?: number
   }

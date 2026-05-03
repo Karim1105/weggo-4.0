@@ -126,6 +126,15 @@ export function useListings(baseQueryString: string, sortQuery: string) {
     setProducts((prev) => prev.map((item) => (item.id === id ? { ...item, isFavorite: nextFavorite } : item)))
   }, [])
 
+  const updateLocalProduct = useCallback((id: string, updates: Partial<Product>) => {
+    setProducts((prev) => prev.map((item) => (item.id === id ? { ...item, ...updates } : item)))
+  }, [])
+
+  const removeLocalProduct = useCallback((id: string) => {
+    setProducts((prev) => prev.filter((item) => item.id !== id))
+    setTotalCount((prev) => (typeof prev === 'number' ? Math.max(0, prev - 1) : prev))
+  }, [])
+
   return {
     products,
     loading,
@@ -134,5 +143,7 @@ export function useListings(baseQueryString: string, sortQuery: string) {
     totalCount,
     loadMore,
     toggleLocalFavorite,
+    updateLocalProduct,
+    removeLocalProduct,
   }
 }

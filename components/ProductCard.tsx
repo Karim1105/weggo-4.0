@@ -2,111 +2,32 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Heart, MapPin, Clock, MoreVertical, Trash2, Ban } from 'lucide-react'
-import { useState, useRef, useEffect } from 'react'
-import toast from 'react-hot-toast'
-import { withCsrfHeader } from '@/lib/utils'
+import { Heart, MapPin, Clock } from 'lucide-react'
 import { getProductCardActionVariant } from '@/lib/ui/role-ui'
-
-interface Product {
-  id: string
-  title: string
-  price: number
-  location: string
-  condition: string
-  image: string
-  category: string
-  postedAt: string
-  isFavorite: boolean
-  seller?: {
-    id?: string
-    name: string
-    rating?: number
-    totalSales?: number
-    verified?: boolean
-  }
-}
+import { Product } from '@/app/browse/types'
+import ListingAdminMenu from '@/components/admin/ListingAdminMenu'
 
 interface ProductCardProps {
   product: Product
   index: number
   onToggleFavorite: (id: string) => void
   isAdmin?: boolean
+  adminControlsEnabled?: boolean
+  onAdminUpdate?: (id: string, updates: Partial<Product>) => void
+  onAdminRemove?: (id: string) => void
 }
 
-export default function ProductCard({ product, index, onToggleFavorite, isAdmin = false }: ProductCardProps) {
-  const [showDropdown, setShowDropdown] = useState(false)
-  const dropdownRef = useRef<HTMLDivElement>(null)
+export default function ProductCard({
+  product,
+  index,
+  onToggleFavorite,
+  isAdmin = false,
+  adminControlsEnabled = false,
+  onAdminUpdate,
+  onAdminRemove,
+}: ProductCardProps) {
   const actionVariant = getProductCardActionVariant(isAdmin)
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setShowDropdown(false)
-      }
-    }
-
-    if (showDropdown) {
-      document.addEventListener('mousedown', handleClickOutside)
-      return () => document.removeEventListener('mousedown', handleClickOutside)
-    }
-  }, [showDropdown])
-
-  const handleDeleteListing = async (e: React.MouseEvent) => {
-    e.stopPropagation()
-    try {
-      const response = await fetch(`/api/listings/${product.id}`, {
-        method: 'DELETE',
-        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
-        credentials: 'include',
-      })
-
-      if (response.ok) {
-        toast.success('Listing deleted successfully')
-        setShowDropdown(false)
-        // Optionally trigger a refresh or remove from UI
-      } else {
-        const data = await response.json()
-        toast.error(data.error || 'Failed to delete listing')
-      }
-    } catch (error) {
-      toast.error('Error deleting listing')
-      console.error(error)
-    }
-  }
-
-  const handleBanUser = async (e: React.MouseEvent) => {
-    e.stopPropagation()
-
-    if (!product.seller?.id) {
-      toast.error('Seller ID not available')
-      return
-    }
-
-    try {
-      const response = await fetch(`/api/admin/ban-user`, {
-        method: 'POST',
-        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
-        credentials: 'include',
-        body: JSON.stringify({
-          userId: product.seller.id,
-          reason: 'Banned by admin from product listing'
-        })
-      })
-
-      const data = await response.json()
-
-      if (response.ok) {
-        toast.success(`User banned successfully and ${data.data.listingsDeleted} listings removed`)
-        setShowDropdown(false)
-      } else {
-        toast.error(data.error || 'Failed to ban user')
-      }
-    } catch (error) {
-      toast.error('Error banning user')
-      console.error(error)
-    }
-  }
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -116,25 +37,6 @@ export default function ProductCard({ product, index, onToggleFavorite, isAdmin 
       className="card-modern group cursor-pointer hover-lift relative"
     >
       {/* Admin Dropdown - Outside Link to prevent navigation */}
-      {isAdmin && showDropdown && (
-        <div className="absolute top-12 right-4 bg-white rounded-lg shadow-xl z-50 overflow-hidden" ref={dropdownRef}>
-          <button
-            onClick={handleDeleteListing}
-            className="w-full flex items-center space-x-2 px-4 py-2 hover:bg-red-50 text-red-600 transition-colors text-sm font-medium"
-          >
-            <Trash2 className="w-4 h-4" />
-            <span>Delete Listing</span>
-          </button>
-          <button
-            onClick={handleBanUser}
-            className="w-full flex items-center space-x-2 px-4 py-2 hover:bg-orange-50 text-orange-600 transition-colors text-sm font-medium border-t border-gray-100"
-          >
-            <Ban className="w-4 h-4" />
-            <span>Ban User</span>
-          </button>
-        </div>
-      )}
-
       <Link href={`/listings/${product.id}`} className="block">
       {/* Image */}
       <div className="relative aspect-square overflow-hidden">
@@ -145,19 +47,10 @@ export default function ProductCard({ product, index, onToggleFavorite, isAdmin 
         />
 
         {/* Favorite Button or Admin Dropdown Button */}
-        {actionVariant === 'admin-menu' ? (
-          <motion.button
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={(e) => {
-              e.preventDefault()
-              e.stopPropagation()
-              setShowDropdown(!showDropdown)
-            }}
-            className="absolute top-3 right-3 w-10 h-10 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg hover:bg-white transition-colors"
-          >
-            <MoreVertical className="w-5 h-5 text-gray-600" />
-          </motion.button>
+        {actionVariant === 'admin-menu' && adminControlsEnabled ? (
+          <div className="absolute top-3 right-3">
+            <ListingAdminMenu product={product} onUpdate={onAdminUpdate} onRemove={onAdminRemove} />
+          </div>
         ) : (
           <motion.button
             whileHover={{ scale: 1.1 }}
@@ -236,9 +129,16 @@ export default function ProductCard({ product, index, onToggleFavorite, isAdmin 
           <p className="text-2xl font-bold text-primary-600">
             {product.price.toLocaleString()} EGP
           </p>
-          <span className="px-4 py-2 gradient-primary text-white text-sm font-medium rounded-lg">
-            View
-          </span>
+          <div className="flex items-center gap-2">
+            {product.isBoosted ? (
+              <span className="px-3 py-1 rounded-full bg-yellow-100 text-yellow-800 text-xs font-semibold">
+                Featured
+              </span>
+            ) : null}
+            <span className="px-4 py-2 gradient-primary text-white text-sm font-medium rounded-lg">
+              View
+            </span>
+          </div>
         </div>
       </div>
       </Link>

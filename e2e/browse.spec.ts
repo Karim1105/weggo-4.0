@@ -10,6 +10,8 @@ const listingCard = {
   category: 'electronics',
   images: ['/uploads/camera.jpg'],
   createdAt: '2026-04-01T12:00:00.000Z',
+  status: 'active',
+  isBoosted: false,
   seller: {
     _id: 'seller-1',
     name: 'Seller One',
@@ -39,10 +41,38 @@ test.beforeEach(async ({ page }) => {
   })
 
   await page.route('**/api/auth/me', async (route) => {
+    const cookie = route.request().headers()['cookie'] || ''
+    const isAdmin = cookie.includes('adminView=')
+
     await route.fulfill({
-      status: 401,
+      status: 200,
       contentType: 'application/json',
-      body: JSON.stringify({ success: false, error: 'Unauthorized' }),
+      body: JSON.stringify(
+        isAdmin
+          ? { success: true, user: { _id: 'admin-1', role: 'admin' } }
+          : { success: false, error: 'Unauthorized' }
+      ),
+    })
+  })
+
+  await page.route('**/api/admin/listings/test-1', async (route) => {
+    if (route.request().method() === 'PATCH' || route.request().method() === 'DELETE') {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({ success: true, data: { listingId: 'test-1', visible: false } }),
+      })
+      return
+    }
+
+    await route.fallback()
+  })
+
+  await page.route('**/api/admin/listings/test-1/boost', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({ success: true, data: { listingId: 'test-1', isBoosted: true } }),
     })
   })
 
@@ -83,6 +113,28 @@ test.beforeEach(async ({ page }) => {
       }),
     })
   })
+})
+
+test('admin browse card menu uses admin APIs and updates the UI', async ({ page, context }) => {
+  await context.addCookies([
+    {
+      name: 'adminView',
+      value: 'on',
+      url: 'http://localhost:3000',
+      path: '/',
+    },
+  ])
+
+  await page.goto('/browse')
+
+  await page.getByLabel('Listing admin actions').first().click()
+  await page.getByRole('button', { name: /Feature Listing/i }).click()
+  await expect(page.getByText('Featured').first()).toBeVisible()
+
+  page.once('dialog', (dialog) => dialog.accept())
+  await page.getByLabel('Listing admin actions').first().click()
+  await page.getByRole('button', { name: /Delete Listing/i }).click()
+  await expect(page.getByText('Vintage Camera')).toHaveCount(0)
 })
 
 test('favorite clicks on product cards do not navigate away from browse', async ({ page }) => {

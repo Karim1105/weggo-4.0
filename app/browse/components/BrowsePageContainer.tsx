@@ -12,12 +12,19 @@ import LoadMoreButton from '@/app/browse/components/LoadMoreButton'
 import { useFilters } from '@/app/browse/hooks/useFilters'
 import { useListings } from '@/app/browse/hooks/useListings'
 import { DEFAULT_MAX_PRICE, DEFAULT_MIN_PRICE, DEFAULT_SORT, SORT_OPTIONS } from '@/app/browse/types'
+import type { AdminWrapperState } from '@/components/admin/AdminWrapper'
 import { categories as apiCategories, subcategoriesByCategory, withCsrfHeader } from '@/lib/utils'
 import { useFavorites } from '@/lib/hooks/useFavorites'
+import { useAdmin } from '@/hooks/useAdmin'
 
-export default function BrowsePageContainer() {
+interface BrowsePageContainerProps {
+  adminState: AdminWrapperState
+}
+
+export default function BrowsePageContainer({ adminState }: BrowsePageContainerProps) {
   const router = useRouter()
   const { syncFavorite } = useFavorites()
+  const { isAdmin, canSeeControls } = useAdmin(adminState)
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [showFilters, setShowFilters] = useState(false)
@@ -36,7 +43,7 @@ export default function BrowsePageContainer() {
     clearFilters,
   } = useFilters()
 
-  const { products, loading, loadingMore, hasMore, totalCount, loadMore, toggleLocalFavorite } = useListings(queryString, sortQuery)
+  const { products, loading, loadingMore, hasMore, totalCount, loadMore, toggleLocalFavorite, updateLocalProduct, removeLocalProduct } = useListings(queryString, sortQuery)
 
   const categories = useMemo(() => ['all', ...apiCategories.map((c) => c.id)], [])
   const categoryLabels: Record<string, string> = useMemo(() => {
@@ -254,7 +261,16 @@ export default function BrowsePageContainer() {
           subcategories={subcategories}
         />
 
-        <ProductGrid viewMode={viewMode} products={products} loading={loading} onToggleFavorite={toggleFavorite} />
+        <ProductGrid
+          viewMode={viewMode}
+          products={products}
+          loading={loading}
+          onToggleFavorite={toggleFavorite}
+          isAdmin={isAdmin}
+          adminControlsEnabled={canSeeControls}
+          onAdminProductUpdate={updateLocalProduct}
+          onAdminProductRemove={removeLocalProduct}
+        />
 
         <LoadMoreButton visible={!loading && products.length > 0 && hasMore} loading={loadingMore} onClick={loadMore} />
 

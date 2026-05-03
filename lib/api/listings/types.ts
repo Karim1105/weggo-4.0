@@ -84,6 +84,7 @@ export interface SanitizedListing {
   seller?: ListingSeller
   images: string[]
   description?: string
+  isBoosted?: boolean
 }
 
 export interface ListingsResult {
