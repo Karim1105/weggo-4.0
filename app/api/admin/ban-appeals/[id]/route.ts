@@ -3,7 +3,9 @@ import { isValidObjectId } from 'mongoose'
 import connectDB from '@/lib/db'
 import BanAppeal from '@/models/BanAppeal'
 import User from '@/models/User'
+import Product from '@/models/Product'
 import { requireAdmin } from '@/lib/auth'
+import { invalidateMarketplaceDiscoveryCaches } from '@/lib/cache'
 import { logger, getRequestId } from '@/lib/logger'
 
 async function getHandler(
@@ -122,9 +124,17 @@ async function postHandler(
         )
       }
 
+      await Product.updateMany(
+        { seller: appeal.userId, status: 'deleted', expiresAt: { $exists: true } },
+        { $set: { status: 'active' }, $unset: { expiresAt: 1 } }
+      )
+
       appeal.status = 'approved'
+      appeal.rejectionReason = undefined
       appeal.reviewedBy = (admin as any)._id
       appeal.reviewedAt = new Date()
+
+      invalidateMarketplaceDiscoveryCaches()
 
       logger.info('Ban appeal approved', { appealId, userId: appeal.userId, adminId: admin._id }, requestId)
     } else {
@@ -141,6 +151,23 @@ async function postHandler(
           { success: false, error: 'Rejection reason cannot exceed 4096 characters' },
           { status: 400 }
         )
+      }
+
+      if (previousStatus === 'approved') {
+        await User.findByIdAndUpdate(appeal.userId, {
+          banned: true,
+          bannedAt: new Date(),
+          bannedReason: appeal.reason,
+          bannedBy: (admin as any)._id,
+        })
+
+        const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        await Product.updateMany(
+          { seller: appeal.userId, status: { $ne: 'deleted' } },
+          { $set: { status: 'deleted', expiresAt } }
+        )
+
+        invalidateMarketplaceDiscoveryCaches()
       }
 
       appeal.status = 'rejected'

@@ -10,6 +10,17 @@ export type AdminTabKey =
   | 'categories'
   | 'activity'
 
+export const ADMIN_TAB_KEYS: AdminTabKey[] = [
+  'overview',
+  'users',
+  'reports',
+  'appeals',
+  'tickets',
+  'listings',
+  'categories',
+  'activity',
+]
+
 export interface AdminNavItem {
   key: AdminTabKey
   label: string
@@ -57,13 +68,24 @@ export interface AdminReport {
   reason: string
   status: 'pending' | 'reviewed' | 'resolved' | 'dismissed'
   createdAt: string
+  actionTaken?: string
   listing?: {
     _id?: string
     title?: string
     images?: string[]
+    status?: string
+    price?: number
+    location?: string
+    seller?: {
+      _id?: string
+      name?: string
+      email?: string
+    }
   }
   reporter?: {
+    _id?: string
     name?: string
+    email?: string
   }
 }
 
@@ -80,8 +102,12 @@ export interface AdminAppeal {
   rejectionReason?: string
   createdAt: string
   userId?: {
+    _id?: string
     name?: string
     email?: string
+    banned?: boolean
+    bannedAt?: string
+    bannedReason?: string
   }
 }
 
@@ -113,11 +139,169 @@ export interface SellerListing {
   createdAt: string
 }
 
+export interface AdminUserConversation {
+  conversationId: string
+  otherUser?: {
+    _id?: string
+    name?: string
+    avatar?: string
+    role?: string
+  } | null
+  product?: {
+    _id?: string
+    title?: string
+    price?: number
+    images?: string[]
+    status?: string
+  } | null
+  messageCount: number
+  unreadCount: number
+  lastMessageTime: string
+  recentMessages: Array<{
+    _id: string
+    content?: string
+    createdAt: string
+    sender?: {
+      _id?: string
+      name?: string
+      avatar?: string
+    }
+    receiver?: {
+      _id?: string
+      name?: string
+      avatar?: string
+    }
+  }>
+}
+
+export interface AdminConversationDetailPayload {
+  conversation: {
+    conversationId: string
+    participants: Array<{
+      _id?: string
+      name?: string
+      email?: string
+      avatar?: string
+      banned?: boolean
+    }>
+    product?: {
+      _id?: string
+      title?: string
+      price?: number
+      images?: string[]
+      status?: string
+    } | null
+    messages: Array<{
+      id: string
+      conversationId: string
+      content: string
+      createdAt: string
+      receivedAt?: string
+      read: boolean
+      readAt?: string
+      sender: {
+        id: string
+        name: string
+        email?: string
+        avatar?: string
+        banned: boolean
+      }
+      receiver: {
+        id: string
+        name: string
+        email?: string
+        avatar?: string
+        banned: boolean
+      }
+      product?: {
+        id: string
+        title: string
+        price: number
+        images: string[]
+      }
+    }>
+    total: number
+  }
+}
+
+export interface AdminUserChatsPayload {
+  user: {
+    id: string
+    name: string
+    email: string
+    role: string
+    banned: boolean
+  }
+  conversations: AdminUserConversation[]
+  pagination: PaginationMeta
+}
+
+export interface AdminUserListingsPayload {
+  seller: {
+    id: string
+    name: string
+    email: string
+    role: string
+    sellerVerified: boolean
+    banned: boolean
+    averageRating?: number
+    ratingCount?: number
+    totalSales?: number
+  }
+  listings: SellerListing[]
+  statistics: {
+    total: number
+    active: number
+    sold: number
+    pending: number
+    deleted: number
+    totalViews: number
+  }
+  recentReviews: Array<{
+    _id: string
+    rating: number
+    comment?: string
+    createdAt: string
+    reviewer?: {
+      name?: string
+      avatar?: string
+    }
+  }>
+  pagination: PaginationMeta
+}
+
+export interface AdminReportDetailPayload {
+  report: AdminReport & {
+    description?: string
+    reviewedAt?: string
+    reviewedBy?: {
+      _id?: string
+      name?: string
+    }
+  }
+}
+
+export interface AdminAppealDetailPayload {
+  appeal: AdminAppeal & {
+    reviewedAt?: string
+    reviewedBy?: {
+      _id?: string
+      name?: string
+    }
+    bannedBy?: {
+      _id?: string
+      name?: string
+    }
+  }
+}
+
 export interface SellerListingsPayload {
   seller: {
     _id: string
     name: string
     email: string
+    sellerVerified?: boolean
+    banned?: boolean
   }
   listings: SellerListing[]
   pagination: PaginationMeta

@@ -1,5 +1,17 @@
 import { adminFetch } from '@/features/admin/services/api-client'
-import { AnalyticsPayload, AppealsPayload, ReportsPayload, SellerListingsPayload, SellersPayload, UsersPayload } from '@/features/admin/types'
+import {
+  AdminAppealDetailPayload,
+  AdminConversationDetailPayload,
+  AdminReportDetailPayload,
+  AdminUserChatsPayload,
+  AdminUserListingsPayload,
+  AnalyticsPayload,
+  AppealsPayload,
+  ReportsPayload,
+  SellerListingsPayload,
+  SellersPayload,
+  UsersPayload,
+} from '@/features/admin/types'
 
 export async function getAnalytics(refreshTick?: number) {
   const suffix = refreshTick ? `?t=${Date.now()}` : ''
@@ -51,6 +63,11 @@ export async function reviewReport(reportId: string, action: string, actionTaken
   })
 }
 
+export async function getReportDetail(reportId: string) {
+  const res = await adminFetch<{ success: true; data: AdminReportDetailPayload }>(`/api/admin/reports/${reportId}`)
+  return res.data
+}
+
 export async function getAppeals(params: { status?: string; page?: number; limit?: number; refreshTick?: number }) {
   const query = new URLSearchParams()
   if (params.status && params.status !== 'all') query.set('status', params.status)
@@ -67,6 +84,11 @@ export async function reviewAppeal(appealId: string, action: 'approve' | 'reject
     method: 'POST',
     body: JSON.stringify({ action, rejectionReason }),
   })
+}
+
+export async function getAppealDetail(appealId: string) {
+  const res = await adminFetch<{ success: true; data: AdminAppealDetailPayload }>(`/api/admin/ban-appeals/${appealId}`)
+  return res.data
 }
 
 export async function getSellers(params: { page?: number; limit?: number; refreshTick?: number }) {
@@ -95,5 +117,30 @@ export async function getSellerListings(sellerId: string, params: { page?: numbe
   const res = await adminFetch<{ success: true; data: SellerListingsPayload }>(
     `/api/admin/sellers/${sellerId}/listings?${query.toString()}`
   )
+  return res.data
+}
+
+export async function getAdminUserChats(userId: string, params: { page?: number; limit?: number; messageLimit?: number } = {}) {
+  const query = new URLSearchParams()
+  query.set('page', String(params.page || 1))
+  query.set('limit', String(params.limit || 20))
+  query.set('messageLimit', String(params.messageLimit || 10))
+
+  const res = await adminFetch<{ success: true; data: AdminUserChatsPayload }>(`/api/admin/users/${userId}/chats?${query.toString()}`)
+  return res.data
+}
+
+export async function getAdminUserListings(userId: string, params: { page?: number; limit?: number; status?: string } = {}) {
+  const query = new URLSearchParams()
+  query.set('page', String(params.page || 1))
+  query.set('limit', String(params.limit || 20))
+  if (params.status && params.status !== 'all') query.set('status', params.status)
+
+  const res = await adminFetch<{ success: true; data: AdminUserListingsPayload }>(`/api/admin/users/${userId}/listings?${query.toString()}`)
+  return res.data
+}
+
+export async function getAdminConversationDetail(conversationId: string) {
+  const res = await adminFetch<{ success: true; data: AdminConversationDetailPayload }>(`/api/admin/conversations/${encodeURIComponent(conversationId)}`)
   return res.data
 }

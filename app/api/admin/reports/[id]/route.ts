@@ -4,6 +4,71 @@ import connectDB from '@/lib/db'
 import Report from '@/models/Report'
 import Product from '@/models/Product'
 import { requireAdmin } from '@/lib/auth'
+import { invalidateMarketplaceDiscoveryCaches } from '@/lib/cache'
+
+async function getHandler(
+  request: NextRequest,
+  admin: any,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: reportId } = await context.params
+    if (!isValidObjectId(reportId)) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid report ID format' },
+        { status: 400 }
+      )
+    }
+
+    await connectDB()
+
+    const reportRaw = await Report.findById(reportId)
+      .populate({
+        path: 'listing',
+        select: 'title images status seller price location description',
+        populate: {
+          path: 'seller',
+          select: 'name email',
+        },
+      })
+      .populate('reporter', 'name email')
+      .populate('reviewedBy', 'name')
+      .lean()
+
+    if (!reportRaw) {
+      return NextResponse.json(
+        { success: false, error: 'Report not found' },
+        { status: 404 }
+      )
+    }
+
+    const report = {
+      ...reportRaw,
+      listing: reportRaw.listing
+        ? {
+            ...(reportRaw.listing as any),
+            images: Array.isArray((reportRaw.listing as any).images)
+              ? (reportRaw.listing as any).images
+                  .filter((img: string) => typeof img === 'string' && !img.startsWith('data:'))
+                  .slice(0, 1)
+              : [],
+          }
+        : null,
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        report,
+      },
+    })
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, error: error.message || 'Failed to fetch report detail' },
+      { status: 500 }
+    )
+  }
+}
 
 // POST /api/admin/reports/[id] - Take action on a report
 async function handler(
@@ -49,6 +114,7 @@ async function handler(
             status: 'deleted',
             expiresAt,
           })
+          invalidateMarketplaceDiscoveryCaches()
         }
         newStatus = 'resolved'
         break
@@ -94,4 +160,5 @@ async function handler(
   }
 }
 
+export const GET = requireAdmin(getHandler)
 export const POST = requireAdmin(handler)

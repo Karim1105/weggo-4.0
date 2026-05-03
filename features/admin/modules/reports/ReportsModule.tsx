@@ -1,11 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { EmptyState, ErrorState, LoadingState } from '@/components/admin/AsyncStates'
 import { TablePagination } from '@/components/admin/TablePagination'
 import { getReports, reviewReport } from '@/features/admin/services/admin-api'
 import { ActivityLog, AdminNotification, AdminReport, PaginationMeta } from '@/features/admin/types'
+import { listingImageUrl } from '@/lib/utils'
 
 interface ReportsModuleProps {
   refreshTick: number
@@ -86,12 +88,28 @@ export default function ReportsModule({ refreshTick, onActivity, onNotify }: Rep
                 <div>
                   <h3 className="text-sm font-semibold text-gray-900">{report.listing?.title || 'Deleted listing'}</h3>
                   <p className="text-xs text-gray-500">Reported by {report.reporter?.name || 'Unknown'}</p>
+                  {report.listing?.status ? (
+                    <p className="mt-1 text-xs text-gray-500 capitalize">Listing status: {report.listing.status}</p>
+                  ) : null}
                 </div>
                 <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold capitalize text-gray-700">{report.status}</span>
               </div>
+              {report.listing?.images?.[0] ? (
+                <div className="mt-3 overflow-hidden rounded-lg border">
+                  <img src={listingImageUrl(report.listing.images[0])} alt={report.listing.title || 'Reported listing'} className="h-32 w-full object-cover" />
+                </div>
+              ) : null}
               <p className="mt-3 text-sm text-gray-700">{report.reason}</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link
+                  href={`/report-review/${report._id}`}
+                  className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700"
+                >
+                  Open review
+                </Link>
+              </div>
               {report.status === 'pending' && (
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-2 flex flex-wrap gap-2">
                   {['dismiss', 'warn-seller', 'delete-listing', 'resolve'].map((action) => (
                     <button
                       key={action}

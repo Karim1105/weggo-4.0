@@ -1,10 +1,11 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { AdminShell } from '@/components/admin/AdminShell'
 import { ADMIN_NAV_ITEMS, TAB_SUBTITLES, TAB_TITLES } from '@/features/admin/config/navigation'
-import { ActivityLog, AdminNotification, AdminRole, AdminTabKey } from '@/features/admin/types'
+import { ActivityLog, ADMIN_TAB_KEYS, AdminNotification, AdminRole, AdminTabKey } from '@/features/admin/types'
 
 const OverviewModule = dynamic(() => import('@/features/admin/modules/overview/OverviewModule'))
 const UsersModule = dynamic(() => import('@/features/admin/modules/users/UsersModule'))
@@ -16,8 +17,13 @@ const CategoriesModule = dynamic(() => import('@/features/admin/modules/categori
 const ActivityModule = dynamic(() => import('@/features/admin/modules/activity/ActivityModule'))
 
 export default function AdminDashboardPage() {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const role: AdminRole = 'admin'
-  const [activeTab, setActiveTab] = useState<AdminTabKey>('overview')
+  const tabParam = searchParams.get('tab')
+  const resolvedTab = ADMIN_TAB_KEYS.includes(tabParam as AdminTabKey) ? (tabParam as AdminTabKey) : 'overview'
+  const [activeTab, setActiveTab] = useState<AdminTabKey>(resolvedTab)
   const [refreshTick, setRefreshTick] = useState(0)
   const [refreshing, setRefreshing] = useState(false)
   const [notifications, setNotifications] = useState<AdminNotification[]>([])
@@ -25,6 +31,17 @@ export default function AdminDashboardPage() {
 
   const navItems = useMemo(() => ADMIN_NAV_ITEMS.filter((item) => item.roles.includes(role)), [role])
   const unreadNotifications = useMemo(() => notifications.filter((item) => !item.read).length, [notifications])
+
+  useEffect(() => {
+    setActiveTab(resolvedTab)
+  }, [resolvedTab])
+
+  useEffect(() => {
+    if (searchParams.get('tab') === activeTab) return
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('tab', activeTab)
+    router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+  }, [activeTab, pathname, router, searchParams])
 
   const handleRefresh = () => {
     setRefreshing(true)

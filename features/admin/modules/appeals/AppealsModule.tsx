@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import toast from 'react-hot-toast'
 import { EmptyState, ErrorState, LoadingState } from '@/components/admin/AsyncStates'
 import { TablePagination } from '@/components/admin/TablePagination'
@@ -90,8 +91,16 @@ export default function AppealsModule({ refreshTick, onActivity, onNotify }: App
                 <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold capitalize text-gray-700">{appeal.status}</span>
               </div>
               <p className="mt-3 text-sm text-gray-700">{appeal.appealMessage}</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                <Link
+                  href={`/appeal-review/${appeal._id}`}
+                  className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700"
+                >
+                  Open review
+                </Link>
+              </div>
               {appeal.status === 'pending' && (
-                <div className="mt-4 flex gap-2">
+                <div className="mt-2 flex gap-2">
                   <button onClick={() => handleReview(appeal._id, 'approve')} className="rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700">
                     Approve
                   </button>

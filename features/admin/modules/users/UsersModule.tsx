@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import toast from 'react-hot-toast'
 import { Ban, ShieldCheck } from 'lucide-react'
@@ -59,8 +59,7 @@ export default function UsersModule({ refreshTick, onActivity, onNotify }: Users
     loadUsers(1)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [refreshTick])
-
-  const canSubmitBanReason = useMemo(() => Boolean(banReasonForm.watch('reason')?.trim()), [banReasonForm])
+  const banReason = banReasonForm.watch('reason') || ''
 
   const applyFilters = filtersForm.handleSubmit((values) => {
     setAppliedFilters(values)
@@ -207,6 +206,9 @@ export default function UsersModule({ refreshTick, onActivity, onNotify }: Users
                 placeholder="Reason for banning this account"
                 className="w-full rounded-lg border px-3 py-2 text-sm"
               />
+              {banReasonForm.formState.errors.reason ? (
+                <p className="text-xs text-red-600">Please enter a ban reason with at least 4 characters.</p>
+              ) : null}
               <div className="flex justify-end gap-2">
                 <button
                   type="button"
@@ -220,7 +222,7 @@ export default function UsersModule({ refreshTick, onActivity, onNotify }: Users
                 </button>
                 <button
                   type="submit"
-                  disabled={!canSubmitBanReason}
+                  disabled={!banReason.trim() || loadingAction === selectedBanUserId}
                   className="rounded-lg bg-red-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50"
                 >
                   Confirm ban

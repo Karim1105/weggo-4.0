@@ -1,381 +1,315 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter, useParams } from 'next/navigation'
-import { motion } from 'framer-motion'
-import { ChevronLeft, Star } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import Link from 'next/link'
+import { useParams, useRouter } from 'next/navigation'
+import { ChevronLeft, MessageCircle, Package, ShieldAlert } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { withCsrfHeader } from '@/lib/utils'
+import {
+  getAdminUserChats,
+  getAdminUserListings,
+  getAppealDetail,
+  reviewAppeal,
+} from '@/features/admin/services/admin-api'
+import {
+  AdminAppealDetailPayload,
+  AdminUserChatsPayload,
+  AdminUserListingsPayload,
+} from '@/features/admin/types'
 
 export default function AppealReviewPage() {
-  const router = useRouter()
   const params = useParams()
+  const router = useRouter()
   const appealId = params.id as string
 
-  const [appeal, setAppeal] = useState<any>(null)
+  const [appeal, setAppeal] = useState<AdminAppealDetailPayload['appeal'] | null>(null)
+  const [userChats, setUserChats] = useState<AdminUserChatsPayload['conversations']>([])
+  const [userListings, setUserListings] = useState<AdminUserListingsPayload['listings']>([])
   const [loading, setLoading] = useState(true)
-  const [loadingAction, setLoadingAction] = useState<string | null>(null)
-  const [userChats, setUserChats] = useState<any[]>([])
-  const [userListings, setUserListings] = useState<any[]>([])
-  const [detailError, setDetailError] = useState<string | null>(null)
-  const [chatsError, setChatsError] = useState<string | null>(null)
-  const [listingsError, setListingsError] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [loadingAction, setLoadingAction] = useState<'approve' | 'reject' | null>(null)
+  const [showRejectForm, setShowRejectForm] = useState(false)
+  const [rejectionReason, setRejectionReason] = useState('')
 
   useEffect(() => {
-    const loadAppeal = async () => {
+    let cancelled = false
+
+    const load = async () => {
       setLoading(true)
-      setDetailError(null)
+      setError(null)
 
       try {
-        const res = await fetch(`/api/admin/ban-appeals/${appealId}`, {
-          credentials: 'include',
-        })
-        const data = await res.json()
+        const appealData = await getAppealDetail(appealId)
+        if (cancelled) return
 
-        if (!res.ok || !data.success || !data.data?.appeal) {
-          throw new Error(data.error || 'Failed to load appeal')
+        setAppeal(appealData.appeal)
+
+        const userId = appealData.appeal.userId?._id
+        if (!userId) {
+          setUserChats([])
+          setUserListings([])
+          setLoading(false)
+          return
         }
 
-        const nextAppeal = data.data.appeal
-        setAppeal(nextAppeal)
-        if (typeof window !== 'undefined') {
-          localStorage.setItem(`appeal_${appealId}`, JSON.stringify(nextAppeal))
-        }
-        await fetchUserDetails(nextAppeal)
-      } catch (error) {
-        const storedAppeal = typeof window !== 'undefined' ? localStorage.getItem(`appeal_${appealId}`) : null
-        if (storedAppeal) {
-          try {
-            const fallbackAppeal = JSON.parse(storedAppeal)
-            setAppeal(fallbackAppeal)
-            setDetailError('Showing cached appeal details because the live admin fetch failed.')
-            await fetchUserDetails(fallbackAppeal)
-            setLoading(false)
-            return
-          } catch (fallbackError) {
-            console.error('Failed to parse stored appeal:', fallbackError)
-          }
-        }
+        const [chatsData, listingsData] = await Promise.all([
+          getAdminUserChats(userId, { messageLimit: 5 }),
+          getAdminUserListings(userId, { limit: 20 }),
+        ])
 
-        const message = error instanceof Error ? error.message : 'Failed to load appeal details'
-        setAppeal(null)
-        setDetailError(message)
+        if (cancelled) return
+        setUserChats(chatsData.conversations)
+        setUserListings(listingsData.listings)
+      } catch (loadError) {
+        if (cancelled) return
+        const message = loadError instanceof Error ? loadError.message : 'Failed to load appeal review'
+        setError(message)
         toast.error(message)
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
-
-      setLoading(false)
     }
 
-    void loadAppeal()
-  }, [appealId, router])
+    void load()
 
-  const fetchUserDetails = async (appeal: any) => {
-    setChatsError(null)
-    setListingsError(null)
-    setUserChats([])
-    setUserListings([])
+    return () => {
+      cancelled = true
+    }
+  }, [appealId])
 
+  const handleApprove = async () => {
+    setLoadingAction('approve')
     try {
-      const userId = typeof appeal.userId === 'object' ? appeal.userId._id : appeal.userId
-
-      if (!userId) {
-        setChatsError('Appeal is missing the linked user ID.')
-        setListingsError('Appeal is missing the linked user ID.')
-        return
-      }
-
-      const [chatsRes, listingsRes] = await Promise.all([
-        fetch(`/api/admin/users/${userId}/chats`, { credentials: 'include' }),
-        fetch(`/api/admin/users/${userId}/listings`, { credentials: 'include' }),
-      ])
-
-      const chatsData = await chatsRes.json()
-      const listingsData = await listingsRes.json()
-
-      if (chatsRes.ok && chatsData.success) {
-        setUserChats(chatsData.data?.conversations || [])
-      } else {
-        setChatsError(chatsData.error || 'Failed to load user chats')
-      }
-
-      if (listingsRes.ok && listingsData.success) {
-        setUserListings(listingsData.data?.listings || [])
-      } else {
-        setListingsError(listingsData.error || 'Failed to load user listings')
-      }
-    } catch (error) {
-      console.error('Failed to fetch user details:', error)
-      setChatsError('Failed to load user chats')
-      setListingsError('Failed to load user listings')
-      toast.error('Failed to load user details')
+      await reviewAppeal(appealId, 'approve')
+      toast.success('Appeal approved successfully')
+      router.push('/admin?tab=appeals')
+    } catch (actionError) {
+      toast.error(actionError instanceof Error ? actionError.message : 'Failed to approve appeal')
+    } finally {
+      setLoadingAction(null)
     }
   }
 
-  const handleAppealAction = async (action: 'approve' | 'reject') => {
-    let rejectionReason = ''
-
-    if (action === 'reject') {
-      rejectionReason = prompt('Provide a reason for rejecting this appeal:') || ''
-      if (!rejectionReason.trim()) {
-        toast.error('Rejection reason is required')
-        return
-      }
+  const handleReject = async () => {
+    const trimmedReason = rejectionReason.trim()
+    if (!trimmedReason) {
+      toast.error('Rejection reason is required')
+      return
     }
 
-    setLoadingAction(action)
+    setLoadingAction('reject')
     try {
-      const res = await fetch(`/api/admin/ban-appeals/${appealId}`, {
-        method: 'POST',
-        headers: withCsrfHeader({ 'Content-Type': 'application/json' }),
-        credentials: 'include',
-        body: JSON.stringify({ action, rejectionReason }),
-      })
-
-      const data = await res.json()
-      if (data.success) {
-        toast.success(`Appeal ${action}ed successfully`)
-        router.push('/admin?tab=appeals')
-      } else {
-        toast.error(data.error || 'Action failed')
-      }
-    } catch (error) {
-      toast.error('Failed to process appeal')
+      await reviewAppeal(appealId, 'reject', trimmedReason)
+      toast.success('Appeal rejected successfully')
+      router.push('/admin?tab=appeals')
+    } catch (actionError) {
+      toast.error(actionError instanceof Error ? actionError.message : 'Failed to reject appeal')
     } finally {
       setLoadingAction(null)
     }
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-gray-600">Loading appeal details...</div>
-      </div>
-    )
+    return <div className="min-h-screen bg-gray-50 px-4 py-20 text-center text-gray-600">Loading appeal review...</div>
   }
 
   if (!appeal) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center space-y-3">
-          <div className="text-gray-600">{detailError || 'Appeal not found'}</div>
-          <button
-            onClick={() => router.push('/admin')}
-            className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-          >
-            Back to Admin
-          </button>
-        </div>
+      <div className="min-h-screen bg-gray-50 px-4 py-20 text-center">
+        <p className="text-gray-700">{error || 'Appeal not found'}</p>
+        <button
+          onClick={() => router.push('/admin?tab=appeals')}
+          className="mt-4 rounded-lg border px-4 py-2 text-sm font-semibold text-gray-700"
+        >
+          Back to Admin
+        </button>
       </div>
     )
   }
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.push('/admin')}
-              className="flex items-center gap-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition"
-            >
-              <ChevronLeft className="w-5 h-5" />
-              Back to Admin
-            </button>
-            <h1 className="text-2xl font-bold text-gray-900">Appeal Review</h1>
-            <span className={`px-3 py-1 text-xs font-medium rounded-full ${
-              appeal.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-              appeal.status === 'approved' ? 'bg-green-100 text-green-800' :
-              'bg-red-100 text-red-800'
-            }`}>
-              {appeal.status?.charAt(0).toUpperCase() + appeal.status?.slice(1)}
-            </span>
+      <div className="border-b bg-white">
+        <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-4">
+          <button
+            onClick={() => router.push('/admin?tab=appeals')}
+            className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Back to Admin
+          </button>
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900">Appeal Review</h1>
+            <p className="text-sm text-gray-500">Review a banned user, their chats, and their listings in one place.</p>
           </div>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="space-y-6">
-          {detailError && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="bg-yellow-50 border border-yellow-200 text-yellow-900 p-4 rounded-xl shadow-sm"
-            >
-              {detailError}
-            </motion.div>
-          )}
+      <div className="mx-auto max-w-5xl space-y-6 px-4 py-8">
+        {error ? <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div> : null}
 
-          {/* User Information */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-white p-6 rounded-xl shadow-sm"
-          >
-            <h2 className="text-lg font-semibold mb-4">User Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Name</p>
-                <p className="text-gray-900">{appeal.userId?.name || 'Unknown'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Email</p>
-                <p className="text-gray-900">{appeal.userId?.email || 'Unknown'}</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-600 mb-1">Appeal Submitted</p>
-                <p className="text-gray-900">{new Date(appeal.createdAt).toLocaleString()}</p>
-              </div>
+        <section className="rounded-xl border bg-white p-6">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">{appeal.userId?.name || 'Unknown user'}</h2>
+              <p className="text-sm text-gray-500">{appeal.userId?.email || 'No email available'}</p>
             </div>
-          </motion.div>
+            <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold capitalize text-gray-700">{appeal.status}</span>
+          </div>
 
-          {/* Ban Information */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="bg-gray-50 p-6 rounded-xl shadow-sm"
-          >
-            <h2 className="text-lg font-semibold mb-4">Ban Information</h2>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm text-gray-600 mb-2 font-semibold">Ban Reason:</p>
-                <p className="text-gray-700">{appeal.reason}</p>
-              </div>
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <div className="rounded-lg bg-gray-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Ban Reason</p>
+              <p className="mt-2 text-sm text-gray-700">{appeal.reason}</p>
             </div>
-          </motion.div>
+            <div className="rounded-lg bg-blue-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-blue-700">Appeal Message</p>
+              <p className="mt-2 text-sm text-gray-700">{appeal.appealMessage}</p>
+            </div>
+          </div>
 
-          {/* Appeal Message */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-blue-50 p-6 rounded-xl shadow-sm"
-          >
-            <h2 className="text-lg font-semibold mb-4">Appeal Message</h2>
-            <p className="text-gray-700">{appeal.appealMessage}</p>
-          </motion.div>
+          {appeal.rejectionReason ? (
+            <div className="mt-4 rounded-lg border border-red-200 bg-red-50 p-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-red-700">Rejection Reason</p>
+              <p className="mt-2 text-sm text-red-800">{appeal.rejectionReason}</p>
+            </div>
+          ) : null}
 
-          {/* Rejection Reason (if rejected) */}
-          {appeal.status === 'rejected' && appeal.rejectionReason && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-red-50 p-6 rounded-xl shadow-sm"
-            >
-              <h2 className="text-lg font-semibold mb-4 text-red-900">Rejection Reason</h2>
-              <p className="text-red-800">{appeal.rejectionReason}</p>
-            </motion.div>
-          )}
-
-          {/* User Chats */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="bg-white p-6 rounded-xl shadow-sm"
-          >
-            <h2 className="text-lg font-semibold mb-4">User Chats ({userChats.length})</h2>
-            {chatsError ? (
-              <p className="text-sm text-red-600">{chatsError}</p>
-            ) : userChats && userChats.length > 0 ? (
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {userChats.map((conversation: any) => (
-                  <a
-                    key={conversation.conversationId}
-                    href={`/messages/${conversation.conversationId}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition"
+          {appeal.status === 'pending' ? (
+            <div className="mt-6 space-y-3">
+              {showRejectForm ? (
+                <div className="rounded-lg border bg-gray-50 p-4">
+                  <label className="block text-xs font-semibold uppercase tracking-wide text-gray-500">Rejection Reason</label>
+                  <textarea
+                    value={rejectionReason}
+                    onChange={(event) => setRejectionReason(event.target.value)}
+                    rows={4}
+                    className="mt-2 w-full rounded-lg border px-3 py-2 text-sm"
+                    placeholder="Explain why this appeal is being rejected"
+                  />
+                  <div className="mt-3 flex gap-2">
+                    <button
+                      onClick={handleReject}
+                      disabled={loadingAction !== null}
+                      className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
+                    >
+                      {loadingAction === 'reject' ? 'Rejecting...' : 'Confirm Rejection'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowRejectForm(false)
+                        setRejectionReason('')
+                      }}
+                      className="rounded-lg border px-4 py-2 text-sm font-semibold text-gray-700"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={handleApprove}
+                    disabled={loadingAction !== null}
+                    className="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
                   >
-                    <div className="flex justify-between items-start mb-2">
-                      <p className="font-medium text-gray-900">{conversation.otherUser?.name}</p>
-                      <p className="text-xs text-gray-500">Messages: {conversation.messageCount || 0}</p>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">{conversation.product?.title}</p>
-                    {conversation.recentMessages && conversation.recentMessages.length > 0 && (
-                      <p className="text-sm text-gray-600 italic mb-2">{conversation.recentMessages[0].content?.substring(0, 100)}...</p>
-                    )}
-                    <p className="text-blue-600 text-xs font-semibold">Open in new tab →</p>
-                  </a>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500">No chats found</p>
-            )}
-          </motion.div>
-
-          {/* User Listings */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="bg-white p-6 rounded-xl shadow-sm"
-          >
-            <h2 className="text-lg font-semibold mb-4">User Listings ({userListings.length})</h2>
-            {listingsError ? (
-              <p className="text-sm text-red-600">{listingsError}</p>
-            ) : userListings && userListings.length > 0 ? (
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {userListings.map((listing: any) => (
-                  <a
-                    key={listing._id}
-                    href={`/listings/${listing._id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="block bg-gray-50 p-4 rounded-lg border border-gray-200 hover:bg-blue-50 hover:border-blue-300 transition"
+                    {loadingAction === 'approve' ? 'Approving...' : 'Approve Appeal'}
+                  </button>
+                  <button
+                    onClick={() => setShowRejectForm(true)}
+                    disabled={loadingAction !== null}
+                    className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-50"
                   >
-                    <div className="flex justify-between items-start mb-1">
-                      <p className="font-medium text-gray-900">{listing.title}</p>
-                      <span className="px-2 py-1 text-xs font-medium bg-gray-200 text-gray-800 rounded">
-                        {listing.status}
-                      </span>
-                    </div>
-                    <p className="text-sm text-gray-600 mb-2">${listing.price}</p>
-                    {listing.averageRating > 0 && (
-                      <div className="flex items-center gap-1 mb-2">
-                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                        <span className="text-sm text-gray-600">
-                          {listing.averageRating} ({listing.ratingCount} reviews)
-                        </span>
-                      </div>
-                    )}
-                    <p className="text-blue-600 text-xs font-semibold">Open in new tab →</p>
-                  </a>
-                ))}
-              </div>
-            ) : (
-              <p className="text-gray-500">No listings found</p>
-            )}
-          </motion.div>
+                    Reject Appeal
+                  </button>
+                </div>
+              )}
+            </div>
+          ) : null}
+        </section>
 
-          {/* Action Buttons */}
-          {appeal.status === 'pending' && (
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.6 }}
-              className="bg-white p-6 rounded-xl shadow-sm flex gap-3"
-            >
-              <button
-                onClick={() => handleAppealAction('approve')}
-                disabled={loadingAction !== null}
-                className="flex-1 px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium disabled:opacity-50 transition"
-              >
-                {loadingAction === 'approve' ? 'Approving...' : 'Approve Appeal'}
-              </button>
-              <button
-                onClick={() => handleAppealAction('reject')}
-                disabled={loadingAction !== null}
-                className="flex-1 px-6 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 font-medium disabled:opacity-50 transition"
-              >
-                {loadingAction === 'reject' ? 'Rejecting...' : 'Reject Appeal'}
-              </button>
-            </motion.div>
+        <section className="rounded-xl border bg-white p-6">
+          <div className="flex items-center gap-2">
+            <MessageCircle className="h-4 w-4 text-indigo-600" />
+            <h2 className="text-lg font-semibold text-gray-900">User Chats</h2>
+            <span className="text-sm text-gray-500">({userChats.length})</span>
+          </div>
+
+          {userChats.length === 0 ? (
+            <p className="mt-4 text-sm text-gray-500">No chats found for this user.</p>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {userChats.map((conversation) => (
+                <article key={conversation.conversationId} className="rounded-lg border bg-gray-50 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-gray-900">{conversation.otherUser?.name || 'Unknown user'}</p>
+                      <p className="text-xs text-gray-500">Conversation ID: {conversation.conversationId}</p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <p className="text-xs text-gray-500">{conversation.messageCount} messages</p>
+                      <Link
+                        href={`/chat-review/${encodeURIComponent(conversation.conversationId)}?appealId=${encodeURIComponent(appealId)}`}
+                        className="rounded-lg border bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-100"
+                      >
+                        View Full Chat
+                      </Link>
+                    </div>
+                  </div>
+                  {conversation.product?.title ? (
+                    <p className="mt-2 text-sm text-gray-600">About listing: {conversation.product.title}</p>
+                  ) : null}
+                  {conversation.recentMessages[0]?.content ? (
+                    <p className="mt-2 text-sm italic text-gray-600">"{conversation.recentMessages[0].content}"</p>
+                  ) : null}
+                </article>
+              ))}
+            </div>
           )}
-        </div>
+        </section>
+
+        <section className="rounded-xl border bg-white p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Package className="h-4 w-4 text-indigo-600" />
+              <h2 className="text-lg font-semibold text-gray-900">User Listings</h2>
+              <span className="text-sm text-gray-500">({userListings.length})</span>
+            </div>
+            {appeal.userId?._id ? (
+              <button
+                onClick={() => router.push(`/seller-listings/${appeal.userId?._id}`)}
+                className="rounded-lg border px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                Open Seller Review
+              </button>
+            ) : null}
+          </div>
+
+          {userListings.length === 0 ? (
+            <p className="mt-4 text-sm text-gray-500">No listings found for this user.</p>
+          ) : (
+            <div className="mt-4 grid gap-3 md:grid-cols-2">
+              {userListings.map((listing) => (
+                <article key={listing._id} className="rounded-lg border bg-gray-50 p-4">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="text-sm font-semibold text-gray-900">{listing.title}</p>
+                    <span className="rounded-full bg-gray-200 px-2 py-1 text-[11px] font-semibold capitalize text-gray-700">{listing.status}</span>
+                  </div>
+                  <p className="mt-2 text-sm text-gray-600">{listing.price.toLocaleString()} EGP</p>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <div className="flex items-start gap-2">
+            <ShieldAlert className="mt-0.5 h-4 w-4" />
+            <p>These review surfaces intentionally use admin APIs only and do not depend on cached local data or user-facing messaging/listing pages.</p>
+          </div>
+        </section>
       </div>
     </div>
   )

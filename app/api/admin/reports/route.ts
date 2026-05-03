@@ -25,8 +25,15 @@ async function handler(request: NextRequest) {
 
     const [reportsRaw, total] = await Promise.all([
       Report.find(query)
-        .populate('listing', 'title images status seller')
-        .populate('reporter', 'name')
+        .populate({
+          path: 'listing',
+          select: 'title images status seller price location',
+          populate: {
+            path: 'seller',
+            select: 'name email',
+          },
+        })
+        .populate('reporter', 'name email')
         .populate('reviewedBy', 'name')
         .sort({ createdAt: -1 })
         .skip(skip)
