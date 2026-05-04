@@ -134,7 +134,7 @@ export default function ProductCard({
             </div>
             <div className="flex min-h-[3.25rem] items-end gap-2">
               <div className="min-w-[5.5rem] text-right">
-                {isAdmin && product.isBoosted ? (
+                {product.isBoosted ? (
                   <span className="inline-flex rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-800">
                     Featured
                   </span>
