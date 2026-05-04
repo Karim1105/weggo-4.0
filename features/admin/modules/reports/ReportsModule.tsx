@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { Clock3, MapPin } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { EmptyState, ErrorState, LoadingState } from '@/components/admin/AsyncStates'
 import { TablePagination } from '@/components/admin/TablePagination'
@@ -81,49 +82,90 @@ export default function ReportsModule({ refreshTick, onActivity, onNotify }: Rep
       {!loading && !error && reports.length === 0 && <EmptyState title="No reports found" />}
 
       {!loading && !error && reports.length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {reports.map((report) => (
-            <article key={report._id} className="rounded-xl border bg-white p-4">
-              <div className="flex flex-wrap items-start justify-between gap-2">
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-900">{report.listing?.title || 'Deleted listing'}</h3>
-                  <p className="text-xs text-gray-500">Reported by {report.reporter?.name || 'Unknown'}</p>
-                  {report.listing?.status ? (
-                    <p className="mt-1 text-xs text-gray-500 capitalize">Listing status: {report.listing.status}</p>
+            <article key={report._id} className="overflow-hidden rounded-2xl border bg-white shadow-sm">
+              <div className="relative aspect-square overflow-hidden bg-gray-100">
+                {report.listing?.images?.[0] ? (
+                  <img
+                    src={listingImageUrl(report.listing.images[0])}
+                    alt={report.listing.title || 'Reported listing'}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-full items-center justify-center text-sm text-gray-400">No listing image</div>
+                )}
+                <div className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[11px] font-semibold capitalize text-gray-700 shadow-sm">
+                  {report.listing?.status || 'deleted'}
+                </div>
+              </div>
+
+              <div className="space-y-4 p-4">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <h3 className="line-clamp-2 text-base font-semibold text-gray-900">
+                      {report.listing?.title || 'Deleted listing'}
+                    </h3>
+                    <p className="mt-1 text-sm text-gray-500">
+                      Reported by {report.reporter?.name || 'Unknown'}
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-semibold capitalize text-gray-700">
+                    {report.status}
+                  </span>
+                </div>
+
+                <div className="space-y-2 text-sm text-gray-600">
+                  {typeof report.listing?.price === 'number' ? (
+                    <p className="text-xl font-bold text-primary-600">{report.listing.price.toLocaleString()} EGP</p>
+                  ) : (
+                    <p className="text-xl font-bold text-gray-400">Listing unavailable</p>
+                  )}
+                  {report.listing?.location ? (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4 text-gray-400" />
+                      <span className="line-clamp-1">{report.listing.location}</span>
+                    </div>
                   ) : null}
+                  <div className="flex items-center gap-2">
+                    <Clock3 className="h-4 w-4 text-gray-400" />
+                    <span>{new Date(report.createdAt).toLocaleString()}</span>
+                  </div>
                 </div>
-                <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold capitalize text-gray-700">{report.status}</span>
+
+                <div className="rounded-xl bg-red-50 p-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-red-700">Report Reason</p>
+                  <p className="mt-1 text-sm text-red-900">{report.reason}</p>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <Link
+                    href={`/report-review/${report._id}`}
+                    className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-2 text-xs font-semibold text-indigo-700"
+                  >
+                    Open review
+                  </Link>
+                </div>
+
+                {report.status === 'pending' && (
+                  <div className="flex flex-wrap gap-2">
+                    {['dismiss', 'warn-seller', 'delete-listing', 'resolve'].map((action) => (
+                      <button
+                        key={action}
+                        onClick={() => handleAction(report._id, action)}
+                        disabled={processingId === report._id}
+                        className="rounded-lg border px-3 py-2 text-xs font-semibold text-gray-700 disabled:opacity-50"
+                      >
+                        {action}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
-              {report.listing?.images?.[0] ? (
-                <div className="mt-3 overflow-hidden rounded-lg border">
-                  <img src={listingImageUrl(report.listing.images[0])} alt={report.listing.title || 'Reported listing'} className="h-32 w-full object-cover" />
-                </div>
-              ) : null}
-              <p className="mt-3 text-sm text-gray-700">{report.reason}</p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                <Link
-                  href={`/report-review/${report._id}`}
-                  className="rounded-lg border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-xs font-semibold text-indigo-700"
-                >
-                  Open review
-                </Link>
-              </div>
-              {report.status === 'pending' && (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {['dismiss', 'warn-seller', 'delete-listing', 'resolve'].map((action) => (
-                    <button
-                      key={action}
-                      onClick={() => handleAction(report._id, action)}
-                      disabled={processingId === report._id}
-                      className="rounded-lg border px-3 py-1.5 text-xs font-semibold text-gray-700 disabled:opacity-50"
-                    >
-                      {action}
-                    </button>
-                  ))}
-                </div>
-              )}
             </article>
           ))}
+          </div>
 
           <div className="rounded-xl border bg-white p-2">
             <TablePagination

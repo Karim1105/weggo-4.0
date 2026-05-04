@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Filter, Grid, List } from 'lucide-react'
 import { motion } from 'framer-motion'
@@ -28,6 +28,8 @@ export default function BrowsePageContainer({ adminState }: BrowsePageContainerP
 
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [showFilters, setShowFilters] = useState(false)
+  const loadMoreTriggerRef = useRef<HTMLDivElement | null>(null)
+  const isRestoringRef = useRef(false)
 
   const {
     searchInput,
@@ -44,6 +46,7 @@ export default function BrowsePageContainer({ adminState }: BrowsePageContainerP
   } = useFilters()
 
   const { products, loading, loadingMore, hasMore, totalCount, loadMore, toggleLocalFavorite, updateLocalProduct, removeLocalProduct } = useListings(queryString, sortQuery)
+  const scrollStorageKey = useMemo(() => `browse-scroll:${queryString}|${sortQuery}`, [queryString, sortQuery])
 
   const categories = useMemo(() => ['all', ...apiCategories.map((c) => c.id)], [])
   const categoryLabels: Record<string, string> = useMemo(() => {
@@ -128,6 +131,79 @@ export default function BrowsePageContainer({ adminState }: BrowsePageContainerP
       toast.error('Failed to save')
     }
   }, [filters, router, searchInput])
+
+  const rememberScrollPosition = useCallback((productId: string) => {
+    if (typeof window === 'undefined') return
+    window.sessionStorage.setItem(scrollStorageKey, String(window.scrollY))
+    window.sessionStorage.setItem('browse-scroll:return-key', scrollStorageKey)
+    window.sessionStorage.setItem('browse-scroll:target-id', productId)
+  }, [scrollStorageKey])
+
+  useEffect(() => {
+    const target = loadMoreTriggerRef.current
+    if (!target || loading || !hasMore) return
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0]
+        if (entry?.isIntersecting && !loadingMore) {
+          void loadMore()
+        }
+      },
+      {
+        rootMargin: '320px 0px',
+        threshold: 0.1,
+      }
+    )
+
+    observer.observe(target)
+
+    return () => observer.disconnect()
+  }, [hasMore, loadMore, loading, loadingMore, products.length])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    if (loading || products.length === 0) return
+
+    const returnKey = window.sessionStorage.getItem('browse-scroll:return-key')
+    if (returnKey !== scrollStorageKey) return
+
+    isRestoringRef.current = true
+    const targetProductId = window.sessionStorage.getItem('browse-scroll:target-id')
+    if (targetProductId) {
+      const targetElement = document.querySelector<HTMLElement>(`[data-browse-product-id="${CSS.escape(targetProductId)}"]`)
+      if (targetElement) {
+        window.sessionStorage.removeItem('browse-scroll:return-key')
+        window.sessionStorage.removeItem('browse-scroll:target-id')
+        window.sessionStorage.removeItem(scrollStorageKey)
+        requestAnimationFrame(() => {
+          targetElement.scrollIntoView({ block: 'center', behavior: 'auto' })
+          isRestoringRef.current = false
+        })
+        return
+      }
+
+      if (hasMore && !loadingMore) {
+        void loadMore()
+        return
+      }
+    }
+
+    const savedScroll = Number(window.sessionStorage.getItem(scrollStorageKey) || '0')
+    window.sessionStorage.removeItem('browse-scroll:return-key')
+    window.sessionStorage.removeItem('browse-scroll:target-id')
+    window.sessionStorage.removeItem(scrollStorageKey)
+
+    if (!Number.isFinite(savedScroll) || savedScroll <= 0) {
+      isRestoringRef.current = false
+      return
+    }
+
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: savedScroll, behavior: 'auto' })
+      isRestoringRef.current = false
+    })
+  }, [hasMore, loadMore, loading, loadingMore, products.length, scrollStorageKey])
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/40">
@@ -266,12 +342,14 @@ export default function BrowsePageContainer({ adminState }: BrowsePageContainerP
           products={products}
           loading={loading}
           onToggleFavorite={toggleFavorite}
+          onOpenProduct={rememberScrollPosition}
           isAdmin={isAdmin}
           adminControlsEnabled={canSeeControls}
           onAdminProductUpdate={updateLocalProduct}
           onAdminProductRemove={removeLocalProduct}
         />
 
+        <div ref={loadMoreTriggerRef} aria-hidden="true" className="h-6" />
         <LoadMoreButton visible={!loading && products.length > 0 && hasMore} loading={loadingMore} onClick={loadMore} />
 
         {!loading && products.length > 0 && !hasMore && (

@@ -12,6 +12,7 @@ interface ProductGridProps {
   products: Product[]
   loading: boolean
   onToggleFavorite: (id: string) => void
+  onOpenProduct: (productId: string) => void
   isAdmin: boolean
   adminControlsEnabled: boolean
   onAdminProductUpdate: (id: string, updates: Partial<Product>) => void
@@ -23,6 +24,7 @@ export default function ProductGrid({
   products,
   loading,
   onToggleFavorite,
+  onOpenProduct,
   isAdmin,
   adminControlsEnabled,
   onAdminProductUpdate,
@@ -41,18 +43,12 @@ export default function ProductGrid({
   if (viewMode === 'grid') {
     return (
       <div className={`grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 ${loading && products.length > 0 ? 'opacity-50 pointer-events-none' : ''}`}>
-        {products.map((product, index) => (
-          <motion.div
-            key={product.id}
-            initial={false}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.05 + index * 0.03 }}
-            layout="position"
-          >
+        {products.map((product) => (
+          <motion.div key={product.id} layout="position" transition={{ duration: 0.12 }} data-browse-product-id={product.id}>
             <ProductCard
               product={product}
-              index={index}
               onToggleFavorite={onToggleFavorite}
+              onOpenProduct={onOpenProduct}
               isAdmin={isAdmin}
               adminControlsEnabled={adminControlsEnabled}
               onAdminUpdate={onAdminProductUpdate}
@@ -66,17 +62,19 @@ export default function ProductGrid({
 
   return (
     <div className={`space-y-4 ${loading && products.length > 0 ? 'opacity-50 pointer-events-none' : ''}`}>
-      {products.map((product, index) => (
+      {products.map((product) => (
         <motion.div
           key={product.id}
-          initial={false}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.05 + index * 0.03 }}
+          initial={{ opacity: 0, x: 12 }}
+          whileInView={{ opacity: 1, x: 0 }}
+          viewport={{ once: true, amount: 0.15 }}
+          transition={{ duration: 0.16, ease: 'easeOut' }}
           layout="position"
+          data-browse-product-id={product.id}
           className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-md transition-shadow"
         >
           <div className="flex space-x-4">
-            <Link href={`/listings/${product.id}`} className="flex flex-1 space-x-4 min-w-0">
+            <Link href={`/listings/${product.id}`} className="flex flex-1 space-x-4 min-w-0" onClick={() => onOpenProduct(product.id)}>
               <img src={product.image} alt={product.title} className="w-24 h-24 object-cover rounded-xl" />
               <div className="flex-1 min-w-0">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2 truncate">{product.title}</h3>

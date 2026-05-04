@@ -9,8 +9,9 @@ import ListingAdminMenu from '@/components/admin/ListingAdminMenu'
 
 interface ProductCardProps {
   product: Product
-  index: number
+  index?: number
   onToggleFavorite: (id: string) => void
+  onOpenProduct?: (productId: string) => void
   isAdmin?: boolean
   adminControlsEnabled?: boolean
   onAdminUpdate?: (id: string, updates: Partial<Product>) => void
@@ -19,8 +20,8 @@ interface ProductCardProps {
 
 export default function ProductCard({
   product,
-  index,
   onToggleFavorite,
+  onOpenProduct,
   isAdmin = false,
   adminControlsEnabled = false,
   onAdminUpdate,
@@ -30,14 +31,14 @@ export default function ProductCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay: index * 0.1 }}
+      initial={{ opacity: 0, y: 12, scale: 0.985 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      viewport={{ once: true, amount: 0.15 }}
+      transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
       className="card-modern group cursor-pointer hover-lift relative"
     >
       {/* Admin Dropdown - Outside Link to prevent navigation */}
-      <Link href={`/listings/${product.id}`} className="block">
+      <Link href={`/listings/${product.id}`} className="block" onClick={() => onOpenProduct?.(product.id)}>
       {/* Image */}
       <div className="relative aspect-square overflow-hidden">
         <img

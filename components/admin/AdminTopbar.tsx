@@ -1,6 +1,7 @@
 'use client'
 
-import { Bell, Menu, RefreshCw } from 'lucide-react'
+import Link from 'next/link'
+import { Bell, Home, Menu, RefreshCw } from 'lucide-react'
 
 interface AdminTopbarProps {
   title: string
@@ -35,6 +36,13 @@ export function AdminTopbar({
         </div>
 
         <div className="flex items-center gap-2">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <Home className="h-4 w-4" />
+            Home
+          </Link>
           <button
             onClick={onRefresh}
             disabled={refreshing}

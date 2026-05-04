@@ -18,6 +18,11 @@ const cairo = Cairo({ subsets: ['arabic', 'latin'], variable: '--font-cairo' })
 export const metadata: Metadata = {
   title: 'Weggo - اشتري وبيع بسهولة',
   description: 'Your AI-powered marketplace for second-hand goods in Egypt',
+  icons: {
+    icon: '/weggo-w-favicon-transparent-512.png',
+    shortcut: '/weggo-w-favicon-transparent-512.png',
+    apple: '/weggo-w-favicon-transparent-512.png',
+  },
 }
 
 async function getUserRole(): Promise<'user' | 'admin' | null> {
