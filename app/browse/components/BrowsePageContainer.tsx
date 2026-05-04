@@ -189,6 +189,19 @@ export default function BrowsePageContainer({ adminState }: BrowsePageContainerP
         }
         return
       }
+
+      requestAnimationFrame(() => {
+        const delayedTarget = document.querySelector<HTMLElement>(`[data-browse-product-id="${CSS.escape(targetProductId)}"]`)
+        if (delayedTarget) {
+          isRestoringRef.current = true
+          window.sessionStorage.removeItem('browse-scroll:return-key')
+          window.sessionStorage.removeItem('browse-scroll:target-id')
+          window.sessionStorage.removeItem(scrollStorageKey)
+          delayedTarget.scrollIntoView({ block: 'center', behavior: 'auto' })
+          isRestoringRef.current = false
+        }
+      })
+      return
     }
 
     isRestoringRef.current = true

@@ -44,7 +44,7 @@ export default function ProductGrid({
     return (
       <div className={`grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 ${loading && products.length > 0 ? 'opacity-50 pointer-events-none' : ''}`}>
         {products.map((product) => (
-          <motion.div key={product.id} layout="position" transition={{ duration: 0.12 }} data-browse-product-id={product.id}>
+          <motion.div key={product.id} layout="position" transition={{ duration: 0.12 }} data-browse-product-id={product.id} className="h-full">
             <ProductCard
               product={product}
               onToggleFavorite={onToggleFavorite}
