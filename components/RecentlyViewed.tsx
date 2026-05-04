@@ -1,31 +1,13 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { motion } from 'framer-motion'
-import ProductCard from '@/components/ProductCard'
+import ProductGrid from '@/app/browse/components/ProductGrid'
+import { Product } from '@/app/browse/types'
 import { mapApiListingToProduct, withCsrfHeader } from '@/lib/utils'
 import { useAppStore } from '@/lib/store'
 
-interface ProductCardShape {
-  id: string
-  title: string
-  price: number
-  location: string
-  condition: string
-  image: string
-  category: string
-  postedAt: string
-  isFavorite: boolean
-  seller?: {
-    name: string
-    rating?: number
-    totalSales?: number
-    verified?: boolean
-  }
-}
-
 export default function RecentlyViewed() {
-  const [items, setItems] = useState<ProductCardShape[]>([])
+  const [items, setItems] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const storeFavorites = useAppStore((s) => s.favorites)
   const addFavorite = useAppStore((s) => s.addFavorite)
@@ -106,19 +88,17 @@ export default function RecentlyViewed() {
             Refresh
           </button>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          {items.slice(0, 8).map((product, index) => (
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, y: 15 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: index * 0.05 }}
-            >
-              <ProductCard product={product} index={index} onToggleFavorite={toggleFavorite} />
-            </motion.div>
-          ))}
-        </div>
+        <ProductGrid
+          viewMode="grid"
+          products={items.slice(0, 8)}
+          loading={false}
+          onToggleFavorite={toggleFavorite}
+          onOpenProduct={() => {}}
+          isAdmin={false}
+          adminControlsEnabled={false}
+          onAdminProductUpdate={() => {}}
+          onAdminProductRemove={() => {}}
+        />
       </div>
     </section>
   )

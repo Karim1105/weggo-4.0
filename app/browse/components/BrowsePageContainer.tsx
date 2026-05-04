@@ -168,11 +168,11 @@ export default function BrowsePageContainer({ adminState }: BrowsePageContainerP
     const returnKey = window.sessionStorage.getItem('browse-scroll:return-key')
     if (returnKey !== scrollStorageKey) return
 
-    isRestoringRef.current = true
     const targetProductId = window.sessionStorage.getItem('browse-scroll:target-id')
     if (targetProductId) {
       const targetElement = document.querySelector<HTMLElement>(`[data-browse-product-id="${CSS.escape(targetProductId)}"]`)
       if (targetElement) {
+        isRestoringRef.current = true
         window.sessionStorage.removeItem('browse-scroll:return-key')
         window.sessionStorage.removeItem('browse-scroll:target-id')
         window.sessionStorage.removeItem(scrollStorageKey)
@@ -183,12 +183,15 @@ export default function BrowsePageContainer({ adminState }: BrowsePageContainerP
         return
       }
 
-      if (hasMore && !loadingMore) {
-        void loadMore()
+      if (hasMore) {
+        if (!loadingMore) {
+          void loadMore()
+        }
         return
       }
     }
 
+    isRestoringRef.current = true
     const savedScroll = Number(window.sessionStorage.getItem(scrollStorageKey) || '0')
     window.sessionStorage.removeItem('browse-scroll:return-key')
     window.sessionStorage.removeItem('browse-scroll:target-id')

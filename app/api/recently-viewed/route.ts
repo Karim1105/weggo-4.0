@@ -52,7 +52,13 @@ async function handler(request: NextRequest, user: any) {
   const recentViews = await ViewHistory.find({ user: user._id })
     .sort({ viewedAt: -1 })
     .limit(20)
-    .populate('product')
+    .populate({
+      path: 'product',
+      populate: {
+        path: 'seller',
+        select: 'name isVerified rating totalSales',
+      },
+    })
     .lean()
 
   const productsRaw = recentViews
@@ -78,6 +84,8 @@ async function handler(request: NextRequest, user: any) {
       condition: product.condition,
       description,
       createdAt: product.createdAt,
+      status: product.status,
+      isBoosted: product.isBoosted,
       seller: product.seller,
     }
   })
