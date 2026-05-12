@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from 'mongoose'
+import { elasticClient } from '@/lib/elastic'
 
 export interface IProduct extends Document {
   title: string
@@ -133,6 +134,65 @@ ProductSchema.index({ status: 1, averageRating: -1, ratingCount: -1, createdAt: 
 // once the `expiresAt` time is reached. expireAfterSeconds: 0 means expire at the
 // time specified in the field.
 ProductSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 })
+
+async function indexProductInElastic(doc: any) {
+  if (!doc) return
+  try {
+    const docWithSeller = await doc.populate('seller', 'name avatar sellerVerified averageRating totalSales')
+    await elasticClient.index({
+      index: 'products',
+      id: String(doc._id),
+      document: {
+        id: String(doc._id),
+        title: doc.title,
+        description: doc.description,
+        category: doc.category,
+        subcategory: doc.subcategory,
+        condition: doc.condition,
+        price: doc.price,
+        location: doc.location,
+        locationKeyword: doc.location,
+        status: doc.status,
+        createdAt: doc.createdAt,
+        isBoosted: doc.isBoosted || false,
+        images: doc.images,
+        seller: docWithSeller.seller ? {
+          _id: String((docWithSeller.seller as any)._id),
+          name: (docWithSeller.seller as any).name,
+          avatar: (docWithSeller.seller as any).avatar,
+          sellerVerified: (docWithSeller.seller as any).sellerVerified,
+          averageRating: (docWithSeller.seller as any).averageRating,
+          totalSales: (docWithSeller.seller as any).totalSales
+        } : null
+      }
+    })
+  } catch (err) {
+    console.error('ES Product Index Error:', err)
+  }
+}
+
+ProductSchema.post('save', async function(doc) {
+  await indexProductInElastic(doc)
+})
+
+ProductSchema.post('findOneAndUpdate', async function(doc) {
+  await indexProductInElastic(doc)
+})
+
+ProductSchema.post('findOneAndDelete', async function(doc) {
+  if (!doc) return
+  try {
+    await elasticClient.delete({
+      index: 'products',
+      id: String(doc._id)
+    }).catch(e => {
+      // Ignore not found
+      if (e.meta?.statusCode !== 404) console.error('ES Product Delete Error:', e)
+    })
+  } catch (err) {
+    console.error('ES Product Delete Error:', err)
+  }
+})
 
 export default mongoose.models.Product || mongoose.model<IProduct>('Product', ProductSchema)
 

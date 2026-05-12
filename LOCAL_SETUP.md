@@ -1,11 +1,16 @@
 # Local Setup
 
-## 1. Make sure MongoDB is running
+We use `docker-compose` to spin up MongoDB and Elasticsearch for local development.
 
-Example local URI:
+```bash
+docker-compose up -d
+```
+
+Example local URIs:
 
 ```env
 mongodb://localhost:27017/weggo
+ELASTICSEARCH_NODE_URL=http://localhost:9200
 ```
 
 ## 2. Create `.env.local`

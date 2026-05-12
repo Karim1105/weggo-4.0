@@ -12,10 +12,10 @@ import User from '@/models/User'
 import ViewHistory from '@/models/ViewHistory'
 import Wishlist from '@/models/Wishlist'
 
-const COUNT = Math.max(1, Number(process.env.SEED_TRASH_COUNT || '50'))
+const COUNT = Math.max(1, Number(process.env.SEED_TRASH_COUNT || '500'))
 const BUYERS_COUNT = Math.max(
   4,
-  Number(process.env.SEED_TRASH_BUYERS || String(Math.min(20, Math.ceil(COUNT / 2))))
+  Number(process.env.SEED_TRASH_BUYERS || String(Math.min(200, Math.ceil(COUNT / 2))))
 )
 const TICKETS_COUNT = Math.max(
   20,

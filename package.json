@@ -5,13 +5,15 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "npm run es:setup && next start",
     "lint": "npm run lint:types && npm run lint:eslint",
     "lint:types": "next typegen && tsc --noEmit",
     "lint:eslint": "eslint app components lib tests e2e --ext .ts,.tsx",
     "test": "vitest run",
     "test:integration": "vitest run tests/integration",
     "test:e2e": "playwright test",
+    "es:setup": "tsx scripts/es-setup.ts",
+    "es:sync": "tsx scripts/es-sync-all.ts",
     "dataset:products:preview": "tsx scripts/generate-products-dataset.ts --mode preview",
     "dataset:products:full": "tsx scripts/generate-products-dataset.ts --mode full",
     "scrape:prices:preview": "tsx scripts/scrape-pricing-dataset.ts --input private/data/products-preview.json --out private/data/products-preview-scraped.json --limit 20",
@@ -21,6 +23,7 @@
     "seed:trash:delete": "tsx scripts/seed-trash.ts --delete"
   },
   "dependencies": {
+    "@elastic/elasticsearch": "^8.13.1",
     "@types/node": "^25.6.0",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",

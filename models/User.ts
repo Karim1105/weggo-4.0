@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose'
 import bcrypt from 'bcryptjs'
+import { elasticClient } from '@/lib/elastic'
 
 export interface IUser extends Document {
   name: string
@@ -94,6 +95,47 @@ UserSchema.pre('save', async function () {
 UserSchema.methods.comparePassword = async function (candidatePassword: string) {
   return bcrypt.compare(candidatePassword, this.password)
 }
+
+async function indexUserInElastic(doc: any) {
+  if (!doc) return
+  try {
+    await elasticClient.index({
+      index: 'users',
+      id: String(doc._id),
+      document: {
+        name: doc.name,
+        email: doc.email,
+        role: doc.role,
+        isVerified: doc.isVerified,
+        createdAt: doc.createdAt
+      }
+    })
+  } catch (err) {
+    console.error('ES User Index Error:', err)
+  }
+}
+
+UserSchema.post('save', async function(doc) {
+  await indexUserInElastic(doc)
+})
+
+UserSchema.post('findOneAndUpdate', async function(doc) {
+  await indexUserInElastic(doc)
+})
+
+UserSchema.post('findOneAndDelete', async function(doc) {
+  if (!doc) return
+  try {
+    await elasticClient.delete({
+      index: 'users',
+      id: String(doc._id)
+    }).catch(e => {
+      if (e.meta?.statusCode !== 404) console.error('ES User Delete Error:', e)
+    })
+  } catch (err) {
+    console.error('ES User Delete Error:', err)
+  }
+})
 
 export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema)
 
