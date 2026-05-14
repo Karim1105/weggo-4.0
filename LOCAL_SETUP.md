@@ -1,19 +1,12 @@
 # Local Setup
 
-We use Docker Compose to spin up Elasticsearch for local development.
+## 1. Make sure MongoDB is running
 
-```bash
-docker compose up -d elasticsearch
-```
-
-Example local URIs:
+Example local URI:
 
 ```env
 mongodb://localhost:27017/weggo
-ELASTICSEARCH_NODE_URL=http://localhost:9200
 ```
-
-MongoDB can be your normal local instance. It does not need to run in Docker.
 
 ## 2. Create `.env.local`
 
@@ -38,20 +31,6 @@ SEED_FEATURED_SECRET=
 npm install
 npm run dev
 ```
-
-For production-style local startup that also boots MongoDB and Elasticsearch automatically:
-
-```bash
-npm run start
-```
-
-On Windows, `npm run start` will:
-
-- verify Docker is installed
-- start Docker Desktop if it is installed but not running
-- start the `elasticsearch` container
-- run Elasticsearch index setup
-- launch Next.js
 
 Open `http://localhost:3000`.
 
@@ -82,7 +61,6 @@ You can also use the admin seed route if you configure `SEED_ADMIN_SECRET`.
 Mongo connection errors:
 
 - check that MongoDB is running
-- if you use a non-Docker MongoDB instance, confirm it is reachable at the `MONGODB_URI` value
 - check `MONGODB_URI` in `.env.local`
 
 Build says `JWT_SECRET is required in production`:

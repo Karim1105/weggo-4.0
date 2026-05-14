@@ -42,20 +42,6 @@ npm run build
 npm start
 ```
 
-## Docker multi-arch
-
-If you deploy with Docker instead of PM2, the repo now includes a production Dockerfile and buildx notes in `DOCKER_DEPLOY.md`.
-
-Use buildx for both common Linux server architectures:
-
-```bash
-docker buildx build \
-  --platform linux/amd64,linux/arm64 \
-  -t your-registry/weggo:latest \
-  --push \
-  .
-```
-
 ## PM2 example
 
 ```bash

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ChevronLeft, Flag, Package, User } from 'lucide-react'
 import toast from 'react-hot-toast'
@@ -25,7 +25,7 @@ export default function ReportReviewPage() {
   const [error, setError] = useState<string | null>(null)
   const [loadingAction, setLoadingAction] = useState<string | null>(null)
 
-  const loadReport = async () => {
+  const loadReport = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
@@ -38,11 +38,11 @@ export default function ReportReviewPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [reportId])
 
   useEffect(() => {
     void loadReport()
-  }, [reportId])
+  }, [loadReport])
 
   const handleAction = async (action: string) => {
     setLoadingAction(action)

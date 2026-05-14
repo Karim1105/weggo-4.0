@@ -27,10 +27,6 @@ export default function ResultsHeader({
   const visibleCount = products.length
   const resolvedTotal = totalCount ?? visibleCount
 
-  if (!loading && typeof window !== 'undefined') {
-     console.log('ResultsHeader render:', { loading, visibleCount, totalCount, resolvedTotal, searchQuery })
-  }
-
   return (
     <div className="flex items-center justify-between mb-8 min-h-[80px]">
       <div>
@@ -38,20 +34,16 @@ export default function ResultsHeader({
           {loading ? 'Loading...' : `${resolvedTotal} items found`}
         </h1>
         <p className="text-gray-600 min-h-[24px]">
-          {!loading && resolvedTotal > visibleCount ? (
-            <span>Showing {visibleCount} loaded items so far</span>
-          ) : null}
-          {!loading && !!searchQuery ? (
-            <span>Search results for "{searchQuery}"</span>
-          ) : null}
-          {!loading && selectedCategory !== 'all' && !searchQuery ? (
+          {!loading && resolvedTotal > visibleCount && `Showing ${visibleCount} loaded items so far`}
+          {!loading && searchQuery && `Search results for "${searchQuery}"`}
+          {!loading && selectedCategory !== 'all' && !searchQuery && (
             <span>
               in {categoryLabels[selectedCategory] || selectedCategory}
-              {selectedSubcategory !== 'all' && subcategories.find((s) => s.id === selectedSubcategory) ? (
+              {selectedSubcategory !== 'all' && subcategories.find((s) => s.id === selectedSubcategory) && (
                 <span> &rarr; {subcategories.find((s) => s.id === selectedSubcategory)?.name}</span>
-              ) : null}
+              )}
             </span>
-          ) : null}
+          )}
         </p>
       </div>
     </div>

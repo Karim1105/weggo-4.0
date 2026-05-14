@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { Ban, ChevronLeft, Sparkles, Trash2 } from 'lucide-react'
@@ -28,7 +28,7 @@ export default function SellerListingsPage() {
 
   const selectedCount = useMemo(() => selectedListings.size, [selectedListings])
 
-  const loadSellerData = async () => {
+  const loadSellerData = useCallback(async () => {
     setLoading(true)
     setError(null)
     try {
@@ -41,11 +41,11 @@ export default function SellerListingsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [sellerId])
 
   useEffect(() => {
     void loadSellerData()
-  }, [sellerId])
+  }, [loadSellerData])
 
   const toggleListingSelection = (listingId: string) => {
     setSelectedListings((prev) => {

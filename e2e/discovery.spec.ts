@@ -3,7 +3,6 @@ import { test, expect } from '@playwright/test'
 function makeListing(id: string, title: string, category = 'electronics') {
   return {
     _id: id,
-    id: id,
     title,
     description: `${title} description`,
     price: 1500,
@@ -142,7 +141,6 @@ test('home discovery shows live category counts and honest recommendation fallba
 })
 
 test('browse shows total count separately from loaded items and can load more', async ({ page }) => {
-  page.on('console', msg => console.log('PAGE LOG:', msg.text()))
   const firstPage = [makeListing('browse-1', 'Vintage Camera'), makeListing('browse-2', 'Desk Lamp', 'home')]
   const secondPage = [makeListing('browse-3', 'Road Bike', 'sports')]
 
@@ -175,7 +173,7 @@ test('browse shows total count separately from loaded items and can load more', 
     const url = new URL(route.request().url())
     const cursor = url.searchParams.get('cursor')
 
-    if (cursor) {
+    if (cursor === 'cursor-2') {
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -211,10 +209,10 @@ test('browse shows total count separately from loaded items and can load more', 
   await expect(page.getByRole('heading', { name: '3 items found' })).toBeVisible()
   await expect(page.getByText('Showing 2 loaded items so far')).toBeVisible()
   await expect(page.getByText('Vintage Camera')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Load more' })).toBeVisible()
 
-  // Scroll to bottom to trigger infinite scroll if it hasn't already
-  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+  await page.getByRole('button', { name: 'Load more' }).click()
 
   await expect(page.getByText('Road Bike')).toBeVisible()
-  await expect(page.getByRole('button', { name: /Load (M|m)ore/ })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Load more' })).toHaveCount(0)
 })

@@ -7,8 +7,6 @@
 - MongoDB available locally on the server or via an external URI
 - a domain if you want public HTTPS access
 
-If you move to Docker later, see `DOCKER_DEPLOY.md` for multi-arch image builds. The relevant compatibility target is CPU architecture (`linux/amd64` or `linux/arm64`), not Ubuntu vs Arch Linux specifically.
-
 ## 1. Install system packages
 
 ```bash

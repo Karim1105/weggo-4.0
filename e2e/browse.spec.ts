@@ -2,7 +2,6 @@ import { test, expect } from '@playwright/test'
 
 const listingCard = {
   _id: 'test-1',
-  id: 'test-1',
   title: 'Vintage Camera',
   description: 'A clean, working camera for testing.',
   price: 1500,
@@ -121,15 +120,9 @@ test('admin browse card menu uses admin APIs and updates the UI', async ({ page,
     {
       name: 'adminView',
       value: 'on',
-      domain: 'localhost',
+      url: 'http://localhost:3000',
       path: '/',
     },
-    {
-      name: 'token',
-      value: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJhZG1pbi0xIiwicm9sZSI6ImFkbWluIiwiaWF0IjoxNzc4NjA0ODEwLCJleHAiOjE3Nzg2MzM2MTB9.VRNPVG5xkvQgTKCG7bE7C3bgXXiqEx2fmvOzt7CNyr0',
-      domain: 'localhost',
-      path: '/',
-    }
   ])
 
   await page.goto('/browse')

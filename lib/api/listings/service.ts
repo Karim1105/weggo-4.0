@@ -44,29 +44,6 @@ function mapCreateListingError(error: unknown) {
   return ApiErrors.serverError()
 }
 
-import { searchListingsElastic } from '@/lib/api/listings/elastic'
-
-async function getListingsMongoFallback(params: ListingQueryParams): Promise<ListingsResult> {
-  const { pipeline, query, fields } = buildListingsPipeline(params)
-  const [items, total] = await Promise.all([
-    aggregateListings(pipeline),
-    params.includeTotal ? countListings(query) : Promise.resolve(null),
-  ])
-
-  const hasMore = items.length > params.limit
-  const listingsSlice = items.slice(0, params.limit)
-  const nextCursor = hasMore && listingsSlice.length > 0 ? encodeCursor(listingsSlice[listingsSlice.length - 1], fields) : null
-
-  return {
-    listings: listingsSlice.map(sanitizeListing),
-    limit: params.limit,
-    total,
-    totalPages: params.includeTotal && total !== null ? Math.max(1, Math.ceil(total / params.limit)) : null,
-    hasMore,
-    nextCursor,
-  }
-}
-
 export async function getListingsService(request: NextRequest): Promise<Response> {
   const parseResult = parseListingsQuery(request.nextUrl.searchParams)
   if (!parseResult.ok) return parseResult.response
@@ -79,20 +56,23 @@ export async function getListingsService(request: NextRequest): Promise<Response
     params.sellerId = String(user._id)
   }
 
-  let result: ListingsResult
+  const { pipeline, query, fields } = buildListingsPipeline(params)
+  const [items, total] = await Promise.all([
+    aggregateListings(pipeline),
+    params.includeTotal ? countListings(query) : Promise.resolve(null),
+  ])
 
-  try {
-    result = await searchListingsElastic(params)
-  } catch (error) {
-    logger.warn(
-      'Elasticsearch listings query failed, falling back to MongoDB',
-      {
-        error: error instanceof Error ? error.message : String(error),
-        sellerScoped: Boolean(params.sellerId),
-        search: params.search,
-      }
-    )
-    result = await getListingsMongoFallback(params)
+  const hasMore = items.length > params.limit
+  const listingsSlice = items.slice(0, params.limit)
+  const nextCursor = hasMore && listingsSlice.length > 0 ? encodeCursor(listingsSlice[listingsSlice.length - 1], fields) : null
+
+  const result: ListingsResult = {
+    listings: listingsSlice.map(sanitizeListing),
+    limit: params.limit,
+    total,
+    totalPages: params.includeTotal && total !== null ? Math.max(1, Math.ceil(total / params.limit)) : null,
+    hasMore,
+    nextCursor,
   }
 
   return Response.json({ success: true, data: result }, { status: 200, headers: { 'Cache-Control': 'private, no-store', Vary: 'Cookie' } })

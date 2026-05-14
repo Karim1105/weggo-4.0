@@ -121,6 +121,8 @@ export default function PersonalizedFeed() {
         setSlidesToShow(1)
       } else if (window.innerWidth < 1024) {
         setSlidesToShow(2)
+      } else if (window.innerWidth < 1280) {
+        setSlidesToShow(3)
       } else {
         setSlidesToShow(4)
       }
@@ -381,6 +383,7 @@ export default function PersonalizedFeed() {
   const totalSlides = Math.max(1, Math.ceil(displayProducts.length / slidesToShow))
   const startIndex = currentSlide * slidesToShow
   const carouselProducts = displayProducts.slice(startIndex, startIndex + slidesToShow)
+  const visibleCarouselColumns = Math.max(1, Math.min(slidesToShow, carouselProducts.length || 1))
   const canGoPrev = currentSlide > 0
   const canGoNext = currentSlide < totalSlides - 1
 
@@ -678,34 +681,38 @@ export default function PersonalizedFeed() {
                 transition={{ duration: 0.5 }}
                 className="relative"
               >
-                {totalSlides > 1 && (
-                  <motion.button
-                    whileHover={canGoPrev ? { scale: 1.05 } : undefined}
-                    whileTap={canGoPrev ? { scale: 0.95 } : undefined}
-                    onClick={prevSlide}
-                    disabled={!canGoPrev}
-                    className="absolute left-2 lg:-left-16 top-1/3 -translate-y-1/2 z-10 w-10 h-10 lg:w-14 lg:h-14 bg-white shadow-xl rounded-xl lg:rounded-2xl flex items-center justify-center text-primary-600 hover:bg-primary-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                    aria-label="Previous slide"
-                  >
-                    <ChevronLeft className="w-5 h-5 lg:w-6 lg:h-6" />
-                  </motion.button>
-                )}
-
-                {totalSlides > 1 && (
-                  <motion.button
-                    whileHover={canGoNext ? { scale: 1.05 } : undefined}
-                    whileTap={canGoNext ? { scale: 0.95 } : undefined}
-                    onClick={nextSlide}
-                    disabled={!canGoNext}
-                    className="absolute right-2 lg:-right-16 top-1/3 -translate-y-1/2 z-10 w-10 h-10 lg:w-14 lg:h-14 bg-white shadow-xl rounded-xl lg:rounded-2xl flex items-center justify-center text-primary-600 hover:bg-primary-50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                    aria-label="Next slide"
-                  >
-                    <ChevronRight className="w-5 h-5 lg:w-6 lg:h-6" />
-                  </motion.button>
-                )}
+                {totalSlides > 1 ? (
+                  <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-sm font-medium text-gray-500">
+                      Slide {currentSlide + 1} of {totalSlides}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <motion.button
+                        whileHover={canGoPrev ? { scale: 1.05 } : undefined}
+                        whileTap={canGoPrev ? { scale: 0.95 } : undefined}
+                        onClick={prevSlide}
+                        disabled={!canGoPrev}
+                        className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-primary-600 shadow-lg transition-colors hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        aria-label="Previous slide"
+                      >
+                        <ChevronLeft className="h-5 w-5" />
+                      </motion.button>
+                      <motion.button
+                        whileHover={canGoNext ? { scale: 1.05 } : undefined}
+                        whileTap={canGoNext ? { scale: 0.95 } : undefined}
+                        onClick={nextSlide}
+                        disabled={!canGoNext}
+                        className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-primary-600 shadow-lg transition-colors hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        aria-label="Next slide"
+                      >
+                        <ChevronRight className="h-5 w-5" />
+                      </motion.button>
+                    </div>
+                  </div>
+                ) : null}
 
                 <div
-                  className="overflow-hidden px-0 lg:px-0"
+                  className="overflow-hidden"
                   tabIndex={0}
                   onKeyDown={handleCarouselKeyDown}
                   onTouchStart={handleTouchStart}
@@ -718,7 +725,8 @@ export default function PersonalizedFeed() {
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -60 }}
                     transition={{ duration: 0.3 }}
-                    className="flex space-x-4 pb-4 justify-center px-12 lg:px-0"
+                    className="grid gap-4 pb-4 md:gap-6"
+                    style={{ gridTemplateColumns: `repeat(${visibleCarouselColumns}, minmax(0, 1fr))` }}
                   >
                     {carouselProducts.map((product, index) => (
                       <motion.div
@@ -727,7 +735,7 @@ export default function PersonalizedFeed() {
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
                         transition={{ delay: index * 0.08 }}
-                        className="flex-shrink-0 w-full sm:w-1/2 lg:w-1/4"
+                        className="min-w-0"
                       >
                         <ProductCard product={product} index={index} onToggleFavorite={toggleFavorite} />
                       </motion.div>
