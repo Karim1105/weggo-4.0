@@ -116,6 +116,8 @@ Open `http://localhost:3000`.
 npm run dev
 npm run build
 npm run start
+npm run docker:build
+npm run docker:run
 npm run lint
 npm test
 npm run test:integration
@@ -154,6 +156,7 @@ npm run test:e2e
 - [QUICKSTART.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/QUICKSTART.md)
 - [SETUP.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/SETUP.md)
 - [LOCAL_SETUP.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/LOCAL_SETUP.md)
+- [DOCKER_DEPLOY.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/DOCKER_DEPLOY.md)
 - [SETUP_BACKEND.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/SETUP_BACKEND.md)
 - [FEATURES.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/FEATURES.md)
 - [ARCHITECTURE.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/ARCHITECTURE.md)
