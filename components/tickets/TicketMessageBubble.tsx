@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { listingImageUrl } from '@/lib/utils'
 
 interface TicketMessageBubbleProps {
@@ -18,8 +19,14 @@ export default function TicketMessageBubble({ mine, senderLabel, message, create
         {attachments.length > 0 && (
           <div className="mt-2 grid grid-cols-2 gap-2">
             {attachments.map((attachment) => (
-              <a key={attachment} href={listingImageUrl(attachment)} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-md border bg-black/5">
-                <img src={listingImageUrl(attachment)} alt="attachment" className="h-24 w-full object-cover" />
+              <a
+                key={attachment}
+                href={listingImageUrl(attachment)}
+                target="_blank"
+                rel="noreferrer"
+                className="relative block h-24 overflow-hidden rounded-md border bg-black/5"
+              >
+                <Image src={listingImageUrl(attachment)} alt="attachment" fill sizes="160px" className="object-cover" />
               </a>
             ))}
           </div>

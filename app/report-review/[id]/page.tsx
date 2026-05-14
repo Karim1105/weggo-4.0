@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useCallback, useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ChevronLeft, Flag, Package, User } from 'lucide-react'
@@ -128,11 +129,13 @@ export default function ReportReviewPage() {
 
           {report.listing ? (
             <div className="mt-4 grid gap-4 md:grid-cols-[220px,1fr]">
-              <div className="overflow-hidden rounded-xl border bg-gray-50">
+              <div className="relative overflow-hidden rounded-xl border bg-gray-50">
                 {report.listing.images?.[0] ? (
-                  <img
+                  <Image
                     src={listingImageUrl(report.listing.images[0])}
                     alt={report.listing.title || 'Reported listing'}
+                    width={220}
+                    height={192}
                     className="h-48 w-full object-cover"
                   />
                 ) : (

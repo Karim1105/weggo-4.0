@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
@@ -289,7 +290,13 @@ export default function SellerListingsPage() {
             {listings.map((listing) => (
               <article key={listing._id} className="overflow-hidden rounded-xl border bg-white shadow-sm">
                 {listing.images?.[0] ? (
-                  <img src={listingImageUrl(listing.images[0])} alt={listing.title} className="h-48 w-full object-cover" />
+                  <Image
+                    src={listingImageUrl(listing.images[0])}
+                    alt={listing.title}
+                    width={420}
+                    height={192}
+                    className="h-48 w-full object-cover"
+                  />
                 ) : null}
                 <div className="p-5">
                   <div className="flex gap-3">

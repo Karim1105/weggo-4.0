@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -47,6 +48,8 @@ interface ListingDetailClientProps {
 }
 
 export default function ListingDetailClient({ listingId, adminState }: ListingDetailClientProps) {
+  const imageUnavailablePlaceholder = 'https://via.placeholder.com/800x800?text=Image+Not+Available'
+  const imageErrorPlaceholder = 'https://via.placeholder.com/80x80?text=Error'
   const router = useRouter()
   const id = listingId
   const [listing, setListing] = useState<Listing | null>(null)
@@ -103,6 +106,10 @@ export default function ListingDetailClient({ listingId, adminState }: ListingDe
       })
       .catch(() => {})
   }, [listing, id])
+
+  useEffect(() => {
+    setImageError(false)
+  }, [selectedImage, listing?._id])
 
   useEffect(() => {
     if (!listing) return
@@ -354,17 +361,14 @@ export default function ListingDetailClient({ listingId, adminState }: ListingDe
           <div className="bg-white/80 backdrop-blur rounded-2xl shadow-xl border border-white/20 overflow-hidden mb-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 p-6 lg:p-8">
               <div>
-                <div className="aspect-square rounded-xl overflow-hidden bg-gray-100 mb-4">
-                  <img
-                    src={fullImageUrl}
+                <div className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 mb-4">
+                  <Image
+                    src={imageError ? imageUnavailablePlaceholder : fullImageUrl}
                     alt={listing.title}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      if (!imageError) {
-                        e.currentTarget.src = 'https://via.placeholder.com/800x800?text=Image+Not+Available'
-                        setImageError(true)
-                      }
-                    }}
+                    fill
+                    sizes="(min-width: 1024px) 50vw, 100vw"
+                    className="object-cover"
+                    onError={() => setImageError(true)}
                   />
                 </div>
                 {listing.images && listing.images.length > 1 && (
@@ -376,16 +380,18 @@ export default function ListingDetailClient({ listingId, adminState }: ListingDe
                           key={i}
                           type="button"
                           onClick={() => setSelectedImage(i)}
-                          className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
+                          className={`relative flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 ${
                             selectedImage === i ? 'border-primary-500' : 'border-gray-200'
                           }`}
                         >
-                          <img
+                          <Image
                             src={thumbUrl}
                             alt=""
-                            className="w-full h-full object-cover"
+                            fill
+                            sizes="80px"
+                            className="object-cover"
                             onError={(e) => {
-                              e.currentTarget.src = 'https://via.placeholder.com/80x80?text=Error'
+                              e.currentTarget.src = imageErrorPlaceholder
                             }}
                           />
                         </button>

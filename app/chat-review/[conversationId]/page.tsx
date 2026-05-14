@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useEffect, useMemo, useState } from 'react'
 import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { ChevronLeft, MessageCircle, Package, Users } from 'lucide-react'
@@ -125,11 +126,13 @@ export default function ChatReviewPage() {
               <h2 className="text-lg font-semibold text-gray-900">Listing Context</h2>
             </div>
             <div className="mt-4 grid gap-4 md:grid-cols-[180px,1fr]">
-              <div className="overflow-hidden rounded-xl border bg-gray-50">
+              <div className="relative overflow-hidden rounded-xl border bg-gray-50">
                 {conversation.product.images?.[0] ? (
-                  <img
+                  <Image
                     src={listingImageUrl(conversation.product.images[0])}
                     alt={conversation.product.title || 'Listing image'}
+                    width={180}
+                    height={160}
                     className="h-40 w-full object-cover"
                   />
                 ) : (

@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Heart, MapPin, Clock } from 'lucide-react'
@@ -75,7 +76,9 @@ export default function ProductGrid({
         >
           <div className="flex space-x-4">
             <Link href={`/listings/${product.id}`} className="flex flex-1 space-x-4 min-w-0" onClick={() => onOpenProduct(product.id)}>
-              <img src={product.image} alt={product.title} className="w-24 h-24 object-cover rounded-xl" />
+              <div className="relative h-24 w-24 flex-shrink-0 overflow-hidden rounded-xl">
+                <Image src={product.image} alt={product.title} fill sizes="96px" className="object-cover" />
+              </div>
               <div className="flex-1 min-w-0">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2 truncate">{product.title}</h3>
                 <div className="flex items-center space-x-4 text-sm text-gray-600 mb-2">

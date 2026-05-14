@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Clock, MapPin, User } from 'lucide-react'
@@ -27,11 +28,13 @@ export default function ConversationItem({ conversation, currentUserId, onOpen }
         }`}
       >
         {formatted.imageUrl ? (
-          <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
-            <img
+          <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+            <Image
               src={formatted.imageUrl}
               alt={formatted.productTitle || 'Item'}
-              className="w-full h-full object-cover"
+              fill
+              sizes="56px"
+              className="object-cover"
             />
           </div>
         ) : (

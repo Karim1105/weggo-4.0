@@ -1,4 +1,5 @@
 import { memo } from 'react'
+import Image from 'next/image'
 import { Camera, X } from 'lucide-react'
 
 interface ImageUploadProps {
@@ -16,7 +17,7 @@ function ImageUploadComponent({ imagePreviews, onUpload, onRemove }: ImageUpload
       <div className="grid grid-cols-4 gap-4 mb-4">
         {imagePreviews.map((image, index) => (
           <div key={`${image}-${index}`} className="relative aspect-square rounded-lg overflow-hidden group">
-            <img src={image} alt={`Upload ${index + 1}`} className="w-full h-full object-cover" />
+            <Image src={image} alt={`Upload ${index + 1}`} fill sizes="25vw" unoptimized className="object-cover" />
             <button
               type="button"
               onClick={() => onRemove(index)}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { Search, Sparkles, TrendingUp, Shield, Heart, MapPin, Star } from 'lucide-react'
 import Link from 'next/link'
@@ -269,10 +270,12 @@ export default function Hero() {
                           }`} 
                         />
                       </button>
-                      <div className="aspect-square rounded-xl mb-4 overflow-hidden">
-                        <img 
+                      <div className="relative aspect-square rounded-xl mb-4 overflow-hidden">
+                        <Image 
                           src={featuredProducts[0].image}
                           alt={featuredProducts[0].title}
+                          fill
+                          sizes="288px"
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                         />
                       </div>
@@ -339,10 +342,12 @@ export default function Hero() {
                           }`} 
                         />
                       </button>
-                      <div className="aspect-square rounded-xl mb-4 overflow-hidden">
-                        <img 
+                      <div className="relative aspect-square rounded-xl mb-4 overflow-hidden">
+                        <Image 
                           src={featuredProducts[1].image}
                           alt={featuredProducts[1].title}
+                          fill
+                          sizes="288px"
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                         />
                       </div>
@@ -409,10 +414,12 @@ export default function Hero() {
                           }`} 
                         />
                       </button>
-                      <div className="aspect-video rounded-lg mb-3 overflow-hidden">
-                        <img 
+                      <div className="relative aspect-video rounded-lg mb-3 overflow-hidden">
+                        <Image 
                           src={featuredProducts[2].image}
                           alt={featuredProducts[2].title}
+                          fill
+                          sizes="256px"
                           className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                         />
                       </div>

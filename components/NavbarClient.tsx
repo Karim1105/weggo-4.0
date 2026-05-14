@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -118,8 +119,8 @@ export default function NavbarClient({ initialUser, sellHref }: NavbarClientProp
       // Invalidate navbar cache so next refresh gets the logged-out version
       await revalidateNavbar()
       toast.success('Logged out successfully')
-      // Force hard reload to clear all cached state
-      window.location.href = '/'
+      router.push('/')
+      router.refresh()
     } catch (error) {
       toast.error('Logout failed')
     }
@@ -181,9 +182,11 @@ export default function NavbarClient({ initialUser, sellHref }: NavbarClientProp
               whileHover={{ scale: 1.05, rotate: 2 }}
               className="inline-block"
             >
-              <img
+              <Image
                 src="/weggo-logo.png"
                 alt="Weggo logo"
+                width={170}
+                height={48}
                 className="block h-10 sm:h-11 md:h-12 w-auto max-w-[120px] sm:max-w-[140px] md:max-w-[170px] object-contain"
               />
             </motion.div>

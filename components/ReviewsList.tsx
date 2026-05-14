@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import { useEffect, useState } from 'react'
 
 interface Review {
@@ -146,11 +147,15 @@ export default function ReviewsList({
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   {review.reviewer.avatar && (
-                    <img
-                      src={review.reviewer.avatar}
-                      alt={review.reviewer.name}
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
+                    <div className="relative h-10 w-10 overflow-hidden rounded-full">
+                      <Image
+                        src={review.reviewer.avatar}
+                        alt={review.reviewer.name}
+                        fill
+                        sizes="40px"
+                        className="object-cover"
+                      />
+                    </div>
                   )}
                   <div>
                     <p className="font-semibold text-gray-900">

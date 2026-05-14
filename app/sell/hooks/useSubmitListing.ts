@@ -1,3 +1,4 @@
+import { useRouter } from 'next/navigation'
 import { useCallback, useState } from 'react'
 import toast from 'react-hot-toast'
 import { createListingRequest } from '../api'
@@ -10,6 +11,7 @@ interface UseSubmitListingParams {
 
 export function useSubmitListing({ onVerificationRequired, onSuccess }: UseSubmitListingParams) {
   const [submitting, setSubmitting] = useState(false)
+  const router = useRouter()
 
   const submitListing = useCallback(async (data: ListingFormValues, imageFiles: File[]) => {
     if (imageFiles.length === 0) {
@@ -23,7 +25,7 @@ export function useSubmitListing({ onVerificationRequired, onSuccess }: UseSubmi
 
       if (status === 401) {
         toast.error('Please log in to list an item')
-        window.location.href = '/login?redirect=/sell'
+        router.push('/login?redirect=/sell')
         return
       }
 
@@ -48,14 +50,14 @@ export function useSubmitListing({ onVerificationRequired, onSuccess }: UseSubmi
 
       const createdListing = result.data?.listing || result.listing
       if (createdListing?._id) {
-        window.location.href = `/listings/${createdListing._id}`
+        router.push(`/listings/${createdListing._id}`)
       }
     } catch {
       toast.error('Failed to create listing')
     } finally {
       setSubmitting(false)
     }
-  }, [onSuccess, onVerificationRequired])
+  }, [onSuccess, onVerificationRequired, router])
 
   return {
     submitting,

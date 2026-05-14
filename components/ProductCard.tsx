@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Heart, MapPin, Clock } from 'lucide-react'
@@ -44,9 +45,11 @@ export default function ProductCard({
         onClick={() => onOpenProduct?.(product.id)}
       >
         <div className="relative aspect-square overflow-hidden">
-          <img
+          <Image
             src={product.image}
             alt={product.title}
+            fill
+            sizes="(min-width: 1280px) 25vw, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
             className="h-full w-full object-cover transition-transform duration-300 ease-out group-hover:scale-[1.03]"
           />
           <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-white/90 via-white/30 to-transparent" />
