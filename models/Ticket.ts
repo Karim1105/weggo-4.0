@@ -1,5 +1,5 @@
 import mongoose, { Document, Schema } from 'mongoose'
-import { elasticClient } from '@/lib/elastic'
+import { elasticClient, isIgnorableElasticError, shouldSkipElasticSync } from '@/lib/elastic'
 
 export type TicketStatus = 'open' | 'pending' | 'resolved' | 'closed'
 
@@ -40,7 +40,7 @@ TicketSchema.index({ status: 1, updatedAt: -1 })
 TicketSchema.index({ subject: 'text' }) // Can be removed later once ES text search proves reliable
 
 async function indexTicketInElastic(doc: any) {
-  if (!doc) return
+  if (!doc || shouldSkipElasticSync()) return
   try {
     await elasticClient.index({
       index: 'tickets',
@@ -54,7 +54,9 @@ async function indexTicketInElastic(doc: any) {
       }
     })
   } catch (err) {
-    console.error('ES Ticket Index Error:', err)
+    if (!isIgnorableElasticError(err)) {
+      console.error('ES Ticket Index Error:', err)
+    }
   }
 }
 
@@ -67,16 +69,18 @@ TicketSchema.post('findOneAndUpdate', async function(doc) {
 })
 
 TicketSchema.post('findOneAndDelete', async function(doc) {
-  if (!doc) return
+  if (!doc || shouldSkipElasticSync()) return
   try {
     await elasticClient.delete({
       index: 'tickets',
       id: String(doc._id)
     }).catch(e => {
-      if (e.meta?.statusCode !== 404) console.error('ES Ticket Delete Error:', e)
+      if (e.meta?.statusCode !== 404 && !isIgnorableElasticError(e)) console.error('ES Ticket Delete Error:', e)
     })
   } catch (err) {
-    console.error('ES Ticket Delete Error:', err)
+    if (!isIgnorableElasticError(err)) {
+      console.error('ES Ticket Delete Error:', err)
+    }
   }
 })
 

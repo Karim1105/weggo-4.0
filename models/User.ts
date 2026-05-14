@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose'
 import bcrypt from 'bcryptjs'
-import { elasticClient } from '@/lib/elastic'
+import { elasticClient, isIgnorableElasticError, shouldSkipElasticSync } from '@/lib/elastic'
 
 export interface IUser extends Document {
   name: string
@@ -97,7 +97,7 @@ UserSchema.methods.comparePassword = async function (candidatePassword: string) 
 }
 
 async function indexUserInElastic(doc: any) {
-  if (!doc) return
+  if (!doc || shouldSkipElasticSync()) return
   try {
     await elasticClient.index({
       index: 'users',
@@ -111,7 +111,9 @@ async function indexUserInElastic(doc: any) {
       }
     })
   } catch (err) {
-    console.error('ES User Index Error:', err)
+    if (!isIgnorableElasticError(err)) {
+      console.error('ES User Index Error:', err)
+    }
   }
 }
 
@@ -124,16 +126,18 @@ UserSchema.post('findOneAndUpdate', async function(doc) {
 })
 
 UserSchema.post('findOneAndDelete', async function(doc) {
-  if (!doc) return
+  if (!doc || shouldSkipElasticSync()) return
   try {
     await elasticClient.delete({
       index: 'users',
       id: String(doc._id)
     }).catch(e => {
-      if (e.meta?.statusCode !== 404) console.error('ES User Delete Error:', e)
+      if (e.meta?.statusCode !== 404 && !isIgnorableElasticError(e)) console.error('ES User Delete Error:', e)
     })
   } catch (err) {
-    console.error('ES User Delete Error:', err)
+    if (!isIgnorableElasticError(err)) {
+      console.error('ES User Delete Error:', err)
+    }
   }
 })
 

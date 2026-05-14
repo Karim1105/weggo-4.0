@@ -1,7 +1,11 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 import mongoose from 'mongoose'
 import { NextRequest } from 'next/server'
+import { encodeCursor } from '@/lib/api/listings/cursor'
+import { aggregateListings, countListings } from '@/lib/api/listings/data'
+import { buildListingsPipeline, sanitizeListing } from '@/lib/api/listings/pipeline'
+import { ListingQueryParams, ListingsResult } from '@/lib/api/listings/types'
 
 let mongo: MongoMemoryServer
 
@@ -10,6 +14,29 @@ const loadProductModel = async () => import('@/models/Product')
 const loadUserModel = async () => import('@/models/User')
 const loadConnectDB = async () => import('@/lib/db')
 const loadAuth = async () => import('@/lib/auth')
+
+vi.mock('@/lib/api/listings/elastic', () => ({
+  searchListingsElastic: async (params: ListingQueryParams): Promise<ListingsResult> => {
+    const { pipeline, query, fields } = buildListingsPipeline(params)
+    const [items, total] = await Promise.all([
+      aggregateListings(pipeline),
+      params.includeTotal ? countListings(query) : Promise.resolve(null),
+    ])
+
+    const hasMore = items.length > params.limit
+    const listingsSlice = items.slice(0, params.limit)
+    const nextCursor = hasMore && listingsSlice.length > 0 ? encodeCursor(listingsSlice[listingsSlice.length - 1], fields) : null
+
+    return {
+      listings: listingsSlice.map(sanitizeListing),
+      limit: params.limit,
+      total,
+      totalPages: params.includeTotal && total !== null ? Math.max(1, Math.ceil(total / params.limit)) : null,
+      hasMore,
+      nextCursor,
+    }
+  },
+}))
 
 beforeAll(async () => {
   mongo = await MongoMemoryServer.create()
@@ -58,18 +85,17 @@ describe('listings integration', () => {
     expect(json.data.listings[0].title).toBe('iPhone 14 Plus')
   }, 15000)
 
-  it('paginates correctly even when older listings are missing isBoosted', async () => {
+  it('paginates correctly across multiple unboosted listings', async () => {
     const connectDB = (await loadConnectDB()).default
     await connectDB()
     const Product = (await loadProductModel()).default
 
     const sellerId = new mongoose.Types.ObjectId()
 
-    await Product.collection.insertMany([
+    await Product.create([
       {
-        _id: new mongoose.Types.ObjectId(),
         title: 'Legacy Listing 1',
-        description: 'Old row without explicit boost field',
+        description: 'Older unboosted listing',
         price: 100,
         category: 'electronics',
         condition: 'Good',
@@ -81,9 +107,8 @@ describe('listings integration', () => {
         updatedAt: new Date('2026-04-10T10:00:00.000Z'),
       },
       {
-        _id: new mongoose.Types.ObjectId(),
         title: 'Legacy Listing 2',
-        description: 'Second old row without explicit boost field',
+        description: 'Second unboosted listing',
         price: 200,
         category: 'electronics',
         condition: 'Good',
@@ -95,9 +120,8 @@ describe('listings integration', () => {
         updatedAt: new Date('2026-04-09T10:00:00.000Z'),
       },
       {
-        _id: new mongoose.Types.ObjectId(),
         title: 'Legacy Listing 3',
-        description: 'Third old row without explicit boost field',
+        description: 'Third unboosted listing',
         price: 300,
         category: 'electronics',
         condition: 'Good',
@@ -330,6 +354,70 @@ describe('listings integration', () => {
     expect(json.success).toBe(true)
     expect(json.data.listings.length).toBe(1)
     expect(json.data.listings[0].title).toBe('Regex Safe Listing')
+  }, 15000)
+
+  it('preserves seller-scoped !=deleted filtering', async () => {
+    const connectDB = (await loadConnectDB()).default
+    await connectDB()
+    const Product = (await loadProductModel()).default
+    const User = (await loadUserModel()).default
+    const { generateToken } = await loadAuth()
+
+    const me = await User.create({
+      name: 'Visibility Seller',
+      email: 'visibility@example.com',
+      password: 'Aa123456',
+      location: 'Cairo',
+    })
+
+    await Product.create([
+      {
+        title: 'Visible Listing',
+        description: 'Should remain visible',
+        price: 100,
+        category: 'electronics',
+        condition: 'Good',
+        location: 'Cairo',
+        images: ['/uploads/visible.jpg'],
+        seller: me._id,
+        status: 'active',
+      },
+      {
+        title: 'Hidden Deleted Listing',
+        description: 'Should be excluded',
+        price: 200,
+        category: 'electronics',
+        condition: 'Good',
+        location: 'Cairo',
+        images: ['/uploads/deleted.jpg'],
+        seller: me._id,
+        status: 'deleted',
+      },
+      {
+        title: 'Sold Listing',
+        description: 'Should remain visible too',
+        price: 300,
+        category: 'electronics',
+        condition: 'Good',
+        location: 'Cairo',
+        images: ['/uploads/sold.jpg'],
+        seller: me._id,
+        status: 'sold',
+      },
+    ])
+
+    const token = generateToken(me as any)
+    const { GET } = await loadListings()
+    const req = new NextRequest('http://localhost/api/listings?seller=me&status=all&state=!=deleted&limit=50', {
+      headers: new Headers({ cookie: `token=${token}` }),
+    })
+    const res = await GET(req)
+    const json = await res.json()
+
+    expect(res.status).toBe(200)
+    expect(json.success).toBe(true)
+    expect(json.data.listings).toHaveLength(2)
+    expect(json.data.listings.map((listing: any) => listing.title).sort()).toEqual(['Sold Listing', 'Visible Listing'])
   }, 15000)
 
   it('rejects excessively long location filters', async () => {

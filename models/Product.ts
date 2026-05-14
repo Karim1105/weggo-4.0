@@ -1,5 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose'
-import { elasticClient } from '@/lib/elastic'
+import { elasticClient, isIgnorableElasticError, shouldSkipElasticSync } from '@/lib/elastic'
+import { buildElasticListingDocument } from '@/lib/api/listings/elastic-document'
 
 export interface IProduct extends Document {
   title: string
@@ -136,38 +137,22 @@ ProductSchema.index({ status: 1, averageRating: -1, ratingCount: -1, createdAt: 
 ProductSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 })
 
 async function indexProductInElastic(doc: any) {
-  if (!doc) return
+  if (!doc || shouldSkipElasticSync()) return
   try {
-    const docWithSeller = await doc.populate('seller', 'name avatar sellerVerified averageRating totalSales')
+    const docWithSeller =
+      mongoose.models.User
+        ? await doc.populate('seller', 'name avatar sellerVerified averageRating totalSales')
+        : doc
+
     await elasticClient.index({
       index: 'products',
       id: String(doc._id),
-      document: {
-        id: String(doc._id),
-        title: doc.title,
-        description: doc.description,
-        category: doc.category,
-        subcategory: doc.subcategory,
-        condition: doc.condition,
-        price: doc.price,
-        location: doc.location,
-        locationKeyword: doc.location,
-        status: doc.status,
-        createdAt: doc.createdAt,
-        isBoosted: doc.isBoosted || false,
-        images: doc.images,
-        seller: docWithSeller.seller ? {
-          _id: String((docWithSeller.seller as any)._id),
-          name: (docWithSeller.seller as any).name,
-          avatar: (docWithSeller.seller as any).avatar,
-          sellerVerified: (docWithSeller.seller as any).sellerVerified,
-          averageRating: (docWithSeller.seller as any).averageRating,
-          totalSales: (docWithSeller.seller as any).totalSales
-        } : null
-      }
+      document: buildElasticListingDocument(docWithSeller),
     })
   } catch (err) {
-    console.error('ES Product Index Error:', err)
+    if (!isIgnorableElasticError(err) && (err as { name?: string })?.name !== 'MissingSchemaError') {
+      console.error('ES Product Index Error:', err)
+    }
   }
 }
 
@@ -180,17 +165,19 @@ ProductSchema.post('findOneAndUpdate', async function(doc) {
 })
 
 ProductSchema.post('findOneAndDelete', async function(doc) {
-  if (!doc) return
+  if (!doc || shouldSkipElasticSync()) return
   try {
     await elasticClient.delete({
       index: 'products',
       id: String(doc._id)
     }).catch(e => {
       // Ignore not found
-      if (e.meta?.statusCode !== 404) console.error('ES Product Delete Error:', e)
+      if (e.meta?.statusCode !== 404 && !isIgnorableElasticError(e)) console.error('ES Product Delete Error:', e)
     })
   } catch (err) {
-    console.error('ES Product Delete Error:', err)
+    if (!isIgnorableElasticError(err)) {
+      console.error('ES Product Delete Error:', err)
+    }
   }
 })
 

@@ -1,6 +1,7 @@
 import connectDB from '../lib/db'
 import mongoose from 'mongoose'
 import { elasticClient } from '../lib/elastic'
+import { buildElasticListingDocument } from '../lib/api/listings/elastic-document'
 import Product from '../models/Product'
 import User from '../models/User'
 import Ticket from '../models/Ticket'
@@ -34,29 +35,7 @@ async function syncAll() {
     if (products.length > 0) {
       const productOperations = products.flatMap((doc: any) => [
         { index: { _index: 'products', _id: String(doc._id) } },
-        {
-          id: String(doc._id),
-          title: doc.title,
-          description: doc.description,
-          category: doc.category,
-          subcategory: doc.subcategory,
-          condition: doc.condition,
-          price: doc.price,
-          location: doc.location,
-          locationKeyword: doc.location,
-          status: doc.status,
-          createdAt: doc.createdAt,
-          isBoosted: doc.isBoosted || false,
-          images: doc.images,
-          seller: doc.seller ? {
-            _id: String(doc.seller._id),
-            name: doc.seller.name,
-            avatar: doc.seller.avatar,
-            sellerVerified: doc.seller.sellerVerified,
-            averageRating: doc.seller.averageRating,
-            totalSales: doc.seller.totalSales
-          } : null
-        }
+        buildElasticListingDocument(doc),
       ])
       await elasticClient.bulk({ refresh: true, operations: productOperations })
       console.log(`Synced ${products.length} products.`)
