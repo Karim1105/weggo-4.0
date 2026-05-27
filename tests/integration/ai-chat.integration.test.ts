@@ -1,14 +1,19 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
+import { afterAll, afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 import mongoose from 'mongoose'
 import { NextRequest } from 'next/server'
 
 let mongo: MongoMemoryServer
 
-const loadConnectDB = async () => import('@/lib/db')
-const loadUserModel = async () => import('@/models/User')
-const loadProductModel = async () => import('@/models/Product')
 const loadAiChatRoute = async () => import('@/app/api/ai-chat/route')
+
+function extractSsePayloads(body: string) {
+  return body
+    .split('\n\n')
+    .map((chunk) => chunk.trim())
+    .filter(Boolean)
+    .map((chunk) => chunk.replace(/^data:\s*/, ''))
+}
 
 beforeAll(async () => {
   mongo = await MongoMemoryServer.create()
@@ -17,6 +22,9 @@ beforeAll(async () => {
 })
 
 afterEach(async () => {
+  vi.restoreAllMocks()
+  delete process.env.CHATBOT_API_URL
+
   if (mongoose.connection.readyState) {
     await mongoose.connection.dropDatabase()
   }
@@ -30,6 +38,10 @@ afterAll(async () => {
 })
 
 describe('ai chat route integration', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it('rejects missing message payloads', async () => {
     const { POST } = await loadAiChatRoute()
 
@@ -47,7 +59,7 @@ describe('ai chat route integration', () => {
     expect(json.error).toBe('Message is required')
   }, 20000)
 
-  it('returns a marketplace fallback for non-listing questions', async () => {
+  it('returns a degraded SSE reply when the chatbot service is not configured', async () => {
     const { POST } = await loadAiChatRoute()
 
     const res = await POST(
@@ -57,107 +69,42 @@ describe('ai chat route integration', () => {
         body: JSON.stringify({ message: 'How does Weggo work?' }),
       })
     )
-    const json = await res.json()
 
     expect(res.status).toBe(200)
-    expect(json.success).toBe(true)
-    expect(typeof json.timestamp).toBe('string')
-    expect(json.response).toContain('Weggo lets you browse listings')
+    expect(res.headers.get('content-type')).toContain('text/event-stream')
+    expect(res.headers.get('set-cookie')).toContain('anon_chat_id=')
+
+    const payloads = extractSsePayloads(await res.text())
+    expect(payloads[0]).toContain('"type":"reply"')
+    expect(payloads[0]).toContain('"degraded":true')
+    expect(payloads[0]).toContain('temporarily unavailable')
+    expect(payloads[payloads.length - 1]).toBe('{"type":"done"}')
   }, 20000)
 
-  it('returns active matched listings and excludes inactive ones', async () => {
-    const connectDB = (await loadConnectDB()).default
-    await connectDB()
-    const User = (await loadUserModel()).default
-    const Product = (await loadProductModel()).default
+  it('proxies chatbot responses into SSE when the service is configured', async () => {
+    process.env.CHATBOT_API_URL = 'http://chatbot.internal:5050'
+
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      session_id: 'server-side-session',
+      reply: '{"has_results":true,"results":[{"listing_id":"1","title":"iPhone 15","price":"20000","relevance":"exact"}],"message":"I found a match."}',
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })))
+
     const { POST } = await loadAiChatRoute()
-
-    const seller = await User.create({
-      name: 'Chat Seller',
-      email: 'chat-active@example.com',
-      password: 'Aa123456',
-      location: 'Cairo',
-    })
-
-    await Product.create([
-      {
-        title: 'Galaxy Phone Active',
-        description: 'An active listing that should be returned',
-        price: 12000,
-        category: 'electronics',
-        condition: 'Excellent',
-        location: 'Cairo',
-        images: ['/uploads/galaxy-active.jpg'],
-        seller: seller._id,
-        status: 'active',
-      },
-      {
-        title: 'Galaxy Phone Sold',
-        description: 'A sold listing that should not be returned',
-        price: 10000,
-        category: 'electronics',
-        condition: 'Good',
-        location: 'Giza',
-        images: ['/uploads/galaxy-sold.jpg'],
-        seller: seller._id,
-        status: 'sold',
-      },
-    ])
-
     const res = await POST(
       new NextRequest('http://localhost/api/ai-chat', {
         method: 'POST',
         headers: new Headers({ 'content-type': 'application/json' }),
-        body: JSON.stringify({ message: 'Show me phones' }),
+        body: JSON.stringify({ message: 'Show me an iPhone 15' }),
       })
     )
-    const json = await res.json()
 
     expect(res.status).toBe(200)
-    expect(json.success).toBe(true)
-    expect(json.response).toContain('Galaxy Phone Active')
-    expect(json.response).not.toContain('Galaxy Phone Sold')
-    expect(json.response).toContain('Cairo')
-  }, 20000)
-
-  it('falls back to category listings when keyword matches are absent', async () => {
-    const connectDB = (await loadConnectDB()).default
-    await connectDB()
-    const User = (await loadUserModel()).default
-    const Product = (await loadProductModel()).default
-    const { POST } = await loadAiChatRoute()
-
-    const seller = await User.create({
-      name: 'Laptop Seller',
-      email: 'chat-laptops@example.com',
-      password: 'Aa123456',
-      location: 'Alexandria',
-    })
-
-    await Product.create({
-      title: 'Ultrabook Pro 14',
-      description: 'Portable work machine',
-      price: 22000,
-      category: 'electronics',
-      condition: 'Like New',
-      location: 'Alexandria',
-      images: ['/uploads/ultrabook.jpg'],
-      seller: seller._id,
-      status: 'active',
-    })
-
-    const res = await POST(
-      new NextRequest('http://localhost/api/ai-chat', {
-        method: 'POST',
-        headers: new Headers({ 'content-type': 'application/json' }),
-        body: JSON.stringify({ message: 'Find laptops' }),
-      })
-    )
-    const json = await res.json()
-
-    expect(res.status).toBe(200)
-    expect(json.success).toBe(true)
-    expect(json.response).toContain('Ultrabook Pro 14')
-    expect(json.response).toContain('If you want more, head to Browse')
+    const payloads = extractSsePayloads(await res.text())
+    expect(payloads[0]).toContain('I found a match.')
+    expect(payloads[0]).toContain('"degraded":false')
+    expect(payloads[payloads.length - 1]).toBe('{"type":"done"}')
   }, 20000)
 })

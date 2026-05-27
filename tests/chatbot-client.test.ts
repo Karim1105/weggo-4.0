@@ -1,13 +1,22 @@
 import { describe, expect, it } from 'vitest'
-import { createChatSessionId, formatChatbotReply } from '@/lib/chatbot-client'
+import { formatChatbotReply, parseAiChatStreamEvent } from '@/lib/chatbot-client'
 
 describe('chatbot client helpers', () => {
-  it('creates a non-empty chat session id', () => {
-    expect(createChatSessionId()).toBeTruthy()
-  })
-
   it('keeps plain text replies unchanged', () => {
     expect(formatChatbotReply('Hello there')).toBe('Hello there')
+  })
+
+  it('parses reply events from the ai chat SSE stream', () => {
+    expect(parseAiChatStreamEvent('{"type":"reply","response":"hello"}')).toEqual({
+      type: 'reply',
+      response: 'hello',
+      degraded: false,
+    })
+    expect(parseAiChatStreamEvent('{"type":"done"}')).toEqual({ type: 'done' })
+    expect(parseAiChatStreamEvent('{"type":"error","error":"boom"}')).toEqual({
+      type: 'error',
+      error: 'boom',
+    })
   })
 
   it('formats structured chatbot listing replies for display', () => {

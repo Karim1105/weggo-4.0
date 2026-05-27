@@ -1,13 +1,15 @@
 import os
 import re
 import asyncio
+import json
 import nltk
 
 from contextlib import asynccontextmanager
 from typing import Literal
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
 from llama_index.core import Settings
@@ -46,7 +48,8 @@ DB_NAME          = os.environ.get("DB_NAME",              "weggo")
 SESSIONS_COLL    = os.environ.get("SESSIONS_COLLECTION",  "sessions")
 LANCEDB_URI      = os.environ.get("LANCEDB_URI",          "../lancedb/semantic-lancedb-qwen3-emb")
 EMBED_API_BASE   = os.environ.get("EMBED_API_BASE",       "http://0.0.0.0:8080/v1")
-SESSION_TTL_SECS = int(os.environ.get("SESSION_TTL_SECS", 180))
+SESSION_TTL_SECS = int(os.environ.get("SESSION_TTL_SECS", 1800))
+INTERNAL_SERVICE_TOKEN = os.environ.get("INTERNAL_SERVICE_TOKEN", "").strip()
 
 # ─────────────────────────────────────────────
 # NLTK bootstrap
@@ -469,6 +472,19 @@ app.add_middleware(
 )
 
 
+@app.middleware("http")
+async def enforce_internal_auth(request: Request, call_next):
+    if request.url.path == "/health":
+        return await call_next(request)
+
+    if INTERNAL_SERVICE_TOKEN:
+        token = request.headers.get("X-Internal-Auth", "")
+        if token != INTERNAL_SERVICE_TOKEN:
+            return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"error": "Unauthorized"})
+
+    return await call_next(request)
+
+
 # ─────────────────────────────────────────────
 # Core chat logic
 # ─────────────────────────────────────────────
@@ -535,6 +551,12 @@ class ChatResponse(BaseModel):
     reply:      str
 
 
+async def stream_chat(session_id: str, user_message: str):
+    reply = await chat(session_id, user_message)
+    yield f"data: {json.dumps({'type': 'reply', 'response': reply})}\n\n"
+    yield f"data: {json.dumps({'type': 'done'})}\n\n"
+
+
 # ─────────────────────────────────────────────
 # Routes
 # ─────────────────────────────────────────────
@@ -555,6 +577,21 @@ async def chat_endpoint(body: ChatRequest):
     try:
         reply = await chat(body.session_id, body.message)
         return ChatResponse(session_id=body.session_id, reply=reply)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.post("/chat/stream")
+async def stream_chat_endpoint(body: ChatRequest):
+    try:
+        return StreamingResponse(
+            stream_chat(body.session_id, body.message),
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache, no-transform",
+                "Connection": "keep-alive",
+            },
+        )
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 

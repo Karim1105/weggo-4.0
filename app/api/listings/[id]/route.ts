@@ -7,6 +7,8 @@ import { getAuthUser } from '@/lib/auth'
 import { normalizeCondition, validateCategory, validateSubcategory } from '@/lib/validators'
 import { invalidateMarketplaceDiscoveryCaches } from '@/lib/cache'
 import { normalizeCategoryId, normalizeSubcategoryId } from '@/lib/taxonomy'
+import { queueListingDeleteForSync, queueListingForSync } from '@/lib/api/listings/sync'
+import { ensureLancedbSyncWorkerStarted, kickLancedbSyncWorker } from '@/lib/workers/lancedb-sync'
 
 export async function GET(
   request: NextRequest,
@@ -126,6 +128,9 @@ export async function DELETE(
     await product.save()
 
     invalidateMarketplaceDiscoveryCaches()
+    await queueListingDeleteForSync(product._id)
+    ensureLancedbSyncWorkerStarted()
+    kickLancedbSyncWorker()
 
     return NextResponse.json({
       success: true,
@@ -283,6 +288,9 @@ export async function PUT(
     await product.save()
 
     invalidateMarketplaceDiscoveryCaches()
+    await queueListingForSync(product)
+    ensureLancedbSyncWorkerStarted()
+    kickLancedbSyncWorker()
 
     return NextResponse.json({
       success: true,

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { deriveChatSessionContext, attachAnonChatCookie } from '@/lib/chatbot-session'
 import { sendChatbotServiceMessage } from '@/lib/chatbot-service'
-import type { ExtractedChatbotServiceRequest } from '@/types/ai'
 
 export async function POST(request: NextRequest) {
-  let body: Partial<ExtractedChatbotServiceRequest>
+  let body: { message?: string }
 
   try {
     body = await request.json()
@@ -14,23 +14,22 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const sessionId = typeof body.session_id === 'string' ? body.session_id.trim() : ''
   const message = typeof body.message === 'string' ? body.message.trim() : ''
-
-  if (!sessionId || !message) {
+  if (!message) {
     return NextResponse.json(
-      { error: 'session_id and message are required' },
+      { error: 'message is required' },
       { status: 400 }
     )
   }
 
   try {
+    const { anonCookieValue, sessionId } = await deriveChatSessionContext(request)
     const response = await sendChatbotServiceMessage({
       session_id: sessionId,
       message,
     })
 
-    return NextResponse.json(response)
+    return attachAnonChatCookie(NextResponse.json(response), anonCookieValue)
   } catch (error) {
     return NextResponse.json(
       {

@@ -3,6 +3,8 @@ import connectDB from '@/lib/db'
 import Product from '@/models/Product'
 import { requireAdmin } from '@/lib/auth'
 import { invalidateMarketplaceDiscoveryCaches } from '@/lib/cache'
+import { queueListingsDeleteForSync } from '@/lib/api/listings/sync'
+import { ensureLancedbSyncWorkerStarted, kickLancedbSyncWorker } from '@/lib/workers/lancedb-sync'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -47,6 +49,9 @@ async function handler(request: NextRequest, admin: any) {
 
     // Clear cache
     invalidateMarketplaceDiscoveryCaches()
+    await queueListingsDeleteForSync(listingIds)
+    ensureLancedbSyncWorkerStarted()
+    kickLancedbSyncWorker()
 
     return NextResponse.json({
       success: true,

@@ -7,12 +7,14 @@ import { logger } from '@/lib/logger'
 import { validateCreateListingForm } from '@/lib/validators'
 import { applyPersistentRateLimit } from '@/lib/api/middleware/persistentRateLimit'
 import { encodeCursor } from '@/lib/api/listings/cursor'
-import { aggregateListings, countListings, createListingDocument, findListingByIdWithSeller } from '@/lib/api/listings/data'
+import { aggregateListings, countListings, findListingByIdWithSeller } from '@/lib/api/listings/data'
 import { cleanupUploadedImages, uploadListingImages } from '@/lib/api/listings/images'
 import { buildListingsPipeline, sanitizeListing } from '@/lib/api/listings/pipeline'
 import { parseCreateListingForm, parseListingsQuery } from '@/lib/api/listings/query'
 import { ListingQueryParams, ListingsResult } from '@/lib/api/listings/types'
 import { invalidateMarketplaceDiscoveryCaches } from '@/lib/cache'
+import { createListingWithSyncOutbox } from '@/lib/api/listings/sync'
+import { ensureLancedbSyncWorkerStarted, kickLancedbSyncWorker } from '@/lib/workers/lancedb-sync'
 
 function mapCreateListingError(error: unknown) {
   if (error instanceof Error) {
@@ -135,7 +137,7 @@ export async function createListingService(request: NextRequest, requestId: stri
     const images = await uploadListingImages(formData, user._id.toString(), productId.toString())
 
     try {
-      await createListingDocument({
+      await createListingWithSyncOutbox({
         productId,
         title: input.title,
         description: input.description,
@@ -160,6 +162,8 @@ export async function createListingService(request: NextRequest, requestId: stri
 
     invalidateMarketplaceDiscoveryCaches()
     revalidateTag('listings', 'max')
+    ensureLancedbSyncWorkerStarted()
+    kickLancedbSyncWorker()
 
     logger.info('Listing created successfully', { listingId: product._id, userId: user._id }, requestId)
 

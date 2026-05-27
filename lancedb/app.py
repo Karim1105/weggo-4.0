@@ -23,6 +23,7 @@ from typing import Any
 import lancedb
 import nltk
 import pyarrow as pa
+from lancedb.rerankers import RRFReranker
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 from langdetect import DetectorFactory, detect
@@ -63,6 +64,7 @@ EMBED_QUERY_INSTRUCTION = os.getenv(
 )
 EMBED_BATCH_SIZE       = int(os.getenv("EMBED_BATCH_SIZE", "128"))
 MAX_BATCH_SIZE         = int(os.getenv("MAX_BATCH_SIZE",   "128"))
+INTERNAL_SERVICE_TOKEN = os.getenv("INTERNAL_SERVICE_TOKEN", "").strip()
 
 # ---------------------------------------------------------------------------
 # Thread pool — shared by all async→sync offloads
@@ -261,6 +263,34 @@ class BatchUpsertRequest(BaseModel):
         return v
 
 
+class SearchRequest(BaseModel):
+    query: str
+    locale: str = "en"
+    filters: dict[str, Any] | None = None
+    limit: int = 10
+
+    @model_validator(mode="after")
+    def validate_fields(self):
+        self.query = self.query.strip()
+        if not self.query:
+            raise ValueError("'query' must not be empty.")
+        if self.locale not in ("en", "ar"):
+            raise ValueError("'locale' must be either 'en' or 'ar'.")
+        self.limit = max(1, min(self.limit, 50))
+        return self
+
+
+class ExistsRequest(BaseModel):
+    ids: list[str]
+
+    @field_validator("ids")
+    @classmethod
+    def validate_ids(cls, v: list[str]) -> list[str]:
+        if not v:
+            raise ValueError("'ids' must be a non-empty array.")
+        return v
+
+
 # ---------------------------------------------------------------------------
 # LanceDB manager
 # ---------------------------------------------------------------------------
@@ -315,6 +345,22 @@ class LanceDBManager:
 
         return pa.table({
             "id":              [str(item["id"]) for item in items],
+            "title_en":        [item.get("title_en", "") for item in items],
+            "title_ar":        [item.get("title_ar", "") for item in items],
+            "description_en":  [item.get("description_en", "") for item in items],
+            "description_ar":  [item.get("description_ar", "") for item in items],
+            "brand_en":        [item.get("brand_en", "") for item in items],
+            "brand_ar":        [item.get("brand_ar", "") for item in items],
+            "category_en":     [item.get("category_en", "") for item in items],
+            "category_ar":     [item.get("category_ar", "") for item in items],
+            "subcategory_en":  [item.get("subcategory_en", "") for item in items],
+            "subcategory_ar":  [item.get("subcategory_ar", "") for item in items],
+            "condition_en":    [item.get("condition_en", "") for item in items],
+            "condition_ar":    [item.get("condition_ar", "") for item in items],
+            "price_en":        [item.get("price_en") for item in items],
+            "price_ar":        [item.get("price_ar") for item in items],
+            "seller_rating_en": [item.get("sellerProfile", {}).get("rating_en") for item in items],
+            "seller_rating_ar": [item.get("sellerProfile", {}).get("rating_ar") for item in items],
             "text":            raw_texts,
             "normalized_text": normalized_texts,
             "vector":          embeddings,
@@ -406,6 +452,62 @@ class LanceDBManager:
             return {"status": "ok", "table": self._table_name, "row_count": 0,
                     "note": "table not yet created"}
 
+    def _build_search_filter(self, locale: str, filters: dict[str, Any] | None) -> str | None:
+        if not filters:
+            return None
+
+        clauses: list[str] = []
+        category = (filters.get("category") or "").strip()
+        condition = (filters.get("condition") or "").strip()
+        min_price = filters.get("minPrice")
+        max_price = filters.get("maxPrice")
+
+        if category:
+            column = f"category_{locale}"
+            safe_category = category.replace("'", "\\'")
+            clauses.append(f"{column} = '{safe_category}'")
+        if condition:
+            column = f"condition_{locale}"
+            safe_condition = condition.replace("'", "\\'")
+            clauses.append(f"{column} = '{safe_condition}'")
+        if isinstance(min_price, (int, float)):
+            clauses.append(f"price_en >= {float(min_price)}")
+        if isinstance(max_price, (int, float)):
+            clauses.append(f"price_en <= {float(max_price)}")
+
+        if not clauses:
+            return None
+
+        return " AND ".join(clauses)
+
+    def _do_search(self, body: SearchRequest) -> dict:
+        tbl = self._get_table()
+        reranker = RRFReranker()
+        query_lang = detect_language(body.query)
+        q_fts = clean_text_for_lexical(body.query, query_lang)
+        q_vec = self.embed_model.get_query_embedding(body.query)
+        search = (
+            tbl.search(query_type="hybrid")
+            .vector(q_vec)
+            .text(q_fts)
+            .limit(body.limit)
+            .rerank(reranker)
+        )
+
+        where = self._build_search_filter(body.locale, body.filters)
+        if where:
+            search = search.where(where)
+
+        results = search.to_list()
+        return {"results": [row["id"] for row in results]}
+
+    def _do_exists(self, body: ExistsRequest) -> dict:
+        tbl = self._get_table()
+        safe_ids = [listing_id.replace("'", "\\'") for listing_id in body.ids]
+        quoted_ids = ",".join(f"'{listing_id}'" for listing_id in safe_ids)
+        results = tbl.search().where(f"id IN ({quoted_ids})").limit(len(body.ids)).to_list()
+        return {"existing_ids": [row["id"] for row in results]}
+
 
 # ---------------------------------------------------------------------------
 # Async wrappers — hold the write lock, offload blocking work to thread pool
@@ -467,6 +569,19 @@ app = FastAPI(
     version="2.0.0",
     lifespan=lifespan,
 )
+
+
+@app.middleware("http")
+async def enforce_internal_auth(request: Request, call_next):
+    if request.url.path == "/health":
+        return await call_next(request)
+
+    if INTERNAL_SERVICE_TOKEN:
+        token = request.headers.get("X-Internal-Auth", "")
+        if token != INTERNAL_SERVICE_TOKEN:
+            return JSONResponse(status_code=status.HTTP_401_UNAUTHORIZED, content={"error": "Unauthorized"})
+
+    return await call_next(request)
 
 
 def get_manager(request: Request) -> LanceDBManager:
@@ -547,6 +662,20 @@ async def update_listing(listing_id: str, listing: ListingModel, request: Reques
 async def delete_listing(listing_id: str, request: Request):
     mgr = get_manager(request)
     return await _locked_write(mgr, mgr._do_delete, listing_id)
+
+
+@app.post("/listings/search", status_code=status.HTTP_200_OK,
+          summary="Hybrid search over indexed listings")
+async def search_listings(body: SearchRequest, request: Request):
+    mgr = get_manager(request)
+    return await asyncio.to_thread(mgr._do_search, body)
+
+
+@app.post("/listings/exists", status_code=status.HTTP_200_OK,
+          summary="Check which listing ids exist in the index")
+async def check_listing_exists(body: ExistsRequest, request: Request):
+    mgr = get_manager(request)
+    return await asyncio.to_thread(mgr._do_exists, body)
 
 
 # ---------------------------------------------------------------------------

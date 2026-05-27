@@ -3,8 +3,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageCircle, X, Send, Sparkles, Loader2 } from 'lucide-react'
-import { createChatSessionId, formatChatbotReply } from '@/lib/chatbot-client'
-import type { AiChatRequestBody, AiChatResponse, ChatbotMessage, ChatbotRole } from '@/types/ai'
+import { formatChatbotReply, parseAiChatStreamEvent } from '@/lib/chatbot-client'
+import type { AiChatRequestBody, ChatbotMessage, ChatbotRole } from '@/types/ai'
 
 function createMessage(role: ChatbotRole, content: string): ChatbotMessage {
   const id = typeof crypto !== 'undefined' && crypto.randomUUID
@@ -30,7 +30,6 @@ export default function AIChatbot() {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-  const sessionIdRef = useRef(createChatSessionId())
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -51,19 +50,51 @@ export default function AIChatbot() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: messageText,
-          sessionId: sessionIdRef.current,
         } satisfies AiChatRequestBody),
       })
-      const data: AiChatResponse = await res.json()
 
-      const assistantMessage = createMessage(
-        'assistant',
-        data.success
-          ? formatChatbotReply(data.response)
-          : (data.error || 'I ran into an issue while searching. Please try again.')
-      )
+      if (!res.ok || !res.body) {
+        throw new Error('The assistant stream could not be opened.')
+      }
 
-      setMessages((prev) => [...prev, assistantMessage])
+      const reader = res.body.getReader()
+      const decoder = new TextDecoder()
+      let buffer = ''
+      let replyText = ''
+
+      for (;;) {
+        const { done, value } = await reader.read()
+        if (done) break
+
+        buffer += decoder.decode(value, { stream: true })
+        const parts = buffer.split('\n\n')
+        buffer = parts.pop() || ''
+
+        for (const part of parts) {
+          const line = part
+            .split('\n')
+            .find((candidate) => candidate.startsWith('data: '))
+
+          if (!line) continue
+
+          const event = parseAiChatStreamEvent(line.slice(6))
+          if (!event) continue
+
+          if (event.type === 'reply') {
+            replyText = event.response
+          }
+        }
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        createMessage(
+          'assistant',
+          replyText
+            ? formatChatbotReply(replyText)
+            : 'I ran into an issue while searching. Please try again.'
+        ),
+      ])
     } catch {
       setMessages((prev) => [
         ...prev,

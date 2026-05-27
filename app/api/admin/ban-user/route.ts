@@ -5,6 +5,8 @@ import Product from '@/models/Product'
 import { requireAdmin } from '@/lib/auth'
 import { logger, getRequestId } from '@/lib/logger'
 import { invalidateMarketplaceDiscoveryCaches } from '@/lib/cache'
+import { queueListingsDeleteForSync } from '@/lib/api/listings/sync'
+import { ensureLancedbSyncWorkerStarted, kickLancedbSyncWorker } from '@/lib/workers/lancedb-sync'
 
 // POST /api/admin/ban-user - Simple endpoint to ban a user
 async function handler(request: NextRequest, admin: any) {
@@ -75,6 +77,7 @@ async function handler(request: NextRequest, admin: any) {
 
     // Mark all user's listings as deleted (soft delete) and set expiresAt for TTL cleanup
     const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+    const listingIds = await Product.find({ seller: user._id, status: { $ne: 'deleted' } }).distinct('_id')
     const listingResult = await Product.updateMany(
       { seller: user._id, status: { $ne: 'deleted' } },
       { $set: { status: 'deleted', expiresAt } }
@@ -83,6 +86,9 @@ async function handler(request: NextRequest, admin: any) {
     await user.save()
 
     invalidateMarketplaceDiscoveryCaches()
+    await queueListingsDeleteForSync(listingIds)
+    ensureLancedbSyncWorkerStarted()
+    kickLancedbSyncWorker()
 
     logger.info('User banned successfully with listings deleted', { userId: user._id, email: user.email, adminId: admin._id, listingsDeleted: listingResult.modifiedCount }, requestId)
 

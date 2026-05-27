@@ -5,6 +5,8 @@ import Product from '@/models/Product'
 import { requireAdmin } from '@/lib/auth'
 import { logger, getRequestId } from '@/lib/logger'
 import { invalidateMarketplaceDiscoveryCaches } from '@/lib/cache'
+import { queueListingsUpsertForSync } from '@/lib/api/listings/sync'
+import { ensureLancedbSyncWorkerStarted, kickLancedbSyncWorker } from '@/lib/workers/lancedb-sync'
 
 // POST /api/admin/unban-user - Simple endpoint to unban a user
 async function handler(request: NextRequest, admin: any) {
@@ -52,6 +54,7 @@ async function handler(request: NextRequest, admin: any) {
 
     // Restore all user's listings that were deleted (set back to active) and remove expiresAt
     // Only restore listings that were soft-deleted with an expiresAt (i.e. admin/ban deletions)
+    const listingIds = await Product.find({ seller: user._id, status: 'deleted', expiresAt: { $exists: true } }).distinct('_id')
     const listingResult = await Product.updateMany(
       { seller: user._id, status: 'deleted', expiresAt: { $exists: true } },
       { $set: { status: 'active' }, $unset: { expiresAt: 1 } }
@@ -59,6 +62,9 @@ async function handler(request: NextRequest, admin: any) {
 
     await user.save()
     invalidateMarketplaceDiscoveryCaches()
+    await queueListingsUpsertForSync(listingIds)
+    ensureLancedbSyncWorkerStarted()
+    kickLancedbSyncWorker()
 
     logger.info('User unbanned successfully with listings restored', { userId: user._id, email: user.email, adminId: admin._id, listingsRestored: listingResult.modifiedCount }, requestId)
 

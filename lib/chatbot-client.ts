@@ -1,4 +1,4 @@
-import type { ExtractedChatbotStructuredReply } from '@/types/ai'
+import type { AiChatStreamEvent, ExtractedChatbotStructuredReply } from '@/types/ai'
 
 function isStructuredReply(value: unknown): value is ExtractedChatbotStructuredReply {
   if (!value || typeof value !== 'object') return false
@@ -11,12 +11,25 @@ function isStructuredReply(value: unknown): value is ExtractedChatbotStructuredR
   )
 }
 
-export function createChatSessionId(): string {
-  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-    return crypto.randomUUID()
-  }
+export function parseAiChatStreamEvent(raw: string): AiChatStreamEvent | null {
+  try {
+    const parsed = JSON.parse(raw) as Partial<AiChatStreamEvent>
+    if (parsed.type === 'reply' && typeof parsed.response === 'string') {
+      return { type: 'reply', response: parsed.response, degraded: parsed.degraded === true }
+    }
 
-  return `chat-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    if (parsed.type === 'done') {
+      return { type: 'done' }
+    }
+
+    if (parsed.type === 'error' && typeof parsed.error === 'string') {
+      return { type: 'error', error: parsed.error }
+    }
+
+    return null
+  } catch {
+    return null
+  }
 }
 
 export function formatChatbotReply(reply: string): string {

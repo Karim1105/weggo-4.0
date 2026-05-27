@@ -7,6 +7,8 @@ import Product from '@/models/Product'
 import { requireAdmin } from '@/lib/auth'
 import { invalidateMarketplaceDiscoveryCaches } from '@/lib/cache'
 import { logger, getRequestId } from '@/lib/logger'
+import { queueListingsDeleteForSync, queueListingsUpsertForSync } from '@/lib/api/listings/sync'
+import { ensureLancedbSyncWorkerStarted, kickLancedbSyncWorker } from '@/lib/workers/lancedb-sync'
 
 async function getHandler(
   request: NextRequest,
@@ -124,6 +126,10 @@ async function postHandler(
         )
       }
 
+      const restoredListingIds = await Product.find(
+        { seller: appeal.userId, status: 'deleted', expiresAt: { $exists: true } }
+      ).distinct('_id')
+
       await Product.updateMany(
         { seller: appeal.userId, status: 'deleted', expiresAt: { $exists: true } },
         { $set: { status: 'active' }, $unset: { expiresAt: 1 } }
@@ -135,6 +141,9 @@ async function postHandler(
       appeal.reviewedAt = new Date()
 
       invalidateMarketplaceDiscoveryCaches()
+      await queueListingsUpsertForSync(restoredListingIds)
+      ensureLancedbSyncWorkerStarted()
+      kickLancedbSyncWorker()
 
       logger.info('Ban appeal approved', { appealId, userId: appeal.userId, adminId: admin._id }, requestId)
     } else {
@@ -162,12 +171,19 @@ async function postHandler(
         })
 
         const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+        const deletedListingIds = await Product.find(
+          { seller: appeal.userId, status: { $ne: 'deleted' } }
+        ).distinct('_id')
+
         await Product.updateMany(
           { seller: appeal.userId, status: { $ne: 'deleted' } },
           { $set: { status: 'deleted', expiresAt } }
         )
 
         invalidateMarketplaceDiscoveryCaches()
+        await queueListingsDeleteForSync(deletedListingIds)
+        ensureLancedbSyncWorkerStarted()
+        kickLancedbSyncWorker()
       }
 
       appeal.status = 'rejected'

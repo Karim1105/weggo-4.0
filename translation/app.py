@@ -32,6 +32,7 @@ log = logging.getLogger("translation_api")
 
 REQUEST_TIMEOUT_S = float(os.environ.get("TRANSLATION_TIMEOUT_S", "60"))
 MAX_LISTINGS_PER_REQUEST = int(os.environ.get("MAX_LISTINGS_PER_REQUEST", "50"))
+INTERNAL_SERVICE_TOKEN = os.environ.get("INTERNAL_SERVICE_TOKEN", "").strip()
 
 app = Flask(__name__)
 
@@ -47,6 +48,19 @@ log.info("Service ready.")
 def _bad_request(message: str, **extra: Any):
     payload = {"error": message, **extra}
     return jsonify(payload), 400
+
+
+@app.before_request
+def enforce_internal_auth():
+    if request.path in ("/healthz", "/readyz"):
+        return None
+
+    if INTERNAL_SERVICE_TOKEN:
+        token = request.headers.get("X-Internal-Auth", "")
+        if token != INTERNAL_SERVICE_TOKEN:
+            return jsonify({"error": "Unauthorized"}), 401
+
+    return None
 
 
 @app.get("/healthz")

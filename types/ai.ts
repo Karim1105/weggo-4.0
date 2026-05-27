@@ -9,7 +9,6 @@ export interface ChatbotMessage {
 
 export interface AiChatRequestBody {
   message: string
-  sessionId?: string
 }
 
 export interface AiChatProductSummary {
@@ -18,19 +17,11 @@ export interface AiChatProductSummary {
   location: string
 }
 
-export interface AiChatQueryConfigEntry {
-  matcher: (text: string) => boolean
-  category: string
-  icon: string
-  label: string
-  keywords: string[]
-  fallback: string
-}
-
 export interface AiChatSuccessResponse {
   success: true
   response: string
   timestamp: string
+  degraded?: boolean
 }
 
 export interface AiChatErrorResponse {
@@ -40,6 +31,26 @@ export interface AiChatErrorResponse {
 
 export type AiChatResponse = AiChatSuccessResponse | AiChatErrorResponse
 
+export interface AiChatStreamReplyEvent {
+  type: 'reply'
+  response: string
+  degraded?: boolean
+}
+
+export interface AiChatStreamDoneEvent {
+  type: 'done'
+}
+
+export interface AiChatStreamErrorEvent {
+  type: 'error'
+  error: string
+}
+
+export type AiChatStreamEvent =
+  | AiChatStreamReplyEvent
+  | AiChatStreamDoneEvent
+  | AiChatStreamErrorEvent
+
 export interface ExtractedChatbotServiceRequest {
   session_id: string
   message: string
@@ -48,6 +59,12 @@ export interface ExtractedChatbotServiceRequest {
 export interface ExtractedChatbotServiceResponse {
   session_id: string
   reply: string
+}
+
+export interface ExtractedChatbotServiceStreamEvent {
+  type: 'chunk' | 'reply' | 'done'
+  content?: string
+  reply?: string
 }
 
 export interface ExtractedChatbotServiceErrorResponse {
@@ -133,3 +150,93 @@ export interface LanceDbSearchFilters {
   location?: string
   brand?: string
 }
+
+export interface LancedbSellerProfilePayload {
+  rating_en?: number | null
+  rating_ar?: number | null
+}
+
+export interface LancedbListingPayload {
+  id: string
+  title_en: string
+  title_ar: string
+  description_en: string
+  description_ar: string
+  brand_en?: string
+  brand_ar?: string
+  category_en: string
+  category_ar: string
+  subcategory_en?: string
+  subcategory_ar?: string
+  condition_en: string
+  condition_ar: string
+  price_en?: number | null
+  price_ar?: number | null
+  sellerProfile?: LancedbSellerProfilePayload
+}
+
+export interface LancedbBatchUpsertRequest {
+  listings: LancedbListingPayload[]
+}
+
+export interface LancedbBatchUpsertResponse {
+  upserted: string[]
+}
+
+export interface LancedbDeleteResponse {
+  deleted: string
+}
+
+export interface LancedbSearchRequest {
+  query: string
+  locale: 'en' | 'ar'
+  filters?: LanceDbSearchFilters
+  limit?: number
+}
+
+export interface LancedbSearchResponse {
+  results: string[]
+}
+
+export interface LancedbExistsRequest {
+  ids: string[]
+}
+
+export interface LancedbExistsResponse {
+  existing_ids: string[]
+}
+
+export interface TranslationServiceListingInput {
+  title?: string
+  description?: string
+  brand?: string
+  category?: string
+  subcategory?: string
+  condition?: string
+  price?: number | string
+  sellerProfile?: {
+    rating?: number | string | null
+  }
+}
+
+export interface TranslationServiceListingOutput extends TranslationServiceListingInput {
+  _sourceLanguage?: 'en' | 'ar'
+  _targetLanguage?: 'en' | 'ar'
+  title_en?: string
+  title_ar?: string
+  description_en?: string
+  description_ar?: string
+  brand_en?: string
+  brand_ar?: string
+  category_en?: string
+  category_ar?: string
+  subcategory_en?: string
+  subcategory_ar?: string
+  condition_en?: string
+  condition_ar?: string
+}
+
+export type TranslationServiceBatchRequest = TranslationServiceListingInput[]
+export type TranslationServiceBatchResponse = TranslationServiceListingOutput[]
+
+export type ListingSyncOperation = 'upsert' | 'delete'

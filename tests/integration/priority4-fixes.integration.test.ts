@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll, afterEach } from 'vitest'
+import { describe, it, expect, beforeAll, afterAll, afterEach, beforeEach, vi } from 'vitest'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 import mongoose from 'mongoose'
 import { NextRequest } from 'next/server'
@@ -37,10 +37,23 @@ function authedJsonRequest(
   })
 }
 
+function extractSsePayloads(body: string) {
+  return body
+    .split('\n\n')
+    .map((chunk) => chunk.trim())
+    .filter(Boolean)
+    .map((chunk) => chunk.replace(/^data:\s*/, ''))
+}
+
 beforeAll(async () => {
   mongo = await MongoMemoryServer.create()
   process.env.MONGODB_URI = mongo.getUri()
   process.env.JWT_SECRET = 'test-secret'
+})
+
+beforeEach(() => {
+  vi.restoreAllMocks()
+  delete process.env.CHATBOT_API_URL
 })
 
 afterEach(async () => {
@@ -135,28 +148,16 @@ describe('priority 4 fixes integration', () => {
   it('serves chatbot listing suggestions from the shared server route', async () => {
     const connectDB = (await loadConnectDB()).default
     await connectDB()
-    const User = (await loadUserModel()).default
-    const Product = (await loadProductModel()).default
     const { POST } = await loadAiChatRoute()
 
-    const seller = await User.create({
-      name: 'Chat Seller',
-      email: 'chat-seller@example.com',
-      password: 'Aa123456',
-      location: 'Cairo',
-    })
-
-    await Product.create({
-      title: 'Galaxy Phone',
-      description: 'A recent phone listing',
-      price: 12000,
-      category: 'electronics',
-      condition: 'Excellent',
-      location: 'Cairo',
-      images: ['/uploads/galaxy.jpg'],
-      seller: seller._id,
-      status: 'active',
-    })
+    process.env.CHATBOT_API_URL = 'http://chatbot.internal:5050'
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      session_id: 'server-session',
+      reply: '{"has_results":true,"results":[{"listing_id":"galaxy","title":"Galaxy Phone","price":"12000","relevance":"exact"}],"message":"I found a listing."}',
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })))
 
     const res = await POST(
       new NextRequest('http://localhost/api/ai-chat', {
@@ -165,11 +166,10 @@ describe('priority 4 fixes integration', () => {
         body: JSON.stringify({ message: 'Show me phones' }),
       })
     )
-    const json = await res.json()
+    const payloads = extractSsePayloads(await res.text())
 
     expect(res.status).toBe(200)
-    expect(json.success).toBe(true)
-    expect(json.response).toContain('Galaxy Phone')
+    expect(payloads[0]).toContain('Galaxy Phone')
   }, 20000)
 
   it('requires a debug secret before exposing cookie diagnostics', async () => {

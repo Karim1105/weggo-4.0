@@ -5,6 +5,8 @@ import Report from '@/models/Report'
 import Product from '@/models/Product'
 import { requireAdmin } from '@/lib/auth'
 import { invalidateMarketplaceDiscoveryCaches } from '@/lib/cache'
+import { queueListingDeleteForSync } from '@/lib/api/listings/sync'
+import { ensureLancedbSyncWorkerStarted, kickLancedbSyncWorker } from '@/lib/workers/lancedb-sync'
 
 async function getHandler(
   request: NextRequest,
@@ -115,6 +117,9 @@ async function handler(
             expiresAt,
           })
           invalidateMarketplaceDiscoveryCaches()
+          await queueListingDeleteForSync(report.listing.toString())
+          ensureLancedbSyncWorkerStarted()
+          kickLancedbSyncWorker()
         }
         newStatus = 'resolved'
         break

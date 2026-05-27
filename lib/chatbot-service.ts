@@ -3,6 +3,12 @@ import type {
   ExtractedChatbotServiceRequest,
   ExtractedChatbotServiceResponse,
 } from '@/types/ai'
+import { getCircuitBreaker } from '@/lib/services/circuit-breaker'
+import { getLimiter } from '@/lib/services/concurrency'
+import { requestJson, requestStream } from '@/lib/services/http-client'
+
+const breaker = getCircuitBreaker('chatbot')
+const limiter = getLimiter('chatbot', 32)
 
 function isChatbotServiceResponse(value: unknown): value is ExtractedChatbotServiceResponse {
   if (!value || typeof value !== 'object') return false
@@ -26,6 +32,11 @@ export function getChatbotApiUrl(): string | null {
   return url.replace(/\/+$/, '')
 }
 
+function getInternalHeaders() {
+  const token = process.env.INTERNAL_SERVICE_TOKEN?.trim()
+  return token ? { 'X-Internal-Auth': token } : undefined
+}
+
 export async function sendChatbotServiceMessage(
   payload: ExtractedChatbotServiceRequest
 ): Promise<ExtractedChatbotServiceResponse> {
@@ -34,23 +45,46 @@ export async function sendChatbotServiceMessage(
     throw new Error('CHATBOT_API_URL is not configured')
   }
 
-  const response = await fetch(`${baseUrl}/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-    cache: 'no-store',
-  })
+  return limiter(() =>
+    breaker.run('chatbot service', async () => {
+      const data = await requestJson<unknown>(`${baseUrl}/chat`, {
+        method: 'POST',
+        body: payload,
+        headers: getInternalHeaders(),
+        timeoutMs: 8_000,
+        signal: undefined,
+      })
 
-  const data = await response.json().catch(() => null) as unknown
+      if (!isChatbotServiceResponse(data)) {
+        throw new Error(getChatbotServiceErrorMessage(data) || 'Chatbot service returned an invalid payload')
+      }
 
-  if (!response.ok) {
-    const message = getChatbotServiceErrorMessage(data) || `Chatbot service returned ${response.status}`
-    throw new Error(message)
+      return data
+    })
+  )
+}
+
+export async function streamChatbotServiceMessage(
+  payload: ExtractedChatbotServiceRequest,
+  signal?: AbortSignal
+) {
+  const baseUrl = getChatbotApiUrl()
+  if (!baseUrl) {
+    throw new Error('CHATBOT_API_URL is not configured')
   }
 
-  if (!isChatbotServiceResponse(data)) {
-    throw new Error('Chatbot service returned an invalid payload')
-  }
-
-  return data
+  return limiter(() =>
+    breaker.run('chatbot service', () =>
+      requestStream(`${baseUrl}/chat/stream`, {
+        method: 'POST',
+        body: payload,
+        headers: {
+          Accept: 'text/event-stream',
+          ...getInternalHeaders(),
+        },
+        timeoutMs: 30_000,
+        signal,
+      })
+    )
+  )
 }

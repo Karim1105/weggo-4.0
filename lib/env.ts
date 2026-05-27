@@ -23,6 +23,19 @@ export function validateEnvironment() {
     })
   }
 
+  const serviceUrlVars = ['CHATBOT_API_URL', 'LANCEDB_API_URL', 'TRANSLATION_API_URL']
+  serviceUrlVars.forEach((envVar) => {
+    const publicName = `NEXT_PUBLIC_${envVar}`
+    if (process.env[publicName]) {
+      throw new Error(`${publicName} must not be defined. Python service URLs are server-only.`)
+    }
+  })
+
+  const configuredServices = serviceUrlVars.filter((envVar) => Boolean(process.env[envVar]))
+  if (configuredServices.length > 0 && !process.env.INTERNAL_SERVICE_TOKEN) {
+    warnings.push('INTERNAL_SERVICE_TOKEN')
+  }
+
   const smtpVars = ['SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS']
   const configuredSmtpVars = smtpVars.filter((envVar) => Boolean(process.env[envVar]))
   if (configuredSmtpVars.length > 0 && configuredSmtpVars.length < smtpVars.length) {
