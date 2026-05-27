@@ -9,7 +9,7 @@ MODE="${1:-key}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 usage() {
-  cat <<EOF
+  cat <<EOF2
 Usage:
   $(basename "$0") key
   $(basename "$0") deploy
@@ -29,7 +29,7 @@ Environment:
 Examples:
   $(basename "$0") key
   REPO_SSH_URL=git@github-weggo:OWNER/REPO.git JWT_SECRET=... MONGODB_URI=... NEXT_PUBLIC_SITE_URL=https://example.com $(basename "$0") deploy
-EOF
+EOF2
 }
 
 require_env() {

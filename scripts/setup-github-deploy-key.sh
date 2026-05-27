@@ -31,7 +31,7 @@ upsert_config_block() {
     ' "$CONFIG_PATH" >"$tmp"
   fi
 
-  cat >>"$tmp" <<EOF
+  cat >>"$tmp" <<EOF2
 $BLOCK_START
 Host $SSH_HOST_ALIAS
   HostName $SSH_HOSTNAME
@@ -39,7 +39,7 @@ Host $SSH_HOST_ALIAS
   IdentityFile $KEY_PATH
   IdentitiesOnly yes
 $BLOCK_END
-EOF
+EOF2
 
   mv "$tmp" "$CONFIG_PATH"
 }
