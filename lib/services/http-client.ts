@@ -33,8 +33,11 @@ const agent = new Agent({
   keepAliveMaxTimeout: 60_000,
   connections: 64,
   pipelining: 1,
-  headersTimeout: 5_000,
-  bodyTimeout: 30_000,
+  // Per-call timeouts are enforced via AbortController in createTimeoutSignal,
+  // so the agent-level timeouts must be permissive. The translation batch
+  // endpoint can take 30s+ before sending headers when the GPU is warming up.
+  headersTimeout: 120_000,
+  bodyTimeout: 120_000,
 })
 
 function createTimeoutSignal(timeoutMs: number, signal?: AbortSignal) {
