@@ -1,7 +1,7 @@
 import crypto from 'crypto'
 import { getCircuitBreaker } from '@/lib/services/circuit-breaker'
 import { getLimiter } from '@/lib/services/concurrency'
-import { requestJson } from '@/lib/services/http-client'
+import { requestJson, ServiceHttpError } from '@/lib/services/http-client'
 import { BoundedLruCache } from '@/lib/services/lru-cache'
 import { singleFlight } from '@/lib/services/single-flight'
 import type {
@@ -109,15 +109,24 @@ export async function getExistingLancedbIds(ids: string[]) {
 
   return readLimiter(() =>
     breaker.run('lancedb service', async () => {
-      const response = await requestJson<LancedbExistsResponse>(`${baseUrl}/listings/exists`, {
-        method: 'POST',
-        body,
-        headers: getInternalHeaders(),
-        timeoutMs: 5_000,
-        idempotent: true,
-        retries: 1,
-      })
-      return Array.isArray(response.existing_ids) ? response.existing_ids : []
+      try {
+        const response = await requestJson<LancedbExistsResponse>(`${baseUrl}/listings/exists`, {
+          method: 'POST',
+          body,
+          headers: getInternalHeaders(),
+          timeoutMs: 5_000,
+          idempotent: true,
+          retries: 1,
+        })
+        return Array.isArray(response.existing_ids) ? response.existing_ids : []
+      } catch (error) {
+        // Fresh deploys have no table until the first upsert; the service
+        // returns 409 with "Table does not exist yet". For an exists-check
+        // that's just "nothing exists yet" — return [] so the reconciler
+        // can proceed to queue all listings for upsert.
+        if (error instanceof ServiceHttpError && error.status === 409) return []
+        throw error
+      }
     })
   )
 }
