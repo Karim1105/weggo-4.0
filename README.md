@@ -153,6 +153,7 @@ npm run test:e2e
 - [START_HERE.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/START_HERE.md)
 - [QUICKSTART.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/QUICKSTART.md)
 - [SETUP.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/SETUP.md)
+- [DEPLOY_AUTOMATION.md](/home/weakx/Code/weggo-4.0/DEPLOY_AUTOMATION.md)
 - [LOCAL_SETUP.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/LOCAL_SETUP.md)
 - [SETUP_BACKEND.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/SETUP_BACKEND.md)
 - [FEATURES.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/FEATURES.md)
