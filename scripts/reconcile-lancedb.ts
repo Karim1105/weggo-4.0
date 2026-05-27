@@ -5,11 +5,16 @@ import { reconcileLancedbIndex } from '@/lib/workers/lancedb-reconcile'
 async function main() {
   console.log('[reconcile] scanning Mongo for active listings missing from LanceDB…')
   await reconcileLancedbIndex()
-  console.log('[reconcile] enqueue complete; draining sync outbox…')
+  console.log('[reconcile] enqueue complete; attempting to drain sync outbox…')
 
   for (let i = 0; i < 200; i += 1) {
     const before = Date.now()
-    await drainListingSyncOutboxBatch()
+    try {
+      await drainListingSyncOutboxBatch()
+    } catch (error) {
+      console.log('[reconcile] drain attempt errored, will let live worker handle it:', (error as Error).message)
+      break
+    }
     const elapsed = Date.now() - before
     console.log(`[reconcile] drain pass ${i + 1} done in ${elapsed}ms`)
 
