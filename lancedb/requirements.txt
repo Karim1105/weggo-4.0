@@ -1,0 +1,11 @@
+fastapi>=0.111
+uvicorn[standard]>=0.29
+gunicorn>=21.0
+lancedb>=0.6
+pyarrow>=14.0
+pydantic>=2.0
+nltk
+langdetect
+camel-tools
+pyarabic
+llama-index-embeddings-openai-like

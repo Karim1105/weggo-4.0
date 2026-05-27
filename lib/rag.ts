@@ -2,38 +2,15 @@
 // This provides context-aware responses based on actual product data
 
 import { searchProducts, getCategorySuggestions, getBrandSuggestions } from './categorization'
+import type {
+  LanceDbSearchFilters,
+  RetrievalProduct,
+  RetrievalSearchContext,
+  RetrievalSearchResult,
+} from '@/types/ai'
 
-export interface Product {
-  id: string
-  title: string
-  description: string
-  price: number
-  location: string
-  condition: string
-  category: string
-  subcategory?: string
-  brand?: string
-  images: string[]
-  seller: {
-    id: string
-    name: string
-    rating: number
-    totalSales: number
-  }
-  postedAt: string
-  tags: string[]
-}
-
-export interface SearchContext {
-  products: Product[]
-  query: string
-  userLocation?: string
-  userPreferences?: {
-    categories: string[]
-    priceRange: { min: number; max: number }
-    brands: string[]
-  }
-}
+export type Product = RetrievalProduct
+export type SearchContext = RetrievalSearchContext
 
 // Mock product database (in production, this would come from your database)
 const MOCK_PRODUCTS: Product[] = [
@@ -200,12 +177,7 @@ const MOCK_PRODUCTS: Product[] = [
 ]
 
 // RAG-powered search function
-export function searchWithRAG(query: string, context: SearchContext): {
-  products: Product[]
-  suggestions: string[]
-  categories: string[]
-  brands: string[]
-} {
+export function searchWithRAG(query: string, context: SearchContext): RetrievalSearchResult {
   // Search products using the categorization system
   const foundProducts = searchProducts(query, context.products)
   
@@ -379,14 +351,7 @@ export function getSearchContext(): SearchContext {
 // Enhanced search with filters
 export function searchWithFilters(
   query: string,
-  filters: {
-    category?: string
-    minPrice?: number
-    maxPrice?: number
-    condition?: string
-    location?: string
-    brand?: string
-  }
+  filters: LanceDbSearchFilters
 ): Product[] {
   let results = MOCK_PRODUCTS
   
@@ -428,5 +393,4 @@ export function searchWithFilters(
 }
 
 export { MOCK_PRODUCTS }
-
 

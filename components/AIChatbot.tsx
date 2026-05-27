@@ -3,15 +3,10 @@
 import { useState, useRef, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageCircle, X, Send, Sparkles, Loader2 } from 'lucide-react'
+import { createChatSessionId, formatChatbotReply } from '@/lib/chatbot-client'
+import type { AiChatRequestBody, AiChatResponse, ChatbotMessage, ChatbotRole } from '@/types/ai'
 
-interface Message {
-  id: string
-  role: 'user' | 'assistant'
-  content: string
-  timestamp: Date
-}
-
-function createMessage(role: 'user' | 'assistant', content: string): Message {
+function createMessage(role: ChatbotRole, content: string): ChatbotMessage {
   const id = typeof crypto !== 'undefined' && crypto.randomUUID
     ? crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`
@@ -26,7 +21,7 @@ function createMessage(role: 'user' | 'assistant', content: string): Message {
 
 export default function AIChatbot() {
   const [isOpen, setIsOpen] = useState(false)
-  const [messages, setMessages] = useState<Message[]>([
+  const [messages, setMessages] = useState<ChatbotMessage[]>([
     createMessage(
       'assistant',
       'Hello! I can help you browse Weggo listings or explain how the marketplace works. Try asking for phones, laptops, or furniture.'
@@ -35,6 +30,7 @@ export default function AIChatbot() {
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const sessionIdRef = useRef(createChatSessionId())
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -53,14 +49,17 @@ export default function AIChatbot() {
       const res = await fetch('/api/ai-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: messageText }),
+        body: JSON.stringify({
+          message: messageText,
+          sessionId: sessionIdRef.current,
+        } satisfies AiChatRequestBody),
       })
-      const data = await res.json()
+      const data: AiChatResponse = await res.json()
 
       const assistantMessage = createMessage(
         'assistant',
         data.success
-          ? data.response
+          ? formatChatbotReply(data.response)
           : (data.error || 'I ran into an issue while searching. Please try again.')
       )
 

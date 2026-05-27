@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { sendChatbotServiceMessage } from '@/lib/chatbot-service'
 import connectDB from '@/lib/db'
 import Product from '@/models/Product'
+import type {
+  AiChatErrorResponse,
+  AiChatProductSummary,
+  AiChatQueryConfigEntry,
+  AiChatRequestBody,
+  AiChatSuccessResponse,
+} from '@/types/ai'
 
-type ProductSummary = {
-  title: string
-  price: number
-  location: string
-}
-
-const QUERY_CONFIG = [
+const QUERY_CONFIG: AiChatQueryConfigEntry[] = [
   {
     matcher: (text: string) => text.includes('phone') || text.includes('mobile'),
     category: 'electronics',
@@ -35,7 +37,7 @@ const QUERY_CONFIG = [
   },
 ]
 
-function formatListings(icon: string, items: ProductSummary[]) {
+function formatListings(icon: string, items: AiChatProductSummary[]) {
   return items
     .map((item) => `${icon} ${item.title} - ${item.price.toLocaleString()} EGP (${item.location})`)
     .join('\n')
@@ -58,7 +60,7 @@ async function getMatchingListings(category: string, keywords: string[]) {
     title: listing.title,
     price: listing.price,
     location: listing.location,
-  }))
+  })) satisfies AiChatProductSummary[]
 }
 
 function generateFallbackResponse(message: string): string {
@@ -77,14 +79,38 @@ function generateFallbackResponse(message: string): string {
 
 export async function POST(request: NextRequest) {
   try {
-    const { message } = await request.json()
+    const { message, sessionId } = await request.json() as AiChatRequestBody
+    const normalizedSessionId = typeof sessionId === 'string' ? sessionId.trim() : ''
     const text = typeof message === 'string' ? message.trim() : ''
 
     if (!text) {
       return NextResponse.json(
-        { success: false, error: 'Message is required' },
+        { success: false, error: 'Message is required' } satisfies AiChatErrorResponse,
         { status: 400 }
       )
+    }
+
+    if (process.env.CHATBOT_API_URL) {
+      try {
+        const chatbotResponse = await sendChatbotServiceMessage({
+          session_id: normalizedSessionId || `chat-${Date.now()}`,
+          message: text,
+        })
+
+        return NextResponse.json({
+          success: true,
+          response: chatbotResponse.reply,
+          timestamp: new Date().toISOString(),
+        } satisfies AiChatSuccessResponse)
+      } catch (error) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: error instanceof Error ? error.message : 'Failed to process AI request',
+          } satisfies AiChatErrorResponse,
+          { status: 502 }
+        )
+      }
     }
 
     await connectDB()
@@ -102,17 +128,17 @@ export async function POST(request: NextRequest) {
         success: true,
         response,
         timestamp: new Date().toISOString(),
-      })
+      } satisfies AiChatSuccessResponse)
     }
 
     return NextResponse.json({
       success: true,
       response: generateFallbackResponse(text),
       timestamp: new Date().toISOString(),
-    })
+    } satisfies AiChatSuccessResponse)
   } catch {
     return NextResponse.json(
-      { success: false, error: 'Failed to process AI request' },
+      { success: false, error: 'Failed to process AI request' } satisfies AiChatErrorResponse,
       { status: 500 }
     )
   }

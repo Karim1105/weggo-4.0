@@ -1,0 +1,29 @@
+# FastAPI + ASGI server
+fastapi>=0.111
+uvicorn[standard]>=0.29
+
+# LlamaIndex core + integrations
+llama-index-core>=0.10
+llama-index-llms-google-genai>=0.1
+llama-index-embeddings-openai-like>=0.1
+llama-index-vector-stores-lancedb>=0.1
+
+# Vector DB & reranking
+lancedb>=0.6
+
+# MongoDB async driver
+motor>=3.3
+
+# NLP — English
+nltk>=3.8
+
+# NLP — Arabic
+pyarabic>=0.6
+camel-tools>=1.5
+langdetect>=1.0
+
+# PyTorch (CPU build — swap for a GPU wheel if needed)
+torch>=2.2 --index-url https://download.pytorch.org/whl/cpu
+
+# Google Generative AI
+google-generativeai>=0.5
