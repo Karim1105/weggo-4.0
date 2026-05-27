@@ -1,6 +1,6 @@
 # Start Here
 
-If you only read one file first, read [README.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/README.md).
+If you only read one file first, read [README.md](./README.md).
 
 ## Fast path
 
@@ -21,17 +21,17 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ## Which doc to read next
 
 - New to the repo:
-  [QUICKSTART.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/QUICKSTART.md)
+  [QUICKSTART.md](./QUICKSTART.md)
 - Need full setup:
-  [SETUP.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/SETUP.md)
+  [SETUP.md](./SETUP.md)
 - Need local/dev setup only:
-  [LOCAL_SETUP.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/LOCAL_SETUP.md)
+  [LOCAL_SETUP.md](./LOCAL_SETUP.md)
 - Need backend/API overview:
-  [SETUP_BACKEND.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/SETUP_BACKEND.md)
+  [SETUP_BACKEND.md](./SETUP_BACKEND.md)
 - Need feature map:
-  [FEATURES.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/FEATURES.md)
+  [FEATURES.md](./FEATURES.md)
 - Need system shape:
-  [ARCHITECTURE.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/ARCHITECTURE.md)
+  [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 ## Current implementation notes
 

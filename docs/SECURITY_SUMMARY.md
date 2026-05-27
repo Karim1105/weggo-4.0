@@ -57,7 +57,7 @@ These are not hidden bugs in the docs; they are current product realities:
 
 For exact implementation details, use:
 
-- [proxy.ts](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/proxy.ts)
-- [lib/auth.ts](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/lib/auth.ts)
-- [lib/csrf.ts](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/lib/csrf.ts)
-- [lib/imageUpload.ts](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/lib/imageUpload.ts)
+- [`proxy.ts`](../proxy.ts)
+- [`lib/auth.ts`](../lib/auth.ts)
+- [`lib/csrf.ts`](../lib/csrf.ts)
+- [`lib/imageUpload.ts`](../lib/imageUpload.ts)

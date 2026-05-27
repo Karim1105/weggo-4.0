@@ -11,7 +11,7 @@ If auto-indexing is disabled in a production environment, make sure these indexe
 
 ### `Product`
 
-Declared in [models/Product.ts](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/models/Product.ts):
+Declared in [`models/Product.ts`](../models/Product.ts):
 
 - text index on `title`, `description`
 - `{ category: 1, location: 1, price: 1 }`
@@ -32,7 +32,7 @@ Declared in [models/Product.ts](/run/media/crankylama/shared%20drive/weggo%20on%
 
 ### `Message`
 
-Declared in [models/Message.ts](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/models/Message.ts):
+Declared in [`models/Message.ts`](../models/Message.ts):
 
 - `{ conversationId: 1, createdAt: -1 }`
 - `{ sender: 1, receiver: 1 }`
@@ -41,7 +41,7 @@ Declared in [models/Message.ts](/run/media/crankylama/shared%20drive/weggo%20on%
 
 ### `Ticket`
 
-Declared in [models/Ticket.ts](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/models/Ticket.ts):
+Declared in [`models/Ticket.ts`](../models/Ticket.ts):
 
 - `{ userId: 1, updatedAt: -1 }`
 - `{ status: 1, updatedAt: -1 }`
@@ -49,7 +49,7 @@ Declared in [models/Ticket.ts](/run/media/crankylama/shared%20drive/weggo%20on%2
 
 ### `TicketMessage`
 
-Declared in [models/TicketMessage.ts](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/models/TicketMessage.ts):
+Declared in [`models/TicketMessage.ts`](../models/TicketMessage.ts):
 
 - `{ ticketId: 1, createdAt: 1 }`
 

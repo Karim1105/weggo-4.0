@@ -82,8 +82,8 @@ That history was useful during the cleanup campaign, but the raw original list i
 
 If you need the present-day code truth, prefer:
 
-- [README.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/README.md)
-- [FEATURES.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/FEATURES.md)
-- [ARCHITECTURE.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/ARCHITECTURE.md)
+- [README.md](./README.md)
+- [FEATURES.md](./FEATURES.md)
+- [ARCHITECTURE.md](./ARCHITECTURE.md)
 
 Use this file mainly as the “what we audited and what happened” summary.

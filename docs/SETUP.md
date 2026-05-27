@@ -117,7 +117,7 @@ They are warnings, not build blockers.
 
 ## Related docs
 
-- [README.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/README.md)
-- [LOCAL_SETUP.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/LOCAL_SETUP.md)
-- [SETUP_BACKEND.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/SETUP_BACKEND.md)
-- [DEPLOY_QUICK_REF.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/DEPLOY_QUICK_REF.md)
+- [README.md](./README.md)
+- [LOCAL_SETUP.md](./LOCAL_SETUP.md)
+- [SETUP_BACKEND.md](./SETUP_BACKEND.md)
+- [DEPLOY_QUICK_REF.md](./DEPLOY_QUICK_REF.md)

@@ -17,7 +17,7 @@ NEXT_PUBLIC_SITE_URL=http://localhost:3000
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-If you need a template, copy from [/.env.example](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/.env.example).
+If you need a template, copy from [`../.env.example`](../.env.example).
 
 ## 3. Start the app
 
@@ -77,6 +77,6 @@ Bus error / `SIGBUS` during build:
 
 ## Read next
 
-- [README.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/README.md)
-- [SETUP.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/SETUP.md)
-- [FEATURES.md](/run/media/crankylama/shared%20drive/weggo%20on%20my%20end/weggo-4.0/FEATURES.md)
+- [README.md](./README.md)
+- [SETUP.md](./SETUP.md)
+- [FEATURES.md](./FEATURES.md)
