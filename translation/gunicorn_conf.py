@@ -26,10 +26,12 @@ timeout = int(os.environ.get("GUNICORN_TIMEOUT", "120"))
 graceful_timeout = 30
 keepalive = 5
 
-# Preload the app in the master process so the eager model-load in app.py
-# happens once, before any worker is forked. With workers=1 this is mostly a
-# nicety, but it makes startup logs cleaner and helps if you ever bump workers.
-preload_app = True
+# preload_app MUST be False: the InferenceWorker starts a daemon thread at
+# module import time. Threads do not survive fork(), so with preload_app=True
+# the queue has no consumer in the forked worker process and every translate
+# request hangs until timeout. With workers=1 the only cost of preload=False
+# is loading the models inside the worker instead of the master.
+preload_app = False
 
 accesslog = "-"
 errorlog = "-"

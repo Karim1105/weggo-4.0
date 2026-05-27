@@ -19,6 +19,12 @@ function createMessage(role: ChatbotRole, content: string): ChatbotMessage {
   }
 }
 
+function getCsrfToken(): string {
+  if (typeof document === 'undefined') return ''
+  const match = document.cookie.match(/(?:^|;\s*)csrfToken=([^;]+)/)
+  return match ? decodeURIComponent(match[1]) : ''
+}
+
 export default function AIChatbot() {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<ChatbotMessage[]>([
@@ -45,9 +51,14 @@ export default function AIChatbot() {
     setIsLoading(true)
 
     try {
+      const csrfToken = getCsrfToken()
       const res = await fetch('/api/ai-chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(csrfToken ? { 'x-csrf-token': csrfToken } : {}),
+        },
         body: JSON.stringify({
           message: messageText,
         } satisfies AiChatRequestBody),

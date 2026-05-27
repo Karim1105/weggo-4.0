@@ -44,8 +44,8 @@ next-env.d.ts
 /playwright-report
 /test-results
 /public/weggo-logo-org.png
-
-#models i believe 
+#models i believe
 chatbot/__pycache__/app.cpython-312.pyc
 lancedb/__pycache__/app.cpython-312.pyc
 lancedb/semantic-lancedb-qwen3-emb/
+__pycache__/

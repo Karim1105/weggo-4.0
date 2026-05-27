@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { deriveChatSessionContext, attachAnonChatCookie } from '@/lib/chatbot-session'
 import { sendChatbotServiceMessage } from '@/lib/chatbot-service'
 import { singleFlight } from '@/lib/services/single-flight'
-import { rateLimit } from '@/lib/rateLimit'
+import { rateLimitByKey } from '@/lib/rateLimit'
 import type {
   AiChatErrorResponse,
   AiChatRequestBody,
@@ -12,7 +12,6 @@ import type {
   AiChatStreamReplyEvent,
 } from '@/types/ai'
 
-const chatRateLimit = rateLimit(10, 60_000)
 const encoder = new TextEncoder()
 
 function sha1(value: string) {
@@ -28,9 +27,6 @@ function getDegradedReply() {
 }
 
 export async function POST(request: NextRequest) {
-  const limited = chatRateLimit(request)
-  if (limited) return limited
-
   let body: Partial<AiChatRequestBody>
 
   try {
@@ -51,6 +47,11 @@ export async function POST(request: NextRequest) {
   }
 
   const { anonCookieValue, sessionId } = await deriveChatSessionContext(request)
+  const limited = rateLimitByKey(`ai_chat:${sessionId}`, 10, 60_000)
+  if (limited) {
+    return attachAnonChatCookie(limited, anonCookieValue)
+  }
+
   const stream = new TransformStream<Uint8Array, Uint8Array>()
   const writer = stream.writable.getWriter()
 

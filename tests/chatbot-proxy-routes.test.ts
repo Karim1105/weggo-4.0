@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
+import { resetRateLimitStateForTests } from '@/lib/rateLimit'
 
 const loadChatRoute = async () => import('@/app/api/chat/route')
 const loadAiChatRoute = async () => import('@/app/api/ai-chat/route')
@@ -18,11 +19,13 @@ describe('chatbot proxy routes', () => {
 
   beforeEach(() => {
     vi.restoreAllMocks()
+    resetRateLimitStateForTests()
     delete process.env.CHATBOT_API_URL
   })
 
   afterEach(() => {
     vi.restoreAllMocks()
+    resetRateLimitStateForTests()
     global.fetch = originalFetch
     if (originalChatbotUrl) {
       process.env.CHATBOT_API_URL = originalChatbotUrl
@@ -104,5 +107,56 @@ describe('chatbot proxy routes', () => {
     const payloads = extractSsePayloads(await response.text())
     expect(payloads.some((payload) => payload.includes('Nothing matched.'))).toBe(true)
     expect(payloads[payloads.length - 1]).toBe('{"type":"done"}')
+  })
+
+  it('rate limits /api/ai-chat per derived chat session instead of a shared unknown IP bucket', async () => {
+    process.env.CHATBOT_API_URL = 'http://chatbot.internal:5050'
+
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({
+      session_id: 'session-42',
+      reply: 'hello',
+    }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    }))
+
+    vi.stubGlobal('fetch', fetchMock)
+
+    const { POST } = await loadAiChatRoute()
+
+    for (let index = 0; index < 10; index += 1) {
+      const response = await POST(new NextRequest('http://localhost/api/ai-chat', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+          cookie: 'anon_chat_id=session-a',
+        },
+        body: JSON.stringify({ message: `hello ${index}` }),
+      }))
+
+      expect(response.status).toBe(200)
+    }
+
+    const limitedResponse = await POST(new NextRequest('http://localhost/api/ai-chat', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        cookie: 'anon_chat_id=session-a',
+      },
+      body: JSON.stringify({ message: 'hello again' }),
+    }))
+
+    expect(limitedResponse.status).toBe(429)
+
+    const differentSessionResponse = await POST(new NextRequest('http://localhost/api/ai-chat', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+        cookie: 'anon_chat_id=session-b',
+      },
+      body: JSON.stringify({ message: 'fresh session' }),
+    }))
+
+    expect(differentSessionResponse.status).toBe(200)
   })
 })

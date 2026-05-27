@@ -31,6 +31,7 @@ from nltk.stem import WordNetLemmatizer
 from dataclasses import dataclass, field
 from motor.motor_asyncio import AsyncIOMotorClient
 from datetime import datetime, timezone
+from pymongo.errors import OperationFailure
 from pyarabic.araby import strip_tatweel, strip_tashkeel, strip_harakat
 
 from langdetect import detect, DetectorFactory
@@ -253,7 +254,22 @@ class MongoSessionStore:
 
 
 async def create_indexes():
-    await sessions_col.create_index("last_active", expireAfterSeconds=SESSION_TTL_SECS)
+    try:
+        await sessions_col.create_index("last_active", expireAfterSeconds=SESSION_TTL_SECS)
+        return
+    except OperationFailure as error:
+        if error.code != 85:
+            raise
+
+    # If the TTL index already exists with a different expiry, update it
+    # in-place so restarts stay idempotent across old and new deployments.
+    await db.command({
+        "collMod": SESSIONS_COLL,
+        "index": {
+            "name": "last_active_1",
+            "expireAfterSeconds": SESSION_TTL_SECS,
+        },
+    })
 
 
 # ─────────────────────────────────────────────

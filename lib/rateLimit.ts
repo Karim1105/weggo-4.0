@@ -10,39 +10,54 @@ interface RateLimitStore {
 const store: RateLimitStore = {}
 let cleanupInterval: NodeJS.Timeout | null = null
 
+function consumeRateLimitEntry(
+  key: string,
+  maxRequests: number,
+  windowMs: number
+): NextResponse | null {
+  initializeRateLimitCleanup()
+
+  const now = Date.now()
+
+  if (!store[key] || now > store[key].resetTime) {
+    store[key] = {
+      count: 1,
+      resetTime: now + windowMs,
+    }
+    return null
+  }
+
+  store[key].count++
+
+  if (store[key].count > maxRequests) {
+    return NextResponse.json(
+      { success: false, error: 'Too many requests, please try again later' },
+      { status: 429 }
+    )
+  }
+
+  return null
+}
+
 export function rateLimit(
   maxRequests: number = 100,
   windowMs: number = 15 * 60 * 1000 // 15 minutes
 ) {
   return (req: NextRequest): NextResponse | null => {
-    initializeRateLimitCleanup()
-
     const ip = req.headers.get('x-forwarded-for') || 
                req.headers.get('x-real-ip') || 
                'unknown'
-    
-    const key = `rate_limit_${ip}`
-    const now = Date.now()
-    
-    if (!store[key] || now > store[key].resetTime) {
-      store[key] = {
-        count: 1,
-        resetTime: now + windowMs,
-      }
-      return null
-    }
-    
-    store[key].count++
-    
-    if (store[key].count > maxRequests) {
-      return NextResponse.json(
-        { success: false, error: 'Too many requests, please try again later' },
-        { status: 429 }
-      )
-    }
-    
-    return null
+
+    return consumeRateLimitEntry(`rate_limit_${ip}`, maxRequests, windowMs)
   }
+}
+
+export function rateLimitByKey(
+  key: string,
+  maxRequests: number = 100,
+  windowMs: number = 15 * 60 * 1000
+) {
+  return consumeRateLimitEntry(`rate_limit_${key}`, maxRequests, windowMs)
 }
 
 /**

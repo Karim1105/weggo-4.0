@@ -18,7 +18,8 @@
     "scrape:prices:full": "tsx scripts/scrape-pricing-dataset.ts --input private/data/products-full.json --out private/data/products-full-scraped.json --limit 500",
     "seed:featured": "tsx scripts/seed-featured.ts",
     "seed:trash": "tsx scripts/seed-trash.ts",
-    "seed:trash:delete": "tsx scripts/seed-trash.ts --delete"
+    "seed:trash:delete": "tsx scripts/seed-trash.ts --delete",
+    "reconcile:lancedb": "tsx scripts/reconcile-lancedb.ts"
   },
   "dependencies": {
     "@types/node": "^25.6.0",
