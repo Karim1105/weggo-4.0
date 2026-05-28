@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { categories as sharedCategories } from '@/lib/utils'
+import { useT } from '@/lib/i18n/useT'
 import { 
   Smartphone, 
   Sofa, 
@@ -79,8 +80,17 @@ const normalizeCountsBySlug = (counts: Record<string, number>) => {
 }
 
 export default function Categories() {
+  const { t, isArabic } = useT()
   const [categories, setCategories] = useState(categoryList)
   const [loading, setLoading] = useState(true)
+
+  const localizedName = (cat: CategoryCard) => (isArabic && cat.nameAr ? cat.nameAr : cat.name)
+  const localizedDescription = (cat: CategoryCard) => {
+    const key = `categories.presentation.${cat.slug}` as const
+    const localized = t(key as never)
+    if (localized && localized !== key) return localized
+    return t('categories.presentation.default' as never)
+  }
 
   const applyCounts = (counts: Record<string, number>) => {
     const normalizedCounts = normalizeCountsBySlug(counts)
@@ -192,7 +202,7 @@ export default function Categories() {
               transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
               className="w-3 h-3 bg-primary-500 rounded-full"
             />
-            <span>Explore Categories</span>
+            <span>{t('categories.badge')}</span>
             <motion.div
               animate={{ rotate: -360 }}
               transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
@@ -201,23 +211,23 @@ export default function Categories() {
           </motion.div>
           
           <h2 className="text-3xl sm:text-4xl md:text-6xl lg:text-8xl font-black mb-4 md:mb-8 leading-tight">
-            <span className="text-gray-900">Discover by{' '}</span>
+            <span className="text-gray-900">{t('categories.titlePart1')}</span>
             <motion.span
-              animate={{ 
+              animate={{
                 backgroundPosition: ['0% 50%', '100% 50%', '0% 50%']
               }}
-              transition={{ 
+              transition={{
                 duration: 3,
                 repeat: Infinity,
                 ease: "easeInOut"
               }}
               className="gradient-primary bg-clip-text text-transparent bg-[length:200%_100%]"
             >
-              Category
+              {t('categories.titlePart2')}
             </motion.span>
           </h2>
           <p className="text-base md:text-xl lg:text-2xl text-gray-700 max-w-3xl mx-auto leading-relaxed">
-            Find exactly what you're looking for with our smart categorization system
+            {t('categories.subtitle')}
           </p>
         </motion.div>
 
@@ -225,7 +235,7 @@ export default function Categories() {
         <div className="mb-8 md:mb-12">
           <div className="flex items-center space-x-2 mb-4 md:mb-8">
             <TrendingUp className="w-4 h-4 md:w-5 md:h-5 text-accent-600" />
-            <h3 className="text-base md:text-xl font-semibold text-gray-900">Popular This Week</h3>
+            <h3 className="text-base md:text-xl font-semibold text-gray-900">{t('categories.popularSectionTitle')}</h3>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
@@ -251,18 +261,18 @@ export default function Categories() {
                       <div className="text-right">
                         <div className="flex items-center space-x-1 text-accent-600">
                           <Star className="w-3 h-3 md:w-4 md:h-4 fill-current" />
-                          <span className="text-xs md:text-sm font-semibold">Popular</span>
+                          <span className="text-xs md:text-sm font-semibold">{t('categories.popularBadge')}</span>
                         </div>
                       </div>
                     </div>
                     
                     <h3 className="font-bold text-base md:text-xl mb-1 md:mb-2 group-hover:text-primary-600 transition-colors">
-                      {category.name}
+                      {localizedName(category)}
                     </h3>
-                    <p className="text-xs md:text-sm text-gray-600 mb-2 md:mb-3">{category.description}</p>
+                    <p className="text-xs md:text-sm text-gray-600 mb-2 md:mb-3">{localizedDescription(category)}</p>
                     <div className="flex items-center justify-between">
                       <span className="text-xl md:text-2xl font-bold text-primary-600">{formatCount(category.count)}</span>
-                      <span className="text-xs md:text-sm text-gray-500">items</span>
+                      <span className="text-xs md:text-sm text-gray-500">{t('categories.itemsSuffix')}</span>
                     </div>
                   </div>
                 </div>
@@ -276,7 +286,7 @@ export default function Categories() {
         <div>
           <div className="flex items-center space-x-2 mb-6 md:mb-8">
             <div className="w-2 h-2 bg-primary-500 rounded-full" />
-            <h3 className="text-base md:text-xl font-semibold text-gray-900">All Categories</h3>
+            <h3 className="text-base md:text-xl font-semibold text-gray-900">{t('categories.allSectionTitle')}</h3>
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -295,9 +305,9 @@ export default function Categories() {
                       <category.icon className="w-6 h-6 text-white" />
                     </div>
                     <h4 className="font-semibold text-base md:text-lg mb-1 group-hover:text-primary-600 transition-colors">
-                      {category.name}
+                      {localizedName(category)}
                     </h4>
-                    <p className="text-xs md:text-sm text-gray-500">{formatCount(category.count)} items</p>
+                    <p className="text-xs md:text-sm text-gray-500">{formatCount(category.count)} {t('categories.itemsSuffix')}</p>
                   </div>
                 </motion.div>
               </Link>
@@ -317,13 +327,13 @@ export default function Categories() {
               <Sparkles className="w-8 h-8 text-white" />
             </div>
             <div className="text-left">
-              <h3 className="text-xl font-bold text-gray-900 mb-1">Can't find what you're looking for?</h3>
-              <p className="text-gray-600 mb-4">Use our AI-powered search to find anything</p>
+              <h3 className="text-xl font-bold text-gray-900 mb-1">{t('categories.ctaTitle')}</h3>
+              <p className="text-gray-600 mb-4">{t('categories.ctaBody')}</p>
               <Link
                 href="/browse"
                 className="inline-flex gradient-primary text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all"
               >
-                Try AI Search
+                {t('categories.ctaButton')}
               </Link>
             </div>
           </div>

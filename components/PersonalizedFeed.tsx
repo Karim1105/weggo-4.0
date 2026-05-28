@@ -19,6 +19,7 @@ import ProductCard from './ProductCard'
 import { mapApiListingToProduct, withCsrfHeader } from '@/lib/utils'
 import { useAppStore } from '@/lib/store'
 import { getListings } from '@/lib/api/listings/client'
+import { useT } from '@/lib/i18n/useT'
 
 interface Product {
   id: string
@@ -100,6 +101,7 @@ function buildRecommendationState(data: RecommendationsResponse): Recommendation
 
 export default function PersonalizedFeed() {
   const router = useRouter()
+  const { t } = useT()
   const [products, setProducts] = useState<Product[]>([])
   const [filter, setFilter] = useState<'all' | 'recommended' | 'nearby' | 'trending'>('recommended')
   const [isLoading, setIsLoading] = useState(true)
@@ -343,40 +345,40 @@ export default function PersonalizedFeed() {
     () => [
       {
         key: 'recommended',
-        label: 'For You',
+        label: t('feed.filters.forYou'),
         icon: Sparkles,
         color: 'from-primary-500 to-primary-600',
         description:
           recommendationState.tone === 'signed-out'
-            ? 'Sign in to personalize this feed'
+            ? t('feed.filters.forYouSignedOut')
             : recommendationState.tone === 'fallback'
-              ? 'Fresh picks while we learn your taste'
-              : 'Blended from your activity and saved interests',
+              ? t('feed.filters.forYouFallback')
+              : t('feed.filters.forYouPersonalized'),
       },
       {
         key: 'trending',
-        label: 'Trending',
+        label: t('feed.filters.trending'),
         icon: TrendingUp,
         color: 'from-accent-500 to-accent-600',
-        description: 'What is hot across the marketplace',
+        description: t('feed.filters.trendingDesc'),
       },
       {
         key: 'nearby',
-        label: 'Nearby',
+        label: t('feed.filters.nearby'),
         icon: MapPin,
         color: 'from-secondary-500 to-secondary-600',
         description:
-          locationPermission === 'denied' ? 'Location permission was denied' : 'Close to your location',
+          locationPermission === 'denied' ? t('feed.filters.nearbyDenied') : t('feed.filters.nearbyDesc'),
       },
       {
         key: 'all',
-        label: 'All Items',
+        label: t('feed.filters.all'),
         icon: Search,
         color: 'from-gray-500 to-gray-600',
-        description: 'Newest active listings across the marketplace',
+        description: t('feed.filters.allDesc'),
       },
     ],
-    [locationPermission, recommendationState.tone]
+    [locationPermission, recommendationState.tone, t]
   )
 
   const displayProducts = products
@@ -441,14 +443,21 @@ export default function PersonalizedFeed() {
     [canGoNext, canGoPrev, nextSlide, prevSlide]
   )
 
+  const recommendedNote =
+    recommendationState.tone === 'personalized'
+      ? t('feed.note.personalized')
+      : recommendationState.tone === 'signed-out'
+        ? t('feed.note.signedOut')
+        : t('feed.note.fallback')
+
   const sectionDescription =
     filter === 'recommended'
-      ? recommendationState.note
+      ? recommendedNote
       : filter === 'trending'
-        ? 'See the listings getting the most attention right now.'
+        ? t('feed.note.sectionTrending')
         : filter === 'nearby'
-          ? 'Use your location to surface listings closer to you.'
-          : 'Browse the newest active listings across all categories.'
+          ? t('feed.note.sectionNearby')
+          : t('feed.note.sectionAll')
 
   const browseHref = filter === 'trending' ? '/browse?sortBy=newest' : '/browse'
 
@@ -486,7 +495,15 @@ export default function PersonalizedFeed() {
               transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
               className="w-3 h-3 bg-white rounded-full"
             />
-            <span>{filter === 'recommended' ? recommendationState.badge : 'Curated marketplace discovery'}</span>
+            <span>{
+              filter === 'recommended'
+                ? (recommendationState.tone === 'personalized'
+                    ? t('feed.badgePersonalized')
+                    : recommendationState.tone === 'signed-out'
+                      ? t('feed.badgeSignedOut')
+                      : t('feed.badgeFallback'))
+                : t('feed.badgeCurated')
+            }</span>
             <motion.div
               animate={{ rotate: -360 }}
               transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
@@ -506,10 +523,10 @@ export default function PersonalizedFeed() {
               transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
               className="gradient-primary bg-clip-text text-transparent bg-[length:200%_100%]"
             >
-              Recommended
+              {t('feed.titlePart1')}
             </motion.span>
             <br />
-            <span className="text-gray-900">for your next browse</span>
+            <span className="text-gray-900">{t('feed.titlePart2')}</span>
           </motion.h2>
 
           <motion.p
@@ -530,8 +547,8 @@ export default function PersonalizedFeed() {
             className="text-sm text-gray-500 max-w-2xl mx-auto mb-12"
           >
             {filter === 'recommended'
-              ? 'This section adapts to the signals we actually have. When signals are weak, it falls back to fresh marketplace picks instead of pretending to be deeply personalized.'
-              : `Showing ${displayProducts.length} items in this view right now.`}
+              ? t('feed.additionalContext')
+              : t('feed.showingNItems', { count: displayProducts.length })}
           </motion.p>
 
           <motion.div
@@ -589,7 +606,7 @@ export default function PersonalizedFeed() {
             transition={{ delay: 0.8 }}
             className="flex items-center justify-center space-x-4 mb-8"
           >
-            <span className="text-sm text-gray-600 font-medium">View Mode:</span>
+            <span className="text-sm text-gray-600 font-medium">{t('feed.viewMode')}</span>
             <div className="flex bg-white/80 rounded-2xl p-1 shadow-lg">
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -602,7 +619,7 @@ export default function PersonalizedFeed() {
                 }`}
               >
                 <Layout className="w-4 h-4" />
-                <span>Carousel</span>
+                <span>{t('feed.viewCarousel')}</span>
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -615,7 +632,7 @@ export default function PersonalizedFeed() {
                 }`}
               >
                 <Grid className="w-4 h-4" />
-                <span>Grid</span>
+                <span>{t('feed.viewGrid')}</span>
               </motion.button>
             </div>
           </motion.div>
@@ -631,8 +648,8 @@ export default function PersonalizedFeed() {
               />
               <p className="text-gray-600 font-medium">
                 {filter === 'nearby' && !userLocation
-                  ? 'Requesting location access...'
-                  : `Loading ${filter === 'recommended' ? 'recommended' : filter} items...`}
+                  ? t('feed.loadingLocation')
+                  : t('feed.loadingItems')}
               </p>
             </div>
           </div>
@@ -648,15 +665,15 @@ export default function PersonalizedFeed() {
               <div className="w-24 h-24 bg-gradient-to-r from-primary-100 to-accent-100 rounded-full flex items-center justify-center mx-auto mb-6">
                 <Search className="w-12 h-12 text-primary-600" />
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-3">No items found</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-3">{t('feed.noResultsTitle')}</h3>
               <p className="text-gray-600 mb-6">
                 {filter === 'nearby'
-                  ? 'No items showed up near your current area yet. You can keep browsing the full marketplace instead.'
+                  ? t('feed.noResultsNearby')
                   : filter === 'recommended'
-                    ? 'We do not have enough matching signals yet. Try saving a few favorites or browsing more listings first.'
+                    ? t('feed.noResultsRecommended')
                     : filter === 'trending'
-                      ? 'Nothing is trending right now. Check back soon.'
-                      : 'No items are available in this view right now.'}
+                      ? t('feed.noResultsTrending')
+                      : t('feed.noResultsDefault')}
               </p>
               <motion.button
                 whileHover={{ scale: 1.05 }}
@@ -664,7 +681,7 @@ export default function PersonalizedFeed() {
                 onClick={() => router.push('/browse')}
                 className="px-8 py-3 bg-gradient-to-r from-primary-500 to-accent-500 text-white rounded-xl font-semibold shadow-lg"
               >
-                Browse All Items
+                {t('feed.browseAll')}
               </motion.button>
             </div>
           </motion.div>
@@ -693,7 +710,7 @@ export default function PersonalizedFeed() {
                         onClick={prevSlide}
                         disabled={!canGoPrev}
                         className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-primary-600 shadow-lg transition-colors hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-40"
-                        aria-label="Previous slide"
+                        aria-label={t('feed.prevSlide')}
                       >
                         <ChevronLeft className="h-5 w-5" />
                       </motion.button>
@@ -703,7 +720,7 @@ export default function PersonalizedFeed() {
                         onClick={nextSlide}
                         disabled={!canGoNext}
                         className="flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-primary-600 shadow-lg transition-colors hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-40"
-                        aria-label="Next slide"
+                        aria-label={t('feed.nextSlide')}
                       >
                         <ChevronRight className="h-5 w-5" />
                       </motion.button>
@@ -717,7 +734,7 @@ export default function PersonalizedFeed() {
                   onKeyDown={handleCarouselKeyDown}
                   onTouchStart={handleTouchStart}
                   onTouchEnd={handleTouchEnd}
-                  aria-label="Recommended listings carousel"
+                  aria-label={t('feed.carouselLabel')}
                 >
                   <motion.div
                     key={currentSlide}
@@ -751,7 +768,7 @@ export default function PersonalizedFeed() {
                         whileHover={{ scale: 1.15 }}
                         whileTap={{ scale: 0.9 }}
                         onClick={() => setCurrentSlide(dot)}
-                        aria-label={`Go to slide ${dot + 1}`}
+                        aria-label={`${t('feed.goToSlide')} ${dot + 1}`}
                         className={`w-3 h-3 rounded-full transition-all ${
                           currentSlide === dot
                             ? 'bg-gradient-to-r from-primary-500 to-accent-500 shadow-lg'
@@ -818,9 +835,9 @@ export default function PersonalizedFeed() {
                   <Zap className="w-8 h-8 text-white" />
                 </motion.div>
 
-                <h3 className="text-3xl font-bold text-gray-900 mb-4">Want to keep exploring?</h3>
+                <h3 className="text-3xl font-bold text-gray-900 mb-4">{t('feed.keepExploringTitle')}</h3>
                 <p className="text-gray-600 mb-10 text-lg">
-                  Jump into the full browse experience for deeper filters, saved searches, and the complete live inventory.
+                  {t('feed.keepExploringBody')}
                 </p>
 
                 <div className="flex flex-col sm:flex-row gap-6 justify-center">
@@ -832,7 +849,7 @@ export default function PersonalizedFeed() {
                   >
                     <div className="flex items-center space-x-3">
                       <Search className="w-6 h-6" />
-                      <span>Browse Full Inventory</span>
+                      <span>{t('feed.browseFull')}</span>
                     </div>
                   </motion.button>
 
@@ -844,7 +861,7 @@ export default function PersonalizedFeed() {
                   >
                     <div className="flex items-center space-x-3">
                       <TrendingUp className="w-6 h-6" />
-                      <span>Switch to Trending</span>
+                      <span>{t('feed.switchTrending')}</span>
                     </div>
                   </motion.button>
                 </div>

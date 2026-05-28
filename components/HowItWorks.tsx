@@ -2,47 +2,49 @@
 
 import { motion } from 'framer-motion'
 import { Search, MessageSquare, Sparkles, Star } from 'lucide-react'
-
-const steps = [
-  {
-    icon: Search,
-    title: 'Discover',
-    description: 'Use our AI assistant to find exactly what you need, or browse personalized recommendations',
-    color: 'from-blue-400 to-blue-600',
-    bgPattern: 'search',
-    features: ['AI-Powered Search', 'Smart Filters', 'Personalized Feed'],
-    stats: '2M+ Items'
-  },
-  {
-    icon: MessageSquare,
-    title: 'Connect',
-    description: 'Chat directly with sellers, ask questions, and negotiate the best price',
-    color: 'from-purple-400 to-purple-600',
-    bgPattern: 'chat',
-    features: ['Secure Messaging', 'Real-time Chat', 'File Sharing'],
-    stats: 'Instant Support'
-  },
-  {
-    icon: Sparkles,
-    title: 'Deal',
-    description: 'Arrange a safe meetup in a public place and complete your purchase',
-    color: 'from-green-400 to-green-600',
-    bgPattern: 'handshake',
-    features: ['Safe Meetups', 'Secure Payment', 'Escrow Service'],
-    stats: '100% Secure'
-  },
-  {
-    icon: Star,
-    title: 'Review',
-    description: 'Share your experience to help build a trusted community',
-    color: 'from-amber-400 to-amber-600',
-    bgPattern: 'stars',
-    features: ['Rate Sellers', 'Write Reviews', 'Build Trust'],
-    stats: '4.8★ Average'
-  }
-]
+import { useT } from '@/lib/i18n/useT'
 
 export default function HowItWorks() {
+  const { t } = useT()
+  const steps = [
+    {
+      icon: Search,
+      title: t('howItWorks.steps.discover.title'),
+      description: t('howItWorks.steps.discover.description'),
+      color: 'from-blue-400 to-blue-600',
+      bgPattern: 'search',
+      features: [t('howItWorks.feature.aiSearch'), t('howItWorks.feature.smartFilters'), t('howItWorks.feature.personalizedFeed')],
+      stats: t('howItWorks.stat.items'),
+    },
+    {
+      icon: MessageSquare,
+      title: t('howItWorks.steps.connect.title'),
+      description: t('howItWorks.steps.connect.description'),
+      color: 'from-purple-400 to-purple-600',
+      bgPattern: 'chat',
+      features: [t('howItWorks.feature.secureMessaging'), t('howItWorks.feature.realtimeChat'), t('howItWorks.feature.fileSharing')],
+      stats: t('howItWorks.stat.instantSupport'),
+    },
+    {
+      icon: Sparkles,
+      title: t('howItWorks.steps.deal.title'),
+      description: t('howItWorks.steps.deal.description'),
+      color: 'from-green-400 to-green-600',
+      bgPattern: 'handshake',
+      features: [t('howItWorks.feature.safeMeetups'), t('howItWorks.feature.securePayment'), t('howItWorks.feature.escrowService')],
+      stats: t('howItWorks.stat.secure'),
+    },
+    {
+      icon: Star,
+      title: t('howItWorks.steps.review.title'),
+      description: t('howItWorks.steps.review.description'),
+      color: 'from-amber-400 to-amber-600',
+      bgPattern: 'stars',
+      features: [t('howItWorks.feature.rateSellers'), t('howItWorks.feature.writeReviews'), t('howItWorks.feature.buildTrust')],
+      stats: t('howItWorks.stat.averageStars'),
+    },
+  ]
+
   return (
     <section className="py-20 px-4 relative overflow-hidden">
       {/* Background Pattern */}
@@ -61,17 +63,17 @@ export default function HowItWorks() {
         >
           <div className="inline-flex items-center space-x-2 bg-primary-50 text-primary-700 px-4 py-2 rounded-full text-sm font-medium mb-4">
             <Sparkles className="w-4 h-4" />
-            <span>How It Works</span>
+            <span>{t('howItWorks.badge')}</span>
           </div>
-          
+
           <h2 className="text-4xl lg:text-5xl font-bold mb-6">
-            How{' '}
+            {t('howItWorks.titlePart1')}
             <span className="gradient-primary bg-clip-text text-transparent">
-              Weggo Works
+              {t('howItWorks.titlePart2')}
             </span>
           </h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Simple, secure, and smart - 4 easy steps to buy and sell
+            {t('howItWorks.subtitle')}
           </p>
         </motion.div>
 
@@ -148,16 +150,16 @@ export default function HowItWorks() {
           className="text-center"
         >
           <div className="max-w-2xl mx-auto">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">Ready to get started?</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mb-4">{t('howItWorks.ctaTitle')}</h3>
             <p className="text-gray-600 mb-8">
-              Join thousands of Egyptians who are already buying and selling on Weggo
+              {t('howItWorks.ctaBody')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button className="gradient-primary text-white px-8 py-4 rounded-full font-semibold text-lg shadow-xl hover:shadow-2xl hover:-translate-y-1 transition-all">
-                Start Buying
+                {t('howItWorks.ctaBuy')}
               </button>
               <button className="px-8 py-4 border-2 border-primary-500 text-primary-600 rounded-full font-semibold text-lg hover:bg-primary-50 transition-all">
-                Start Selling
+                {t('howItWorks.ctaSell')}
               </button>
             </div>
           </div>

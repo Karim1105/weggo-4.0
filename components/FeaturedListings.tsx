@@ -9,6 +9,7 @@ import { mapApiListingToProduct, withCsrfHeader } from '@/lib/utils'
 import { useAppStore } from '@/lib/store'
 import { useUserVerification } from '@/lib/useUserVerification'
 import { getListings } from '@/lib/api/listings/client'
+import { useT } from '@/lib/i18n/useT'
 
 interface Product {
   id: string
@@ -25,6 +26,7 @@ interface Product {
 
 export default function FeaturedListings() {
   const router = useRouter()
+  const { t } = useT()
   const { user, handleVerificationFlow } = useUserVerification()
   const [products, setProducts] = useState<Product[]>([])
   const storeFavorites = useAppStore((s) => s.favorites)
@@ -129,7 +131,7 @@ export default function FeaturedListings() {
               transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
               className="w-3 h-3 bg-white rounded-full"
             />
-            <span>Fresh Marketplace Picks</span>
+            <span>{t('featured.badge')}</span>
             <motion.div
               animate={{ rotate: -360 }}
               transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
@@ -149,10 +151,10 @@ export default function FeaturedListings() {
               transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
               className="gradient-accent bg-clip-text text-transparent bg-[length:200%_100%]"
             >
-              Fresh
+              {t('featured.titleAccent')}
             </motion.span>
             <br />
-            <span className="text-gray-900">Listings To Explore</span>
+            <span className="text-gray-900">{t('featured.titleRest')}</span>
           </motion.h2>
 
           <motion.p
@@ -162,7 +164,7 @@ export default function FeaturedListings() {
             transition={{ delay: 0.4 }}
             className="text-base md:text-xl text-gray-600 max-w-3xl mx-auto mb-8 md:mb-12"
           >
-            A live snapshot of recently added items from across the marketplace, updated as new listings come in.
+            {t('featured.subtitle')}
           </motion.p>
 
           <motion.div
@@ -176,7 +178,7 @@ export default function FeaturedListings() {
                 <Star className="w-5 h-5 md:w-6 md:h-6 text-white fill-white" />
               </div>
               <h3 className="text-xl md:text-2xl font-bold text-primary-600 mb-1">{visibleCount}</h3>
-              <p className="text-sm md:text-base text-gray-600">Listings Shown</p>
+              <p className="text-sm md:text-base text-gray-600">{t('featured.statListings')}</p>
             </div>
 
             <div className="text-center p-4 md:p-6 bg-gradient-to-br from-accent-50 to-accent-100 rounded-2xl">
@@ -184,7 +186,7 @@ export default function FeaturedListings() {
                 <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
               <h3 className="text-xl md:text-2xl font-bold text-accent-600 mb-1">{categoryCount}</h3>
-              <p className="text-sm md:text-base text-gray-600">Categories Covered</p>
+              <p className="text-sm md:text-base text-gray-600">{t('featured.statCategories')}</p>
             </div>
 
             <div className="text-center p-4 md:p-6 bg-gradient-to-br from-secondary-50 to-secondary-100 rounded-2xl">
@@ -192,7 +194,7 @@ export default function FeaturedListings() {
                 <Award className="w-5 h-5 md:w-6 md:h-6 text-white" />
               </div>
               <h3 className="text-xl md:text-2xl font-bold text-secondary-600 mb-1">{verifiedSellerCount}</h3>
-              <p className="text-sm md:text-base text-gray-600">Verified Sellers In View</p>
+              <p className="text-sm md:text-base text-gray-600">{t('featured.statSellers')}</p>
             </div>
           </motion.div>
         </motion.div>
@@ -224,22 +226,22 @@ export default function FeaturedListings() {
         >
           <div className="bg-gradient-to-r from-primary-500 via-primary-600 to-secondary-500 rounded-3xl p-8 text-white">
             <div className="max-w-2xl mx-auto">
-              <h3 className="text-2xl font-bold mb-4">Ready to list something of your own?</h3>
+              <h3 className="text-2xl font-bold mb-4">{t('featured.ctaTitle')}</h3>
               <p className="text-white/90 mb-6">
-                Start selling on Weggo and get your items in front of buyers across the marketplace.
+                {t('featured.ctaBody')}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
                   onClick={() => handleVerificationFlow('/sell')}
                   className="px-8 py-3 bg-white text-primary-600 rounded-full font-semibold hover:shadow-lg transition-all"
                 >
-                  {user?.sellerVerified ? 'Start Selling' : 'Become A Seller'}
+                  {user?.sellerVerified ? t('featured.ctaStart') : t('featured.ctaBecome')}
                 </button>
                 <button
                   onClick={() => router.push('/browse')}
                   className="px-8 py-3 border-2 border-white text-white rounded-full font-semibold hover:bg-white/10 transition-all"
                 >
-                  Browse More
+                  {t('featured.ctaBrowse')}
                 </button>
               </div>
             </div>

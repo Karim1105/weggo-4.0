@@ -3,9 +3,18 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { ScrollText, ShieldCheck, Sparkles } from 'lucide-react'
+import { useT } from '@/lib/i18n/useT'
+import { categories as taxonomy } from '@/lib/taxonomy'
 
 export default function Footer() {
   const year = new Date().getFullYear()
+  const { t, isArabic } = useT()
+  const footerCategories = ['electronics', 'furniture', 'vehicles', 'fashion', 'sports']
+  const label = (id: string) => {
+    const cat = taxonomy.find((c) => c.id === id)
+    if (!cat) return id
+    return isArabic ? cat.nameAr : cat.name
+  }
 
   return (
     <footer className="bg-gray-900 text-white pt-10 md:pt-16 pb-6 md:pb-8">
@@ -23,51 +32,53 @@ export default function Footer() {
               />
             </Link>
             <p className="text-sm md:text-base text-gray-400 mb-4 md:mb-6">
-              Egypt's smartest marketplace for buying and selling second-hand goods. Powered by AI.
+              {t('footer.tagline')}
             </p>
             <div className="flex flex-wrap gap-2 text-xs font-medium text-gray-300">
-              <span className="rounded-full bg-white/10 px-3 py-1.5">AI pricing</span>
-              <span className="rounded-full bg-white/10 px-3 py-1.5">Trusted sellers</span>
-              <span className="rounded-full bg-white/10 px-3 py-1.5">Local discovery</span>
+              <span className="rounded-full bg-white/10 px-3 py-1.5">{t('footer.pillAiPricing')}</span>
+              <span className="rounded-full bg-white/10 px-3 py-1.5">{t('footer.pillTrustedSellers')}</span>
+              <span className="rounded-full bg-white/10 px-3 py-1.5">{t('footer.pillLocalDiscovery')}</span>
             </div>
           </div>
 
           <div>
-            <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Quick Links</h3>
+            <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">{t('footer.quickLinks')}</h3>
             <ul className="space-y-2 md:space-y-3 text-sm md:text-base">
-              <li><Link href="/" className="text-gray-400 hover:text-white transition-colors">Home</Link></li>
-              <li><Link href="/browse" className="text-gray-400 hover:text-white transition-colors">Browse</Link></li>
-              <li><Link href="/sell" className="text-gray-400 hover:text-white transition-colors">Sell</Link></li>
-              <li><Link href="/favorites" className="text-gray-400 hover:text-white transition-colors">Favorites</Link></li>
-              <li><Link href="/support" className="text-gray-400 hover:text-white transition-colors">Support</Link></li>
+              <li><Link href="/" className="text-gray-400 hover:text-white transition-colors">{t('footer.linkHome')}</Link></li>
+              <li><Link href="/browse" className="text-gray-400 hover:text-white transition-colors">{t('footer.linkBrowse')}</Link></li>
+              <li><Link href="/sell" className="text-gray-400 hover:text-white transition-colors">{t('footer.linkSell')}</Link></li>
+              <li><Link href="/favorites" className="text-gray-400 hover:text-white transition-colors">{t('footer.linkFavorites')}</Link></li>
+              <li><Link href="/support" className="text-gray-400 hover:text-white transition-colors">{t('footer.linkSupport')}</Link></li>
             </ul>
           </div>
 
           <div>
-            <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Popular Categories</h3>
+            <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">{t('footer.popularCategories')}</h3>
             <ul className="space-y-2 md:space-y-3 text-sm md:text-base">
-              <li><Link href="/browse?category=electronics" className="text-gray-400 hover:text-white transition-colors">Electronics</Link></li>
-              <li><Link href="/browse?category=furniture" className="text-gray-400 hover:text-white transition-colors">Furniture</Link></li>
-              <li><Link href="/browse?category=vehicles" className="text-gray-400 hover:text-white transition-colors">Vehicles</Link></li>
-              <li><Link href="/browse?category=fashion" className="text-gray-400 hover:text-white transition-colors">Fashion</Link></li>
-              <li><Link href="/browse?category=sports" className="text-gray-400 hover:text-white transition-colors">Sports</Link></li>
+              {footerCategories.map((id) => (
+                <li key={id}>
+                  <Link href={`/browse?category=${id}`} className="text-gray-400 hover:text-white transition-colors">
+                    {label(id)}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
 
           <div>
-            <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">Marketplace Standards</h3>
+            <h3 className="text-base md:text-lg font-semibold mb-3 md:mb-4">{t('footer.standards')}</h3>
             <ul className="space-y-3 md:space-y-4 text-sm md:text-base">
               <li className="flex items-start space-x-3">
                 <Sparkles className="w-5 h-5 text-primary-400 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-400">Cleaner listings, fairer pricing, and faster discovery for buyers and sellers.</span>
+                <span className="text-gray-400">{t('footer.standardCleaner')}</span>
               </li>
               <li className="flex items-start space-x-3">
                 <ShieldCheck className="w-5 h-5 text-primary-400 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-400">Moderation, seller verification, and review workflows keep the marketplace tighter before launch.</span>
+                <span className="text-gray-400">{t('footer.standardModeration')}</span>
               </li>
               <li className="flex items-start space-x-3">
                 <ScrollText className="w-5 h-5 text-primary-400 flex-shrink-0 mt-0.5" />
-                <span className="text-gray-400">Need details? Use the support center, seller guidelines, and legal pages linked below.</span>
+                <span className="text-gray-400">{t('footer.standardDocs')}</span>
               </li>
             </ul>
           </div>
@@ -76,20 +87,20 @@ export default function Footer() {
         <div className="pt-6 md:pt-8 border-t border-gray-800">
           <div className="flex flex-col md:flex-row items-center justify-between space-y-3 md:space-y-0">
             <p className="text-gray-400 text-sm">
-              © {year} Weggo. All rights reserved. Made with ❤️ in Egypt
+              © {year} Weggo. {t('footer.rights')}
             </p>
             <div className="flex space-x-6 text-sm">
               <Link href="/support" className="text-gray-400 hover:text-white transition-colors">
-                Support
+                {t('footer.linkSupport')}
               </Link>
               <Link href="/seller-guidelines" className="text-gray-400 hover:text-white transition-colors">
-                Seller Guidelines
+                {t('footer.seller')}
               </Link>
               <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors">
-                Privacy Policy
+                {t('footer.privacy')}
               </Link>
               <Link href="/terms" className="text-gray-400 hover:text-white transition-colors">
-                Terms of Service
+                {t('footer.terms')}
               </Link>
             </div>
           </div>

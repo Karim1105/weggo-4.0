@@ -9,6 +9,7 @@ import { listingImageUrl } from '@/lib/utils'
 import { useUserVerification } from '@/lib/useUserVerification'
 import { getListings } from '@/lib/api/listings/client'
 import { getLocationLabel } from '@/lib/locations'
+import { useT } from '@/lib/i18n/useT'
 
 interface FeaturedProduct {
   id: string
@@ -30,6 +31,7 @@ const CACHE_DURATION = 1 * 60 * 1000 // 1 minutes
 
 export default function Hero() {
   const { handleVerificationFlow } = useUserVerification()
+  const { t } = useT()
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([])
   const [favorites, setFavorites] = useState<string[]>([])
 
@@ -124,21 +126,20 @@ export default function Hero() {
                 >
                   <Sparkles className="w-4 h-4" />
                 </motion.div>
-                <span>AI-Powered Marketplace</span>
+                <span>{t('hero.badge')}</span>
               </motion.div>
 
               <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-black leading-tight md:leading-[0.9] tracking-tight">
-                <span className="block text-gray-900">Your Way to Go</span>
+                <span className="block text-gray-900">{t('hero.titleLine1')}</span>
                 <span className="block">
                   <span className="gradient-primary bg-clip-text text-transparent">
-                    Second Hand
+                    {t('hero.titleLine2')}
                   </span>
                 </span>
               </h1>
 
               <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-700 leading-relaxed max-w-2xl">
-                <span className="text-primary-600 font-semibold">اشتري وبيع بسهولة</span> - 
-                Your AI assistant helps you find perfect deals and price items intelligently
+                {t('hero.tagline')}
               </p>
             </div>
 
@@ -151,7 +152,7 @@ export default function Hero() {
                 >
                   <span className="relative z-10 flex items-center space-x-3">
                     <Search className="w-5 h-5" />
-                    <span>Start Exploring</span>
+                    <span>{t('hero.ctaExplore')}</span>
                   </span>
                   <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 </motion.span>
@@ -165,7 +166,7 @@ export default function Hero() {
               >
                 <span className="relative z-10 flex items-center space-x-3">
                   <Sparkles className="w-5 h-5" />
-                  <span>Sell Now</span>
+                  <span>{t('hero.ctaSell')}</span>
                 </span>
               </motion.button>
             </div>
@@ -185,8 +186,8 @@ export default function Hero() {
                   <Sparkles className="w-8 h-8 text-white" />
                 </motion.div>
                 <div className="space-y-2">
-                  <h3 className="text-lg md:text-xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors">AI Assistant</h3>
-                  <p className="text-sm md:text-base text-gray-600 leading-relaxed">Smart recommendations tailored to your preferences</p>
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900 group-hover:text-primary-600 transition-colors">{t('hero.featureAiTitle')}</h3>
+                  <p className="text-sm md:text-base text-gray-600 leading-relaxed">{t('hero.featureAiBody')}</p>
                 </div>
               </motion.div>
 
@@ -203,8 +204,8 @@ export default function Hero() {
                   <TrendingUp className="w-8 h-8 text-white" />
                 </motion.div>
                 <div className="space-y-2">
-                  <h3 className="text-lg md:text-xl font-bold text-gray-900 group-hover:text-accent-600 transition-colors">Smart Pricing</h3>
-                  <p className="text-sm md:text-base text-gray-600 leading-relaxed">AI-powered pricing suggestions for optimal deals</p>
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900 group-hover:text-accent-600 transition-colors">{t('hero.featurePricingTitle')}</h3>
+                  <p className="text-sm md:text-base text-gray-600 leading-relaxed">{t('hero.featurePricingBody')}</p>
                 </div>
               </motion.div>
 
@@ -221,8 +222,8 @@ export default function Hero() {
                   <Shield className="w-8 h-8 text-white" />
                 </motion.div>
                 <div className="space-y-2">
-                  <h3 className="text-lg md:text-xl font-bold text-gray-900 group-hover:text-secondary-600 transition-colors">Safe & Secure</h3>
-                  <p className="text-sm md:text-base text-gray-600 leading-relaxed">Protected transactions with verified sellers</p>
+                  <h3 className="text-lg md:text-xl font-bold text-gray-900 group-hover:text-secondary-600 transition-colors">{t('hero.featureSafeTitle')}</h3>
+                  <p className="text-sm md:text-base text-gray-600 leading-relaxed">{t('hero.featureSafeBody')}</p>
                 </div>
               </motion.div>
             </div>

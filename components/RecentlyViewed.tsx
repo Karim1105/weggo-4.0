@@ -5,8 +5,10 @@ import ProductGrid from '@/app/browse/components/ProductGrid'
 import { Product } from '@/app/browse/types'
 import { mapApiListingToProduct, withCsrfHeader } from '@/lib/utils'
 import { useAppStore } from '@/lib/store'
+import { useT } from '@/lib/i18n/useT'
 
 export default function RecentlyViewed() {
+  const { t } = useT()
   const [items, setItems] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const storeFavorites = useAppStore((s) => s.favorites)
@@ -79,13 +81,13 @@ export default function RecentlyViewed() {
     <section className="py-12 px-4">
       <div className="max-w-7xl mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-bold text-gray-900">Recently viewed</h2>
+          <h2 className="text-2xl font-bold text-gray-900">{t('recentlyViewed.title')}</h2>
           <button
             type="button"
             onClick={fetchData}
             className="text-sm text-primary-600 hover:underline"
           >
-            Refresh
+            {t('recentlyViewed.refresh')}
           </button>
         </div>
         <ProductGrid

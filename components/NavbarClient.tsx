@@ -9,6 +9,7 @@ import { Menu, X, Search, Heart, User, Plus, LayoutDashboard, Globe, LogIn, LogO
 import toast from 'react-hot-toast'
 import { revalidateNavbar } from '@/app/actions/auth'
 import { useAppStore } from '@/lib/store'
+import { useT } from '@/lib/i18n/useT'
 
 // Type-safe user interface
 interface NavbarUser {
@@ -32,6 +33,7 @@ export default function NavbarClient({ initialUser, sellHref }: NavbarClientProp
   const [unreadMessages, setUnreadMessages] = useState(0)
   const language = useAppStore((state) => state.language)
   const setLanguage = useAppStore((state) => state.setLanguage)
+  const { t } = useT()
   const router = useRouter()
   const pathname = usePathname()
   const isArabic = language === 'ar'
@@ -161,7 +163,7 @@ export default function NavbarClient({ initialUser, sellHref }: NavbarClientProp
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={handleSearchKeyDown}
-                    placeholder={isArabic ? "ابحث عن أي شيء..." : "Search for anything..."}
+                    placeholder={t('nav.searchPlaceholder')}
                     className="w-full pl-12 pr-12 py-3 rounded-full border border-gray-200 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white backdrop-blur-sm shadow-lg"
                     autoFocus
                   />
@@ -201,7 +203,7 @@ export default function NavbarClient({ initialUser, sellHref }: NavbarClientProp
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onKeyDown={handleSearchKeyDown}
-                placeholder={isArabic ? "ابحث عن أي شيء..." : "Search for anything..."}
+                placeholder={t('nav.searchPlaceholder')}
                 className="w-full pl-12 pr-6 py-4 rounded-2xl border border-gray-200/50 focus:outline-none focus:ring-2 focus:ring-primary-500/50 focus:border-primary-300 bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all duration-300 text-lg"
               />
             </div>
@@ -214,7 +216,7 @@ export default function NavbarClient({ initialUser, sellHref }: NavbarClientProp
               className="flex items-center space-x-1 text-gray-700 hover:text-primary-600 transition-colors"
             >
               <Globe className="w-5 h-5" />
-              <span className="text-sm font-medium">{isArabic ? 'EN' : 'عربي'}</span>
+              <span className="text-sm font-medium">{t('nav.languageToggle')}</span>
             </button>
 
             <Link
@@ -274,7 +276,7 @@ export default function NavbarClient({ initialUser, sellHref }: NavbarClientProp
                 <button
                   onClick={handleLogout}
                   className="p-2.5 hover:bg-gray-100 rounded-full transition-colors"
-                  title="Logout"
+                  title={t('nav.logout')}
                 >
                   <LogOut className="w-6 h-6 text-gray-700" />
                 </button>
@@ -286,7 +288,7 @@ export default function NavbarClient({ initialUser, sellHref }: NavbarClientProp
                   className="group flex items-center space-x-2 border-2 border-primary-500 text-primary-600 px-6 py-3 rounded-2xl font-bold hover:bg-gradient-to-r hover:from-primary-50 hover:to-accent-50 transition-all hover:-translate-y-1 shadow-lg hover:shadow-xl"
                 >
                   <LogIn className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  <span>Login</span>
+                  <span>{t('nav.login')}</span>
                 </Link>
 
                 <Link
@@ -294,7 +296,7 @@ export default function NavbarClient({ initialUser, sellHref }: NavbarClientProp
                   className="group flex items-center space-x-2 gradient-primary text-white px-6 py-3 rounded-2xl font-bold hover:shadow-xl transition-all hover:-translate-y-1 shadow-lg"
                 >
                   <User className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                  <span>Sign Up</span>
+                  <span>{t('nav.signUp')}</span>
                 </Link>
               </>
             )}
@@ -407,7 +409,7 @@ export default function NavbarClient({ initialUser, sellHref }: NavbarClientProp
                     className="flex items-center space-x-3 px-4 py-3 hover:bg-gray-100 rounded-lg transition-colors w-full"
                   >
                     <LogOut className="w-5 h-5" />
-                    <span>Logout</span>
+                    <span>{t('nav.logout')}</span>
                   </button>
                 </>
               ) : (
@@ -418,7 +420,7 @@ export default function NavbarClient({ initialUser, sellHref }: NavbarClientProp
                     className="flex items-center justify-center space-x-2 border-2 border-primary-500 text-primary-600 px-6 py-3 rounded-full font-semibold hover:bg-primary-50 transition-all"
                   >
                     <LogIn className="w-5 h-5" />
-                    <span>Login</span>
+                    <span>{t('nav.login')}</span>
                   </Link>
 
                   <Link
@@ -427,7 +429,7 @@ export default function NavbarClient({ initialUser, sellHref }: NavbarClientProp
                     className="flex items-center justify-center space-x-2 gradient-primary text-white px-6 py-3 rounded-full font-semibold"
                   >
                     <User className="w-5 h-5" />
-                    <span>Sign Up</span>
+                    <span>{t('nav.signUp')}</span>
                   </Link>
                 </>
               )}
