@@ -71,6 +71,17 @@ export function proxy(request: NextRequest) {
     }
   }
 
+  // AI chatbot endpoints require authentication at the edge. The route
+  // handlers also re-check, but rejecting unauthenticated requests here
+  // means we never hit the upstream Python service for anonymous traffic.
+  const isAiChatRoute = pathname === '/api/ai-chat' || pathname === '/api/chat'
+  if (isAiChatRoute && !token) {
+    return NextResponse.json(
+      { success: false, error: 'Authentication required' },
+      { status: 401 }
+    )
+  }
+
   // CSRF protection for state-changing API requests
   // Exempt logout and login endpoints
   if (isApiRequest && isStateChanging && token && pathname !== '/api/auth/logout' && pathname !== '/api/auth/login') {

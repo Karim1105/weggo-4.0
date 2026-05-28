@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import dynamic from 'next/dynamic'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { AdminShell } from '@/components/admin/AdminShell'
+import { AiChatbotToggle } from '@/components/admin/AiChatbotToggle'
 import { ADMIN_NAV_ITEMS, TAB_SUBTITLES, TAB_TITLES } from '@/features/admin/config/navigation'
 import { ActivityLog, ADMIN_TAB_KEYS, AdminNotification, AdminRole, AdminTabKey } from '@/features/admin/types'
 
@@ -76,6 +77,7 @@ export default function AdminDashboardPage() {
       refreshing={refreshing}
       unreadNotifications={unreadNotifications}
       onOpenNotifications={handleOpenNotifications}
+      topbarExtraActions={activeTab === 'overview' ? <AiChatbotToggle /> : null}
     >
       {activeTab === 'overview' && <OverviewModule refreshTick={refreshTick} />}
       {activeTab === 'users' && <UsersModule refreshTick={refreshTick} onActivity={onActivity} onNotify={onNotify} />}

@@ -1,7 +1,9 @@
 import crypto from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
+import { getAuthUser } from '@/lib/auth'
 import { deriveChatSessionContext, attachAnonChatCookie } from '@/lib/chatbot-session'
 import { sendChatbotServiceMessage } from '@/lib/chatbot-service'
+import { isAiChatbotEnabled } from '@/lib/featureFlags'
 import { singleFlight } from '@/lib/services/single-flight'
 import { rateLimitByKey } from '@/lib/rateLimit'
 import type {
@@ -27,6 +29,21 @@ function getDegradedReply() {
 }
 
 export async function POST(request: NextRequest) {
+  const user = await getAuthUser(request)
+  if (!user) {
+    return NextResponse.json(
+      { success: false, error: 'Authentication required' } satisfies AiChatErrorResponse,
+      { status: 401 }
+    )
+  }
+
+  if (user.role !== 'admin' && !(await isAiChatbotEnabled())) {
+    return NextResponse.json(
+      { success: false, error: 'AI assistant is currently disabled' } satisfies AiChatErrorResponse,
+      { status: 403 }
+    )
+  }
+
   let body: Partial<AiChatRequestBody>
 
   try {

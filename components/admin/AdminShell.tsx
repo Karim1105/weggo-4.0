@@ -16,6 +16,7 @@ interface AdminShellProps {
   refreshing: boolean
   unreadNotifications: number
   onOpenNotifications: () => void
+  topbarExtraActions?: React.ReactNode
   children: React.ReactNode
 }
 
@@ -29,6 +30,7 @@ export function AdminShell({
   refreshing,
   unreadNotifications,
   onOpenNotifications,
+  topbarExtraActions,
   children,
 }: AdminShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -51,6 +53,7 @@ export function AdminShell({
           refreshing={refreshing}
           onOpenSidebar={() => setSidebarOpen(true)}
           onOpenNotifications={onOpenNotifications}
+          extraActions={topbarExtraActions}
         />
         <main className="px-4 py-6 lg:px-8">{children}</main>
       </div>

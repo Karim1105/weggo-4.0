@@ -1,10 +1,18 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { usePathname, useRouter } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { MessageCircle, X, Send, Sparkles, Loader2 } from 'lucide-react'
 import { formatChatbotReply, parseAiChatStreamEvent } from '@/lib/chatbot-client'
 import type { AiChatRequestBody, ChatbotMessage, ChatbotRole } from '@/types/ai'
+
+interface ChatbotAccessState {
+  isLoggedIn: boolean
+  isAdmin: boolean
+  aiChatbotEnabled: boolean
+  canUseAiChatbot: boolean
+}
 
 function createMessage(role: ChatbotRole, content: string): ChatbotMessage {
   const id = typeof crypto !== 'undefined' && crypto.randomUUID
@@ -26,6 +34,9 @@ function getCsrfToken(): string {
 }
 
 export default function AIChatbot() {
+  const router = useRouter()
+  const pathname = usePathname()
+  const [access, setAccess] = useState<ChatbotAccessState | null>(null)
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<ChatbotMessage[]>([
     createMessage(
@@ -40,6 +51,33 @@ export default function AIChatbot() {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/system/feature-flags', { credentials: 'same-origin', cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((payload) => {
+        if (cancelled || !payload?.data) return
+        setAccess(payload.data as ChatbotAccessState)
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [pathname])
+
+  const handleIconClick = () => {
+    if (!access) return
+    if (!access.isLoggedIn) {
+      router.push(`/login?redirect=${encodeURIComponent(pathname || '/')}`)
+      return
+    }
+    if (!access.canUseAiChatbot) return
+    setIsOpen((prev) => !prev)
+  }
+
+  // Hide entirely when disabled for the current viewer (not logged in admins
+  // see the icon — login redirect is the intended UX), or when disabled by
+  // an admin and the viewer is not an admin.
+  if (access && access.isLoggedIn && !access.canUseAiChatbot) return null
 
   const sendMessage = async (rawMessage?: string) => {
     const messageText = (rawMessage ?? input).trim()
@@ -129,7 +167,7 @@ export default function AIChatbot() {
         data-ai-chatbot="true"
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleIconClick}
         className="fixed bottom-6 right-6 w-16 h-16 gradient-primary rounded-full shadow-2xl flex items-center justify-center z-50"
       >
         <AnimatePresence mode="wait">

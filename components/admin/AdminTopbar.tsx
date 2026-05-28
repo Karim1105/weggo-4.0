@@ -11,6 +11,8 @@ interface AdminTopbarProps {
   refreshing: boolean
   onOpenSidebar: () => void
   onOpenNotifications: () => void
+  /** Slot rendered between the Home link and the Refresh button. */
+  extraActions?: React.ReactNode
 }
 
 export function AdminTopbar({
@@ -21,6 +23,7 @@ export function AdminTopbar({
   refreshing,
   onOpenSidebar,
   onOpenNotifications,
+  extraActions,
 }: AdminTopbarProps) {
   return (
     <header className="sticky top-0 z-20 border-b bg-white/95 px-4 py-4 backdrop-blur lg:px-8">
@@ -43,6 +46,7 @@ export function AdminTopbar({
             <Home className="h-4 w-4" />
             Home
           </Link>
+          {extraActions}
           <button
             onClick={onRefresh}
             disabled={refreshing}
