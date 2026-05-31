@@ -28,6 +28,15 @@ function formatPrice(value: number, locale: 'en' | 'ar') {
   }
 }
 
+// Compact long absolute dates ("May 19, 2026" → "May 19") so the meta row
+// doesn't crowd the location on narrow mobile cards. Relative formats
+// ("1 day ago", "منذ يومين") pass through unchanged.
+function compactPostedAt(value: string) {
+  if (!value) return value
+  const match = value.match(/^([A-Za-z]+ \d{1,2}),\s*\d{4}$/)
+  return match ? match[1] : value
+}
+
 export default function ProductCard({
   product,
   onToggleFavorite,
@@ -125,7 +134,7 @@ export default function ProductCard({
         </div>
 
         {/* Body */}
-        <div className="flex flex-1 flex-col gap-3 p-3.5 sm:p-4">
+        <div className="flex flex-1 flex-col gap-2.5 p-3 sm:gap-3 sm:p-4">
           {/* Title + category — title auto-direction for mixed AR/EN content */}
           <div className="flex flex-col gap-1">
             <span className="text-[0.68rem] font-medium uppercase tracking-wider text-slate-400">
@@ -139,15 +148,16 @@ export default function ProductCard({
             </h3>
           </div>
 
-          {/* Meta row — single line, two icons */}
-          <div className="flex items-center gap-3 text-xs text-slate-500 sm:text-[0.8rem]">
+          {/* Meta — stacked on mobile so neither location nor date is
+              truncated when both cards share a narrow row; inline on sm+ */}
+          <div className="flex flex-col gap-1 text-xs text-slate-500 sm:flex-row sm:items-center sm:gap-3 sm:text-[0.8rem]">
             <span className="inline-flex min-w-0 items-center gap-1">
               <MapPin className="h-3.5 w-3.5 shrink-0 text-slate-400" aria-hidden />
               <span className="truncate">{product.location}</span>
             </span>
             <span className="inline-flex shrink-0 items-center gap-1">
               <Clock className="h-3.5 w-3.5 text-slate-400" aria-hidden />
-              <span className="whitespace-nowrap">{product.postedAt}</span>
+              <span className="whitespace-nowrap">{compactPostedAt(product.postedAt)}</span>
             </span>
           </div>
 
@@ -166,10 +176,10 @@ export default function ProductCard({
 
           {/* Footer — price + CTA. mt-auto pins to bottom regardless of body length */}
           <div className="mt-auto flex items-center justify-between gap-2 pt-1">
-            <p className="whitespace-nowrap text-lg font-bold tracking-tight text-primary-600 sm:text-xl">
+            <p className="min-w-0 whitespace-nowrap text-[0.95rem] font-bold tracking-tight text-primary-600 sm:text-xl">
               {priceLabel}
             </p>
-            <span className="inline-flex shrink-0 items-center rounded-full bg-primary-50 px-3.5 py-1.5 text-xs font-semibold text-primary-700 transition-colors group-hover:bg-primary-100 sm:px-4 sm:py-2 sm:text-sm">
+            <span className="inline-flex shrink-0 items-center rounded-full bg-primary-50 px-3 py-1.5 text-xs font-semibold text-primary-700 transition-colors group-hover:bg-primary-100 sm:px-4 sm:py-2 sm:text-sm">
               {viewLabel}
             </span>
           </div>
