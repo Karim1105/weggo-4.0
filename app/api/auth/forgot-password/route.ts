@@ -3,6 +3,9 @@ import crypto from 'crypto'
 import connectDB from '@/lib/db'
 import User from '@/models/User'
 import { rateLimit } from '@/lib/rateLimit'
+import { sendEmail } from '@/lib/email/client'
+import { renderPasswordResetEmail } from '@/lib/email/templates/passwordReset'
+import { logger } from '@/lib/logger'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,6 +43,23 @@ export async function POST(request: NextRequest) {
 
     if (process.env.NODE_ENV === 'development') {
       console.info('[AUTH] Password reset link (dev only):', resetLink)
+    }
+
+    // Fire-and-await the email send. A failure is logged server-side but
+    // never surfaced to the requester — surfacing it would leak whether an
+    // account exists at this address.
+    const { subject, html, text } = renderPasswordResetEmail({
+      resetLink,
+      userName: user.name,
+      expiresInMinutes: 60,
+    })
+    const sendResult = await sendEmail({ to: user.email, subject, html, text })
+    if (!sendResult.delivered) {
+      logger.warn('Password reset email not delivered', {
+        userId: String(user._id),
+        provider: sendResult.provider,
+        error: sendResult.error,
+      })
     }
 
     return NextResponse.json({
