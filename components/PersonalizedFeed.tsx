@@ -385,7 +385,10 @@ export default function PersonalizedFeed() {
   const totalSlides = Math.max(1, Math.ceil(displayProducts.length / slidesToShow))
   const startIndex = currentSlide * slidesToShow
   const carouselProducts = displayProducts.slice(startIndex, startIndex + slidesToShow)
-  const visibleCarouselColumns = Math.max(1, Math.min(slidesToShow, carouselProducts.length || 1))
+  // Always render as many columns as `slidesToShow`, even when the last
+  // slide is partial. A single leftover item should occupy 1/Nth of the
+  // row, not stretch full-width like a billboard.
+  const visibleCarouselColumns = Math.max(1, slidesToShow)
   const canGoPrev = currentSlide > 0
   const canGoNext = currentSlide < totalSlides - 1
 
