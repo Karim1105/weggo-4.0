@@ -19,7 +19,9 @@
     "seed:featured": "tsx scripts/seed-featured.ts",
     "seed:trash": "tsx scripts/seed-trash.ts",
     "seed:trash:delete": "tsx scripts/seed-trash.ts --delete",
-    "reconcile:lancedb": "tsx scripts/reconcile-lancedb.ts"
+    "reconcile:lancedb": "tsx scripts/reconcile-lancedb.ts",
+    "migrate:national-id": "tsx scripts/migrate-national-id-hash.ts",
+    "migrate:national-id:dry": "tsx scripts/migrate-national-id-hash.ts --dry-run"
   },
   "dependencies": {
     "@types/node": "^25.6.0",

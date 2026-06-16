@@ -4,7 +4,7 @@
  */
 
 export function validateEnvironment() {
-  const required = ['MONGODB_URI', 'JWT_SECRET']
+  const required = ['MONGODB_URI', 'JWT_SECRET', 'NATIONAL_ID_HASH_SECRET']
   const recommendedInProduction = ['NEXT_PUBLIC_SITE_URL', 'NEXT_PUBLIC_APP_URL']
   const missing: string[] = []
   const warnings: string[] = []

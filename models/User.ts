@@ -12,7 +12,8 @@ export interface IUser extends Document {
   role: 'user' | 'admin'
   sellerVerified: boolean
   idDocumentUrl?: string
-  nationalIdNumber?: string
+  /** Peppered HMAC-SHA256 of the seller's national ID. Never the plaintext. */
+  nationalIdHash?: string
   averageRating: number
   ratingCount: number
   totalSales: number
@@ -69,7 +70,9 @@ const UserSchema = new Schema<IUser>(
     },
     sellerVerified: { type: Boolean, default: false },
     idDocumentUrl: { type: String },
-    nationalIdNumber: { type: String, match: /^[23]\d{13}$/ },
+    // Stored as a peppered HMAC hash (hex), never plaintext. `select: false`
+    // keeps it out of default reads (e.g. getAuthUser) as defense in depth.
+    nationalIdHash: { type: String, select: false, index: true },
     averageRating: { type: Number, default: 0, min: 0, max: 5 },
     ratingCount: { type: Number, default: 0 },
     totalSales: { type: Number, default: 0 },

@@ -62,16 +62,6 @@ export async function saveImage(file: File, userId: string, productId?: string):
   return `/uploads/listings/${encodeURIComponent(userId)}/${productId ? encodeURIComponent(productId) + '/' : ''}${encodeURIComponent(filename)}`
 }
 
-export async function saveIdDocument(file: File, userId: string): Promise<string> {
-  const buffer = await readAndValidateImage(file)
-  const uploadsDir = path.join(process.cwd(), 'public', 'uploads', 'ids', userId)
-  const ext = (file.name && path.extname(file.name)) || ''
-  const filename = `${Date.now()}-${randomUUID()}${ext}`
-  const dest = path.join(uploadsDir, filename)
-  await writeFilePublic(buffer, dest)
-  return `/uploads/ids/${encodeURIComponent(userId)}/${encodeURIComponent(filename)}`
-}
-
 export async function handleImageUpload(
   formData: FormData,
   userId: string,

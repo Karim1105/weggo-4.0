@@ -28,22 +28,30 @@ fi
 echo "✅ PASS: CSRF protection implemented"
 echo ""
 
-# Test 3: Verify middleware CSRF validation
-echo "Test 3: Checking middleware CSRF validation..."
-if ! grep -q "validateCsrf\|X-CSRF-Token" middleware.ts; then
-    echo "❌ FAIL: Middleware CSRF validation missing"
+# Test 3: Verify proxy (edge middleware) CSRF validation
+# Note: Next.js renamed the edge middleware entrypoint to proxy.ts in this app.
+echo "Test 3: Checking proxy CSRF validation..."
+if ! grep -qi "x-csrf-token\|csrfToken" proxy.ts; then
+    echo "❌ FAIL: Proxy CSRF validation missing"
     exit 1
 fi
-echo "✅ PASS: Middleware CSRF validation enabled"
+echo "✅ PASS: Proxy CSRF validation enabled"
 echo ""
 
-# Test 4: Verify ID documents moved to private directory
-echo "Test 4: Checking ID document storage location..."
-if ! grep -q 'join(process.cwd(), .private' lib/imageUpload.ts; then
-    echo "❌ FAIL: ID documents still in public directory"
+# Test 4: Verify seller verification no longer stores ID document files
+# Current design: sellers submit a national ID number that is validated
+# server-side; no identity document images are persisted to disk. Guard against
+# regressions that would write ID files to the public directory.
+echo "Test 4: Checking ID document handling..."
+if grep -q "uploads/ids\|saveIdDocument" lib/imageUpload.ts; then
+    echo "❌ FAIL: ID document files are written to disk (should not be persisted)"
     exit 1
 fi
-echo "✅ PASS: ID documents stored in private directory"
+if ! grep -q "validateEgyptianNationalId" app/api/auth/upload-id/route.ts; then
+    echo "❌ FAIL: National ID is not validated server-side"
+    exit 1
+fi
+echo "✅ PASS: ID documents not persisted; national ID validated server-side"
 echo ""
 
 # Test 5: Verify password reset tokens are hashed
@@ -97,7 +105,7 @@ echo ""
 echo "Summary of Security Fixes:"
 echo "  ✓ Hardcoded admin credentials removed"
 echo "  ✓ CSRF protection implemented (double-submit cookie)"
-echo "  ✓ ID documents moved to private storage"
+echo "  ✓ ID document files not persisted; national ID validated server-side"
 echo "  ✓ Password reset tokens hashed before storage"
 echo "  ✓ JWT tokens not exposed in response bodies"
 echo "  ✓ CSRF helper utility for client-side requests"

@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { categories as sharedCategories } from '@/lib/utils'
@@ -21,6 +21,9 @@ import {
 
 const COUNTS_CACHE_KEY = 'weggo_category_counts_v1'
 const COUNTS_CACHE_TTL = 10 * 60 * 1000
+
+const POPULAR_CACHE_KEY = 'weggo_popular_categories_v1'
+const POPULAR_CACHE_TTL = 5 * 60 * 60 * 1000 // 5 hours, matches the server cache
 
 type CategoryCard = {
   name: string
@@ -83,6 +86,9 @@ export default function Categories() {
   const { t, isArabic } = useT()
   const [categories, setCategories] = useState(categoryList)
   const [loading, setLoading] = useState(true)
+  // Ranked slugs from the server ("Popular This Week"). null = not loaded yet,
+  // so we fall back to the static `popular` flags until the API responds.
+  const [popularSlugs, setPopularSlugs] = useState<string[] | null>(null)
 
   const localizedName = (cat: CategoryCard) => (isArabic && cat.nameAr ? cat.nameAr : cat.name)
   const localizedDescription = (cat: CategoryCard) => {
@@ -102,6 +108,24 @@ export default function Categories() {
       }))
     )
   }
+
+  const fetchPopularCategories = useCallback(async () => {
+    try {
+      const res = await fetch('/api/categories/popular')
+      const data = await res.json()
+
+      if (data.success && Array.isArray(data.data?.popular)) {
+        const slugs: string[] = data.data.popular
+        localStorage.setItem(
+          POPULAR_CACHE_KEY,
+          JSON.stringify({ timestamp: Date.now(), popular: slugs })
+        )
+        setPopularSlugs(slugs)
+      }
+    } catch (error) {
+      console.error('Failed to fetch popular categories:', error)
+    }
+  }, [])
 
   const fetchCategoryCounts = useCallback(async () => {
     try {
@@ -136,8 +160,33 @@ export default function Categories() {
       }
     }
 
+    const cachedPopularRaw = localStorage.getItem(POPULAR_CACHE_KEY)
+    if (cachedPopularRaw) {
+      try {
+        const parsed = JSON.parse(cachedPopularRaw) as { timestamp: number; popular: string[] }
+        if (Array.isArray(parsed?.popular)) {
+          setPopularSlugs(parsed.popular)
+        }
+      } catch {
+        localStorage.removeItem(POPULAR_CACHE_KEY)
+      }
+    }
+
     const scheduleFetch = () => {
       void fetchCategoryCounts()
+      const popularRaw = localStorage.getItem(POPULAR_CACHE_KEY)
+      let popularFresh = false
+      if (popularRaw) {
+        try {
+          const parsed = JSON.parse(popularRaw) as { timestamp: number }
+          popularFresh = !!parsed?.timestamp && Date.now() - parsed.timestamp < POPULAR_CACHE_TTL
+        } catch {
+          popularFresh = false
+        }
+      }
+      if (!popularFresh) {
+        void fetchPopularCategories()
+      }
     }
     if (typeof window !== 'undefined' && 'requestIdleCallback' in window) {
       ;(window as any).requestIdleCallback(scheduleFetch, { timeout: 1200 })
@@ -166,7 +215,18 @@ export default function Categories() {
     return () => {
       window.removeEventListener('focus', handleWindowFocus)
     }
-  }, [fetchCategoryCounts])
+  }, [fetchCategoryCounts, fetchPopularCategories])
+
+  // Ordered popular categories: server ranking when available, otherwise the
+  // static `popular` flags as a fallback.
+  const popularCategories = useMemo(() => {
+    if (popularSlugs && popularSlugs.length) {
+      return popularSlugs
+        .map((slug) => categories.find((cat) => cat.slug === slug))
+        .filter((cat): cat is (typeof categories)[number] => Boolean(cat))
+    }
+    return categories.filter((cat) => cat.popular)
+  }, [popularSlugs, categories])
 
   const formatCount = (count: number) => {
     if (count === 0) return '0'
@@ -239,7 +299,7 @@ export default function Categories() {
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-            {categories.filter(cat => cat.popular).map((category, index) => (
+            {popularCategories.map((category, index) => (
               <Link key={category.name} href={`/browse?category=${category.slug}`}>
                 <motion.div
                   initial={{ opacity: 0, y: 30 }}

@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx vitest *)",
+      "Bash(node -e \"const {MongoMemoryServer}=require\\('mongodb-memory-server'\\); \\(async\\(\\)=>{const m=await MongoMemoryServer.create\\(\\); console.log\\('OK', m.getUri\\(\\)\\); await m.stop\\(\\);}\\)\\(\\)\")",
+      "Bash(npx tsc *)",
+      "Bash(echo \"EXIT: $?\")",
+      "Bash(npx eslint *)",
+      "Bash(npm audit *)",
+      "Bash(echo \"TSC EXIT: $?\")",
+      "Bash(echo \"EXIT $?\")",
+      "Bash(bash verify_security.sh)",
+      "Bash(echo \"ESLINT EXIT $?\")",
+      "Bash(echo \"TSC EXIT $?\")"
+    ]
+  }
+}

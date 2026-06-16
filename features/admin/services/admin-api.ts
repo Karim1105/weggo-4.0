@@ -144,3 +144,16 @@ export async function getAdminConversationDetail(conversationId: string) {
   const res = await adminFetch<{ success: true; data: AdminConversationDetailPayload }>(`/api/admin/conversations/${encodeURIComponent(conversationId)}`)
   return res.data
 }
+
+export interface PopularCategoriesPayload {
+  popular: string[]
+  scores: Record<string, number>
+  computedAt: string
+}
+
+export async function refreshPopularCategories() {
+  const res = await adminFetch<{ success: true; data: PopularCategoriesPayload }>(`/api/admin/categories/popular`, {
+    method: 'POST',
+  })
+  return res.data
+}

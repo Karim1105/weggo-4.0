@@ -3,6 +3,7 @@ import connectDB from '@/lib/db'
 import User from '@/models/User'
 import { getAuthUser } from '@/lib/auth'
 import { NATIONAL_ID_GENERIC_ERROR, validateEgyptianNationalId } from '@/lib/validators'
+import { hashNationalId } from '@/lib/nationalId'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,10 +44,15 @@ export async function POST(request: NextRequest) {
     }
 
     await connectDB()
+    // Persist only a peppered, irreversible hash of the national ID — never the
+    // plaintext. Clear any legacy plaintext field that may still exist.
     await User.findByIdAndUpdate(user._id, {
-      nationalIdNumber: nationalIdNumber.trim(),
-      idDocumentUrl: null,
-      sellerVerified: true,
+      $set: {
+        nationalIdHash: hashNationalId(nationalIdNumber),
+        idDocumentUrl: null,
+        sellerVerified: true,
+      },
+      $unset: { nationalIdNumber: '' },
     })
 
     return NextResponse.json({
