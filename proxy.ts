@@ -61,6 +61,51 @@ function timingSafeEqualStrings(a: string, b: string): boolean {
   return diff === 0
 }
 
+function createNonce(): string {
+  const bytes = new Uint8Array(16)
+  crypto.getRandomValues(bytes)
+  let binary = ''
+  for (const byte of bytes) binary += String.fromCharCode(byte)
+  return btoa(binary)
+}
+
+// Scripts are allowed only when they carry this request's nonce. 'strict-dynamic'
+// lets those trusted scripts load Next.js chunks, so no 'unsafe-inline' is needed.
+function buildContentSecurityPolicy(nonce: string): string {
+  const scriptSrc = ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'"]
+  if (process.env.NODE_ENV !== 'production') {
+    // React dev tooling and HMR evaluate code at runtime.
+    scriptSrc.push("'unsafe-eval'")
+  }
+  return [
+    "default-src 'self'",
+    `script-src ${scriptSrc.join(' ')}`,
+    "script-src-attr 'none'",
+    // Inline style attributes (React style props, framer-motion) still need this.
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data: https: blob:",
+    "font-src 'self'",
+    "connect-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "upgrade-insecure-requests",
+  ].join('; ')
+}
+
+function applySecurityHeaders(response: NextResponse, csp: string): NextResponse {
+  response.headers.set('Content-Security-Policy', csp)
+  response.headers.set('X-Content-Type-Options', 'nosniff')
+  response.headers.set('X-Frame-Options', 'DENY')
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
+  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
+  if (process.env.NODE_ENV === 'production') {
+    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
+  }
+  return response
+}
+
 export async function proxy(request: NextRequest) {
 	const { pathname } = request.nextUrl
 	const origin =
@@ -94,7 +139,15 @@ export async function proxy(request: NextRequest) {
         return NextResponse.json({ success: false, error: 'Not found' }, { status: 404 })
       }
       const notFoundUrl = new URL('/404', origin)
-      return NextResponse.rewrite(notFoundUrl)
+      const nonce = createNonce()
+      const csp = buildContentSecurityPolicy(nonce)
+      const requestHeaders = new Headers(request.headers)
+      requestHeaders.set('x-nonce', nonce)
+      requestHeaders.set('Content-Security-Policy', csp)
+      return applySecurityHeaders(
+        NextResponse.rewrite(notFoundUrl, { request: { headers: requestHeaders } }),
+        csp
+      )
     }
   }
 
@@ -126,66 +179,23 @@ export async function proxy(request: NextRequest) {
 	return NextResponse.redirect(loginUrl)
   }
 
-  // Add security headers
-  const response = NextResponse.next()
-  
-  // Prevent MIME type sniffing
-  response.headers.set('X-Content-Type-Options', 'nosniff')
-  
-  // Prevent clickjacking
-  response.headers.set('X-Frame-Options', 'DENY')
-  
-  // Enable browser XSS protection
-  response.headers.set('X-XSS-Protection', '1; mode=block')
-  
-  // Control referrer information
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin')
-  
-  // Restrict feature access
-  response.headers.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()')
-  
-  // Content Security Policy - prevent XSS and injection attacks
-  const scriptSrc = ["'self'", "'unsafe-inline'"]
-  if (process.env.NODE_ENV !== 'production') {
-    scriptSrc.push("'unsafe-eval'")
-  }
-  response.headers.set(
-    'Content-Security-Policy',
-    [
-      "default-src 'self'",
-      `script-src ${scriptSrc.join(' ')}`,
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: https: blob:",
-      "font-src 'self'",
-      "connect-src 'self'",
-      "frame-ancestors 'none'",
-      "upgrade-insecure-requests",
-    ].join('; ')
-  )
-  
-  // HSTS - enforce HTTPS
-  if (process.env.NODE_ENV === 'production') {
-    response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains')
-  }
+  const nonce = createNonce()
+  const csp = buildContentSecurityPolicy(nonce)
 
-  return response
+  // Next.js reads the nonce from the request's CSP header and adds it to the
+  // framework and page scripts it renders.
+  const requestHeaders = new Headers(request.headers)
+  requestHeaders.set('x-nonce', nonce)
+  requestHeaders.set('Content-Security-Policy', csp)
+
+  return applySecurityHeaders(NextResponse.next({ request: { headers: requestHeaders } }), csp)
 }
 
 export const config = {
   matcher: [
-    '/sell',
-    '/sell/:path*',
-    '/profile',
-    '/profile/:path*',
-    '/favorites',
-    '/favorites/:path*',
-    '/admin',
-    '/admin/:path*',
-    '/api/:path*',
-    '/appeals',
-    '/appeals/:path*',
-    '/appeal-review',
-    '/appeal-review/:path*',
-    '/api/admin/:path*',
+    // Run on every route so every page gets a nonce-based CSP (and the auth
+    // and CSRF checks above). Skip build assets and static images only.
+    // Prefetch requests are not skipped: they must pass the same checks.
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|gif|webp|svg|ico)$).*)',
   ],
 }
