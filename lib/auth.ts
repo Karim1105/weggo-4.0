@@ -20,7 +20,10 @@ export interface JWTPayload {
   userId: string
   email: string
   role: string
+  iat?: number
 }
+
+const JWT_ALGORITHM = 'HS256' as const
 
 export function generateToken(user: IUser): string {
   const payload: JWTPayload = {
@@ -30,15 +33,35 @@ export function generateToken(user: IUser): string {
   }
   // 7 days for regular users, 8 hours for admins
   const expiresIn = user.role === 'admin' ? '8h' : '7d'
-  return jwt.sign(payload, JWT_SECRET_FINAL, { expiresIn })
+  return jwt.sign(payload, JWT_SECRET_FINAL, { expiresIn, algorithm: JWT_ALGORITHM })
 }
 
 export function verifyToken(token: string): JWTPayload | null {
   try {
-    return jwt.verify(token, JWT_SECRET_FINAL) as JWTPayload
+    return jwt.verify(token, JWT_SECRET_FINAL, { algorithms: [JWT_ALGORITHM] }) as JWTPayload
   } catch (error) {
     return null
   }
+}
+
+/**
+ * A token issued before the user's last password change is no longer valid,
+ * so resetting a password logs out every existing session.
+ */
+function isTokenStale(payload: JWTPayload, user: IUser | null): boolean {
+  const changedAt = user?.passwordChangedAt ? new Date(user.passwordChangedAt).getTime() : 0
+  if (!changedAt) return false
+  if (typeof payload.iat !== 'number') return true
+  // iat has second precision; allow for the truncation.
+  return payload.iat * 1000 < changedAt - 1000
+}
+
+async function loadUserForToken(payload: JWTPayload | null): Promise<IUser | null> {
+  if (!payload?.userId) return null
+  await connectDB()
+  const user = await User.findById(payload.userId).select('-password')
+  if (!user || isTokenStale(payload, user)) return null
+  return user
 }
 
 export async function getServerAuthUser(): Promise<IUser | null> {
@@ -47,11 +70,7 @@ export async function getServerAuthUser(): Promise<IUser | null> {
     const token = cookieStore.get('token')?.value
     if (!token) return null
 
-    const payload = verifyToken(token)
-    if (!payload?.userId) return null
-
-    await connectDB()
-    return await User.findById(payload.userId).select('-password')
+    return await loadUserForToken(verifyToken(token))
   } catch {
     return null
   }
@@ -74,12 +93,7 @@ export async function getAuthUser(request: NextRequest): Promise<IUser | null> {
 
     if (!token) return null
 
-    const payload = verifyToken(token)
-    if (!payload) return null
-
-    await connectDB()
-    const user = await User.findById(payload.userId).select('-password')
-    return user
+    return await loadUserForToken(verifyToken(token))
   } catch (error) {
     return null
   }

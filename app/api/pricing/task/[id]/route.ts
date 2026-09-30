@@ -1,13 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getPricingJob } from '@/lib/pricingJobStore'
+import { getAuthUser } from '@/lib/auth'
 
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const user = await getAuthUser(request)
+    if (!user) {
+      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+    }
+
     const { id } = await params
-    const job = getPricingJob(id)
+    const job = getPricingJob(id, user._id.toString())
 
     if (!job) {
       return NextResponse.json(

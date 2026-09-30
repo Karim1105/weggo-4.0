@@ -45,8 +45,8 @@ export async function findConversationMessages(
 
   const [messages, total] = await Promise.all([
     Message.find({ conversationId })
-      .populate('sender', 'name email avatar banned')
-      .populate('receiver', 'name email avatar banned')
+      .populate('sender', 'name avatar banned')
+      .populate('receiver', 'name avatar banned')
       .populate('product', 'title price images')
       .sort({ createdAt: 1 })
       .skip(skip)
@@ -70,8 +70,8 @@ export async function findConversationMessagesByCursor(
 
   const [messages, total] = await Promise.all([
     Message.find(query)
-      .populate('sender', 'name email avatar banned')
-      .populate('receiver', 'name email avatar banned')
+      .populate('sender', 'name avatar banned')
+      .populate('receiver', 'name avatar banned')
       .populate('product', 'title price images')
       .sort({ _id: -1 })
       .limit(pagination.limit + 1)
@@ -137,7 +137,7 @@ export async function findUserConversations(
               localField: 'lastMessage.sender',
               foreignField: '_id',
               as: 'sender',
-              pipeline: [{ $project: { name: 1, email: 1, avatar: 1, banned: 1 } }],
+              pipeline: [{ $project: { name: 1, avatar: 1, banned: 1 } }],
             },
           },
           {
@@ -146,7 +146,7 @@ export async function findUserConversations(
               localField: 'lastMessage.receiver',
               foreignField: '_id',
               as: 'receiver',
-              pipeline: [{ $project: { name: 1, email: 1, avatar: 1, banned: 1 } }],
+              pipeline: [{ $project: { name: 1, avatar: 1, banned: 1 } }],
             },
           },
           {
@@ -270,8 +270,8 @@ export async function createMessage(params: {
 
 export async function findMessageById(messageId: string): Promise<unknown | null> {
   return Message.findById(messageId)
-    .populate('sender', 'name email avatar banned')
-    .populate('receiver', 'name email avatar banned')
+    .populate('sender', 'name avatar banned')
+    .populate('receiver', 'name avatar banned')
     .populate('product', 'title price images')
     .lean()
 }

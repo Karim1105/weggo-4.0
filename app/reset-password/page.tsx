@@ -7,6 +7,7 @@ import { motion } from 'framer-motion'
 import { Lock, ArrowLeft } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { withCsrfHeader } from '@/lib/utils'
+import { validatePassword } from '@/lib/validators'
 
 function ResetPasswordPageInner() {
   const [password, setPassword] = useState('')
@@ -30,8 +31,9 @@ function ResetPasswordPageInner() {
       toast.error('Passwords do not match')
       return
     }
-    if (password.length < 6) {
-      toast.error('Password must be at least 6 characters')
+    const passwordCheck = validatePassword(password)
+    if (!passwordCheck.valid) {
+      toast.error(passwordCheck.message || 'Password is too weak')
       return
     }
     if (!token) return
@@ -92,7 +94,7 @@ function ResetPasswordPageInner() {
                   className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="••••••••"
                   required
-                  minLength={6}
+                  minLength={8}
                 />
               </div>
             </div>
@@ -107,7 +109,7 @@ function ResetPasswordPageInner() {
                   className="w-full pl-10 pr-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="••••••••"
                   required
-                  minLength={6}
+                  minLength={8}
                 />
               </div>
             </div>

@@ -6,6 +6,7 @@ import Ticket from '@/models/Ticket'
 import TicketMessage from '@/models/TicketMessage'
 import { saveTicketAttachments } from '@/lib/tickets/attachments'
 import { cleanupClosedTickets } from '@/lib/tickets/cleanup'
+import { rateLimitByKey } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -21,6 +22,9 @@ async function postHandler(
   if (!isValidObjectId(id)) {
     return NextResponse.json({ success: false, error: 'Invalid ticket id' }, { status: 400 })
   }
+
+  const limited = rateLimitByKey(`tickets:reply:${user._id}`, 60, 60 * 60 * 1000)
+  if (limited) return limited
 
   await connectDB()
   const ticket = await Ticket.findById(id)
@@ -41,6 +45,10 @@ async function postHandler(
 
   if (!message || message.length < 2) {
     return NextResponse.json({ success: false, error: 'Reply is required' }, { status: 400 })
+  }
+
+  if (message.length > 5000) {
+    return NextResponse.json({ success: false, error: 'Reply cannot exceed 5000 characters' }, { status: 400 })
   }
 
   let attachments: string[] = []

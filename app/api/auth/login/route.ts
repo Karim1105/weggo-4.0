@@ -7,6 +7,7 @@ import { rateLimit } from '@/lib/rateLimit'
 import { setCsrfTokenCookie } from '@/lib/csrf'
 import { validateEmail } from '@/lib/validators'
 import { logger, getRequestId } from '@/lib/logger'
+import { getSafeRedirectPath } from '@/lib/safeRedirect'
 
 export const dynamic = 'force-dynamic'
 
@@ -111,12 +112,7 @@ export async function POST(request: NextRequest) {
 
     // For non-admins, respect a safe internal redirect path when provided.
     const safeRedirect =
-      user.role !== 'admin' &&
-      redirectParam &&
-      redirectParam.startsWith('/') &&
-      !redirectParam.startsWith('//')
-        ? redirectParam
-        : baseRedirect
+      (user.role !== 'admin' && getSafeRedirectPath(redirectParam, origin)) || baseRedirect
 
     // Use an absolute redirect based on the public origin for form requests.
     const redirectUrl = new URL(safeRedirect, origin)

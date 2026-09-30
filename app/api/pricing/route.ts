@@ -1,8 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getAuthUser } from '@/lib/auth'
+import { rateLimit } from '@/lib/rateLimit'
+import { parsePricingInput } from '@/lib/pricingInput'
 
 export async function POST(request: NextRequest) {
+  const rateLimitResponse = rateLimit(30, 15 * 60 * 1000)(request)
+  if (rateLimitResponse) return rateLimitResponse
+
+  const user = await getAuthUser(request)
+  if (!user) {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
-    const { title, description, category, condition } = await request.json()
+    const input = parsePricingInput(await request.json().catch(() => null))
+    if (!input) {
+      return NextResponse.json({ success: false, error: 'Invalid input' }, { status: 400 })
+    }
+    const { title, description, category, condition } = input
 
     // Mock implementation
     const pricingData = await analyzePricing(title, description, category, condition)

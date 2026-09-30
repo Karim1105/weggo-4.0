@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { randomBytes, timingSafeEqual } from 'crypto'
 import connectDB from '@/lib/db'
 import User from '@/models/User'
 import Product from '@/models/Product'
@@ -53,9 +54,15 @@ function getSeedSecret(request: NextRequest): string | null {
   return null
 }
 
+function secretMatches(provided: string | null, expected: string | undefined): boolean {
+  if (!provided || !expected || expected.length < 32) return false
+  const a = Buffer.from(provided)
+  const b = Buffer.from(expected)
+  return a.length === b.length && timingSafeEqual(a, b)
+}
+
 export async function POST(request: NextRequest) {
-  const secret = getSeedSecret(request)
-  if (!secret || secret !== process.env.SEED_FEATURED_SECRET) {
+  if (!secretMatches(getSeedSecret(request), process.env.SEED_FEATURED_SECRET)) {
     return NextResponse.json(
       { success: false, error: 'Unauthorized' },
       { status: 401 }
@@ -63,7 +70,9 @@ export async function POST(request: NextRequest) {
   }
 
   const seedEmail = process.env.SEED_SELLER_EMAIL || 'seed-seller@weggo.local'
-  const seedPassword = process.env.SEED_SELLER_PASSWORD || 'SeedSeller123!'
+  // Without an explicit password, use a random one so the seed account never
+  // has well-known credentials.
+  const seedPassword = process.env.SEED_SELLER_PASSWORD || randomBytes(24).toString('base64url')
   const seedName = process.env.SEED_SELLER_NAME || 'Weggo Featured Seller'
 
   try {
@@ -105,7 +114,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: error?.message || 'Seed failed' },
+      { success: false, error: 'Seed failed' },
       { status: 500 }
     )
   }

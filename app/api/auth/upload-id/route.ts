@@ -60,9 +60,9 @@ export async function POST(request: NextRequest) {
       message: 'National ID submitted. You are now a verified seller.',
       sellerVerified: true,
     })
-  } catch (error: any) {
+  } catch {
     return NextResponse.json(
-      { success: false, error: error?.message || 'Failed to submit National ID' },
+      { success: false, error: 'Failed to submit National ID' },
       { status: 500 }
     )
   }

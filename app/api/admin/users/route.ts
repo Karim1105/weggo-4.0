@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db'
 import User from '@/models/User'
 import { requireAdmin } from '@/lib/auth'
+import { escapeRegex } from '@/lib/api/listings/query'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -11,9 +12,9 @@ async function handler(request: NextRequest) {
     await connectDB()
 
     const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '20')
-    const search = searchParams.get('search') || ''
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1)
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20') || 20))
+    const search = escapeRegex((searchParams.get('search') || '').trim().slice(0, 100))
     const status = searchParams.get('status') // 'banned', 'verified', 'all'
 
     const skip = (page - 1) * limit

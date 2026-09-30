@@ -1,3 +1,4 @@
+import { isValidObjectId } from 'mongoose'
 import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db'
 import User from '@/models/User'
@@ -25,7 +26,7 @@ async function handler(request: NextRequest, admin: any) {
       )
     }
 
-    if (!reason || !reason.trim()) {
+    if (typeof reason !== 'string' || !reason.trim()) {
       return NextResponse.json(
         { success: false, error: 'Ban reason is required' },
         { status: 400 }
@@ -36,6 +37,16 @@ async function handler(request: NextRequest, admin: any) {
     if (trimmedReason.length > 500) {
       return NextResponse.json(
         { success: false, error: 'Ban reason cannot exceed 500 characters' },
+        { status: 400 }
+      )
+    }
+
+    if (
+      (userId !== undefined && userId !== null && (typeof userId !== 'string' || !isValidObjectId(userId))) ||
+      (!userId && typeof email !== 'string')
+    ) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid userId or email' },
         { status: 400 }
       )
     }

@@ -13,7 +13,7 @@ function parseNumber(value: string | null) {
 
 export async function GET(request: NextRequest) {
   const query = request.nextUrl.searchParams.get('query')?.trim() || ''
-  if (!query) {
+  if (!query || query.length > 200) {
     return NextResponse.json(
       { success: false, error: 'query is required' },
       { status: 400 }
@@ -67,10 +67,11 @@ export async function GET(request: NextRequest) {
       },
     })
   } catch (error) {
+    console.error('Listing search error:', error)
     return NextResponse.json(
       {
         success: false,
-        error: error instanceof Error ? error.message : 'Search is temporarily unavailable',
+        error: 'Search is temporarily unavailable',
       },
       { status: 503 }
     )

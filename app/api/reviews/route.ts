@@ -3,7 +3,7 @@ import { isValidObjectId, Types } from 'mongoose'
 import connectDB from '@/lib/db'
 import Review from '@/models/Review'
 import Product from '@/models/Product'
-import { requireAuth } from '@/lib/auth'
+import { requireAuthNotBanned } from '@/lib/auth'
 import { updateProductRating, updateSellerRating } from '@/lib/rating'
 
 async function getHandler(request: NextRequest) {
@@ -139,9 +139,23 @@ async function postHandler(request: NextRequest, user: any) {
       )
     }
 
-    if (rating < 1 || rating > 5) {
+    if (typeof rating !== 'number' || !Number.isInteger(rating) || rating < 1 || rating > 5) {
       return NextResponse.json(
         { success: false, error: 'Rating must be between 1 and 5' },
+        { status: 400 }
+      )
+    }
+
+    if (comment !== undefined && comment !== null && (typeof comment !== 'string' || comment.length > 2000)) {
+      return NextResponse.json(
+        { success: false, error: 'Comment must be a string of at most 2000 characters' },
+        { status: 400 }
+      )
+    }
+
+    if (String(sellerId) === String(user._id)) {
+      return NextResponse.json(
+        { success: false, error: 'You cannot review your own listing' },
         { status: 400 }
       )
     }
@@ -161,7 +175,7 @@ async function postHandler(request: NextRequest, user: any) {
 
     // Verify product exists and belongs to seller
     const product = await Product.findById(productId)
-    if (!product || product.seller.toString() !== sellerId) {
+    if (!product || product.status === 'deleted' || product.seller.toString() !== sellerId) {
       return NextResponse.json(
         { success: false, error: 'Invalid product or seller' },
         { status: 400 }
@@ -173,7 +187,7 @@ async function postHandler(request: NextRequest, user: any) {
       seller: sellerId,
       product: productId,
       rating,
-      comment,
+      comment: typeof comment === 'string' ? comment : undefined,
     })
 
     await review.populate([
@@ -210,5 +224,5 @@ async function postHandler(request: NextRequest, user: any) {
 }
 
 export const GET = getHandler
-export const POST = requireAuth(postHandler)
+export const POST = requireAuthNotBanned(postHandler)
 

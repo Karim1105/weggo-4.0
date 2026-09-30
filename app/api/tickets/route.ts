@@ -6,6 +6,7 @@ import TicketMessage from '@/models/TicketMessage'
 import { parsePagination } from '@/lib/pagination'
 import { saveTicketAttachments } from '@/lib/tickets/attachments'
 import { cleanupClosedTickets } from '@/lib/tickets/cleanup'
+import { rateLimitByKey } from '@/lib/rateLimit'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -43,6 +44,9 @@ async function getHandler(request: NextRequest, user: any) {
 async function postHandler(request: NextRequest, user: any) {
   void cleanupClosedTickets().catch(() => {})
 
+  const limited = rateLimitByKey(`tickets:create:${user._id}`, 10, 60 * 60 * 1000)
+  if (limited) return limited
+
   await connectDB()
 
   const contentType = request.headers.get('content-type') || ''
@@ -54,12 +58,12 @@ async function postHandler(request: NextRequest, user: any) {
   const subject = String(formData.get('subject') || '').trim()
   const message = String(formData.get('message') || '').trim()
 
-  if (!subject || subject.length < 3) {
-    return NextResponse.json({ success: false, error: 'Subject must be at least 3 characters' }, { status: 400 })
+  if (!subject || subject.length < 3 || subject.length > 200) {
+    return NextResponse.json({ success: false, error: 'Subject must be between 3 and 200 characters' }, { status: 400 })
   }
 
-  if (!message || message.length < 5) {
-    return NextResponse.json({ success: false, error: 'Message must be at least 5 characters' }, { status: 400 })
+  if (!message || message.length < 5 || message.length > 5000) {
+    return NextResponse.json({ success: false, error: 'Message must be between 5 and 5000 characters' }, { status: 400 })
   }
 
   const ticket = await Ticket.create({

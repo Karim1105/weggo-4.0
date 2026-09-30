@@ -1,17 +1,11 @@
-import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
-import { verifyToken } from '@/lib/auth'
+import { getServerAuthUser } from '@/lib/auth'
 
 export async function requireAdminPageAccess() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get('token')?.value
-
-  if (!token) {
-    notFound()
-  }
-
-  const payload = verifyToken(token)
-  if (!payload || payload.role !== 'admin') {
+  // Check the role against the database, not the JWT claim, so a demoted or
+  // banned admin loses access immediately instead of when the token expires.
+  const user = await getServerAuthUser()
+  if (!user || user.role !== 'admin' || user.banned) {
     notFound()
   }
 }

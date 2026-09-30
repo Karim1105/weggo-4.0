@@ -23,6 +23,7 @@ export interface IUser extends Document {
   bannedBy?: mongoose.Types.ObjectId
   resetPasswordToken?: string
   resetPasswordExpires?: Date
+  passwordChangedAt?: Date
   blockedUsers?: mongoose.Types.ObjectId[]
   createdAt: Date
   updatedAt: Date
@@ -82,6 +83,7 @@ const UserSchema = new Schema<IUser>(
     bannedBy: { type: Schema.Types.ObjectId, ref: 'User' },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
+    passwordChangedAt: { type: Date },
     blockedUsers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   },
   {
@@ -92,6 +94,9 @@ const UserSchema = new Schema<IUser>(
 UserSchema.pre('save', async function () {
   if (!this.isNew && !this.isModified('password')) return
   this.password = await bcrypt.hash(this.password, 12)
+  if (!this.isNew) {
+    this.passwordChangedAt = new Date()
+  }
 })
 
 UserSchema.methods.comparePassword = async function (candidatePassword: string) {

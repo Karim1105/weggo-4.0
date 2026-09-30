@@ -64,10 +64,10 @@ if [[ -z "$ADMIN_EMAIL" ]]; then
 fi
 
 while true; do
-  read -srp "$(echo -e "${YELLOW}Password (min 6 chars):${NC} ")" ADMIN_PASS
+  read -srp "$(echo -e "${YELLOW}Password (min 12 chars, upper, lower, digit):${NC} ")" ADMIN_PASS
   echo ""
-  if [[ ${#ADMIN_PASS} -lt 6 ]]; then
-    echo -e "${RED}Password must be at least 6 characters.${NC}"
+  if [[ ${#ADMIN_PASS} -lt 12 || ! "$ADMIN_PASS" =~ [a-z] || ! "$ADMIN_PASS" =~ [A-Z] || ! "$ADMIN_PASS" =~ [0-9] ]]; then
+    echo -e "${RED}Password must be at least 12 characters and include upper, lower case and a digit.${NC}"
     continue
   fi
   read -srp "$(echo -e "${YELLOW}Confirm password:${NC} ")" ADMIN_PASS_CONFIRM
@@ -80,18 +80,28 @@ while true; do
 done
 
 # ── hash the password with bcrypt (cost 12, matches User model) ─
-HASHED_PASS="$(node -e "
+# Passed via env (not argv) so the plaintext never shows up in `ps` output.
+HASHED_PASS="$(WEGGO_ADMIN_PASS="$ADMIN_PASS" node -e "
   const bcrypt = require('bcryptjs');
-  const hash = bcrypt.hashSync(process.argv[1], 12);
+  const hash = bcrypt.hashSync(process.env.WEGGO_ADMIN_PASS, 12);
   process.stdout.write(hash);
-" "$ADMIN_PASS")"
+")"
 
 # ── insert into MongoDB ─────────────────────────────────────
 echo ""
 echo -e "${CYAN}Creating admin user...${NC}"
 
+# Values are passed through the environment rather than interpolated into the
+# script so quotes in a name or email cannot inject JavaScript.
+export WEGGO_ADMIN_NAME="$ADMIN_NAME"
+export WEGGO_ADMIN_EMAIL="$(echo "$ADMIN_EMAIL" | tr '[:upper:]' '[:lower:]')"
+export WEGGO_ADMIN_HASH="$HASHED_PASS"
+
 RESULT="$(mongosh "$MONGODB_URI" --quiet --eval "
-  const existing = db.users.findOne({ email: '$(echo "$ADMIN_EMAIL" | tr '[:upper:]' '[:lower:]')' });
+  const adminName = process.env.WEGGO_ADMIN_NAME;
+  const adminEmail = process.env.WEGGO_ADMIN_EMAIL;
+  const adminHash = process.env.WEGGO_ADMIN_HASH;
+  const existing = db.users.findOne({ email: adminEmail });
   if (existing) {
     if (existing.role === 'admin') {
       print('EXISTS_ADMIN');
@@ -100,8 +110,8 @@ RESULT="$(mongosh "$MONGODB_URI" --quiet --eval "
         { _id: existing._id },
         {
           \$set: {
-            name: '$ADMIN_NAME',
-            password: '$HASHED_PASS',
+            name: adminName,
+            password: adminHash,
             role: 'admin',
             isVerified: true,
             sellerVerified: true,
@@ -119,9 +129,9 @@ RESULT="$(mongosh "$MONGODB_URI" --quiet --eval "
   } else {
     const now = new Date();
     db.users.insertOne({
-      name: '$ADMIN_NAME',
-      email: '$(echo "$ADMIN_EMAIL" | tr '[:upper:]' '[:lower:]')',
-      password: '$HASHED_PASS',
+      name: adminName,
+      email: adminEmail,
+      password: adminHash,
       role: 'admin',
       isVerified: true,
       sellerVerified: true,

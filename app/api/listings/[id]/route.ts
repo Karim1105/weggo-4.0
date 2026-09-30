@@ -78,9 +78,10 @@ export async function GET(
         'Vary': 'Cookie'
       }
     })
-  } catch (error: any) {
+  } catch (error) {
+    console.error('Listing fetch error:', error)
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to fetch product' },
+      { success: false, error: 'Failed to fetch product' },
       { status: 500 }
     )
   }
@@ -136,9 +137,10 @@ export async function DELETE(
       success: true,
       message: 'Product deleted successfully',
     })
-  } catch (error: any) {
+  } catch (error) {
+    console.error('Listing delete error:', error)
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to delete product' },
+      { success: false, error: 'Failed to delete product' },
       { status: 500 }
     )
   }
@@ -182,7 +184,20 @@ export async function PUT(
       )
     }
 
-    const body = await request.json()
+    if (user.banned) {
+      return NextResponse.json(
+        { success: false, error: 'Your account is banned.' },
+        { status: 403 }
+      )
+    }
+
+    const body = await request.json().catch(() => null)
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json(
+        { success: false, error: 'Invalid request body' },
+        { status: 400 }
+      )
+    }
     const {
       title,
       description,
@@ -206,9 +221,9 @@ export async function PUT(
     }
 
     if (description !== undefined) {
-      if (typeof description !== 'string' || description.trim().length < 10) {
+      if (typeof description !== 'string' || description.trim().length < 10 || description.trim().length > 5000) {
         return NextResponse.json(
-          { success: false, error: 'Description must be at least 10 characters' },
+          { success: false, error: 'Description must be between 10 and 5000 characters' },
           { status: 400 }
         )
       }
@@ -276,9 +291,9 @@ export async function PUT(
     }
 
     if (location !== undefined) {
-      if (typeof location !== 'string' || location.trim().length === 0) {
+      if (typeof location !== 'string' || location.trim().length === 0 || location.trim().length > 100) {
         return NextResponse.json(
-          { success: false, error: 'Location is required' },
+          { success: false, error: 'Location is required (max 100 characters)' },
           { status: 400 }
         )
       }
@@ -297,9 +312,10 @@ export async function PUT(
       listing: product,
       message: 'Product updated successfully',
     })
-  } catch (error: any) {
+  } catch (error) {
+    console.error('Listing update error:', error)
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to update product' },
+      { success: false, error: 'Failed to update product' },
       { status: 500 }
     )
   }

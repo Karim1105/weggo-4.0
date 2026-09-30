@@ -15,6 +15,7 @@ import type {
 } from '@/types/ai'
 
 const encoder = new TextEncoder()
+const MAX_MESSAGE_LENGTH = 2000
 
 function sha1(value: string) {
   return crypto.createHash('sha1').update(value).digest('hex')
@@ -55,10 +56,16 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const text = typeof body.message === 'string' ? body.message.trim() : ''
+  const text = typeof body?.message === 'string' ? body.message.trim() : ''
   if (!text) {
     return NextResponse.json(
       { success: false, error: 'Message is required' } satisfies AiChatErrorResponse,
+      { status: 400 }
+    )
+  }
+  if (text.length > MAX_MESSAGE_LENGTH) {
+    return NextResponse.json(
+      { success: false, error: `Message cannot exceed ${MAX_MESSAGE_LENGTH} characters` } satisfies AiChatErrorResponse,
       { status: 400 }
     )
   }
@@ -100,9 +107,10 @@ export async function POST(request: NextRequest) {
       }))
       await writer.write(sseEvent({ type: 'done' }))
     } catch (error) {
+      console.error('AI chat error:', error)
       await writer.write(sseEvent({
         type: 'error',
-        error: error instanceof Error ? error.message : 'Failed to process AI request',
+        error: 'Failed to process AI request',
       }))
       await writer.write(sseEvent({
         type: 'reply',

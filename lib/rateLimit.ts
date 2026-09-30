@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getClientIp } from '@/lib/clientIp'
 
 interface RateLimitStore {
   [key: string]: {
@@ -44,11 +45,9 @@ export function rateLimit(
   windowMs: number = 15 * 60 * 1000 // 15 minutes
 ) {
   return (req: NextRequest): NextResponse | null => {
-    const ip = req.headers.get('x-forwarded-for') || 
-               req.headers.get('x-real-ip') || 
-               'unknown'
-
-    return consumeRateLimitEntry(`rate_limit_${ip}`, maxRequests, windowMs)
+    const ip = getClientIp(req)
+    // Scope the bucket to the route so limits on one endpoint don't eat into another's.
+    return consumeRateLimitEntry(`rate_limit_${req.nextUrl.pathname}_${ip}`, maxRequests, windowMs)
   }
 }
 

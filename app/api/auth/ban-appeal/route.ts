@@ -23,14 +23,14 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { email, appealMessage } = body
 
-    if (!email || !email.trim()) {
+    if (typeof email !== 'string' || !email.trim() || email.length > 320) {
       return NextResponse.json(
         { success: false, error: 'Email is required' },
         { status: 400 }
       )
     }
 
-    if (!appealMessage || !appealMessage.trim()) {
+    if (typeof appealMessage !== 'string' || !appealMessage.trim()) {
       return NextResponse.json(
         { success: false, error: 'Appeal message is required' },
         { status: 400 }
@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const user = await User.findOne({ email: email.toLowerCase() })
+    const user = await User.findOne({ email: email.trim().toLowerCase() })
     if (!user) {
       logger.info('warning: Ban appeal - user not found', { email }, requestId)
       return NextResponse.json(

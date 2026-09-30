@@ -18,7 +18,26 @@ export type PricingJob = {
   createdAt: string
 }
 
-const JOBS = new Map<string, PricingJob>()
+type StoredPricingJob = PricingJob & { ownerId: string; expiresAt: number }
+
+// Jobs live in memory, so bound both their lifetime and their count.
+const JOB_TTL_MS = 15 * 60 * 1000
+const MAX_JOBS = 1000
+
+const JOBS = new Map<string, StoredPricingJob>()
+
+function pruneJobs() {
+  const now = Date.now()
+  for (const [id, job] of JOBS) {
+    if (job.expiresAt <= now) JOBS.delete(id)
+  }
+  // Map preserves insertion order, so the first keys are the oldest.
+  while (JOBS.size >= MAX_JOBS) {
+    const oldest = JOBS.keys().next().value
+    if (oldest === undefined) break
+    JOBS.delete(oldest)
+  }
+}
 
 const DEFAULT_STEPS: PricingJobStep[] = [
   { id: 'prepare', label: 'Preparing input', status: 'pending' },
@@ -32,10 +51,13 @@ export function createPricingJob(input: {
   description: string
   category: string
   condition: string
-}): PricingJob {
+}, ownerId: string): PricingJob {
+  pruneJobs()
   const id = crypto.randomUUID()
 
-  const job: PricingJob = {
+  const job: StoredPricingJob = {
+    ownerId,
+    expiresAt: Date.now() + JOB_TTL_MS,
     id,
     status: 'queued',
     progress: 0,
@@ -44,20 +66,24 @@ export function createPricingJob(input: {
   }
 
   JOBS.set(id, job)
+  const { ownerId: _ownerId, expiresAt: _expiresAt, ...publicJob } = job
 
   runJob(id, input)
     .catch((error) => {
       updateJob(id, {
         status: 'error',
-        error: error?.message || 'Pricing job failed'
+        error: 'Pricing job failed'
       })
     })
 
-  return job
+  return publicJob
 }
 
-export function getPricingJob(id: string): PricingJob | null {
-  return JOBS.get(id) || null
+export function getPricingJob(id: string, ownerId: string): PricingJob | null {
+  const job = JOBS.get(id)
+  if (!job || job.ownerId !== ownerId || job.expiresAt <= Date.now()) return null
+  const { ownerId: _ownerId, expiresAt: _expiresAt, ...publicJob } = job
+  return publicJob
 }
 
 function updateJob(id: string, update: Partial<PricingJob>) {

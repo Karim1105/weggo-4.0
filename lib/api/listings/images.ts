@@ -13,8 +13,10 @@ export async function uploadListingImages(formData: FormData, userId: string, pr
 export async function cleanupUploadedImages(imagePaths: string[]): Promise<void> {
   await Promise.all(
     imagePaths.map(async (imagePath) => {
+      const uploadsRoot = path.resolve(process.cwd(), 'public', 'uploads')
       const cleanPath = imagePath.startsWith('/') ? imagePath.slice(1) : imagePath
-      const fullPath = path.join(process.cwd(), 'public', cleanPath.replace(/^uploads\//, 'uploads/'))
+      const fullPath = path.resolve(process.cwd(), 'public', cleanPath)
+      if (!fullPath.startsWith(uploadsRoot + path.sep)) return
       try {
         await fs.unlink(fullPath)
       } catch {

@@ -5,6 +5,7 @@ import Product from '@/models/Product'
 import Wishlist from '@/models/Wishlist'
 import { getAuthUser } from '@/lib/auth'
 import { getCache, setCache } from '@/lib/cache'
+import { escapeRegex } from '@/lib/api/listings/query'
 
 export const dynamic = 'force-dynamic'
 
@@ -80,7 +81,7 @@ export async function GET(request: NextRequest) {
     // Use an anchored regex to improve performance and leverage indexes if possible
     const locationTerm = typeof user.location === 'string' ? user.location.trim() : ''
     if (locationTerm) {
-      recommendationOr.push({ location: { $regex: `^${locationTerm}`, $options: 'i' } })
+      recommendationOr.push({ location: { $regex: `^${escapeRegex(locationTerm.slice(0, 100))}`, $options: 'i' } })
     }
 
     // Get recommendations based on:
@@ -151,7 +152,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result)
   } catch (error: any) {
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to get recommendations' },
+      { success: false, error: 'Failed to get recommendations' },
       { status: 500 }
     )
   }

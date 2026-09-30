@@ -29,8 +29,10 @@ export async function cleanupTicketAttachments(attachmentPaths: string[]) {
     uniquePaths.map(async (attachmentPath) => {
       if (!attachmentPath.startsWith('/uploads/')) return
 
+      const uploadsRoot = path.resolve(process.cwd(), 'public', 'uploads')
       const cleanPath = attachmentPath.startsWith('/') ? attachmentPath.slice(1) : attachmentPath
-      const fullPath = path.join(process.cwd(), 'public', cleanPath)
+      const fullPath = path.resolve(process.cwd(), 'public', cleanPath)
+      if (!fullPath.startsWith(uploadsRoot + path.sep)) return
 
       try {
         await fs.unlink(fullPath)

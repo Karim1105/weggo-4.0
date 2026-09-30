@@ -4,6 +4,7 @@ import { requireAdmin } from '@/lib/auth'
 import Ticket from '@/models/Ticket'
 import { parsePagination } from '@/lib/pagination'
 import { cleanupClosedTickets } from '@/lib/tickets/cleanup'
+import { escapeRegex } from '@/lib/api/listings/query'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -15,7 +16,7 @@ async function getHandler(request: NextRequest) {
   const { searchParams } = new URL(request.url)
   const { page, limit, skip } = parsePagination(searchParams, { limit: 15, maxLimit: 100 })
   const status = (searchParams.get('status') || 'all').trim()
-  const search = (searchParams.get('search') || '').trim()
+  const search = escapeRegex((searchParams.get('search') || '').trim().slice(0, 100))
 
   const query: any = {}
   if (status !== 'all') {

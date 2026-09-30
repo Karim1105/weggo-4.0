@@ -9,7 +9,7 @@ async function handler(request: NextRequest, user: any) {
 
   if (request.method === 'GET') {
     const me = await User.findById(user._id)
-      .populate('blockedUsers', 'name email avatar')
+      .populate('blockedUsers', 'name avatar')
       .lean() as { blockedUsers?: unknown[] } | null
 
     return NextResponse.json({

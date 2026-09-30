@@ -3,6 +3,9 @@ import { getAuthUser } from '@/lib/auth'
 import { deriveChatSessionContext, attachAnonChatCookie } from '@/lib/chatbot-session'
 import { sendChatbotServiceMessage } from '@/lib/chatbot-service'
 import { isAiChatbotEnabled } from '@/lib/featureFlags'
+import { rateLimitByKey } from '@/lib/rateLimit'
+
+const MAX_MESSAGE_LENGTH = 2000
 
 export async function POST(request: NextRequest) {
   const user = await getAuthUser(request)
@@ -25,16 +28,26 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const message = typeof body.message === 'string' ? body.message.trim() : ''
+  const message = typeof body?.message === 'string' ? body.message.trim() : ''
   if (!message) {
     return NextResponse.json(
       { error: 'message is required' },
       { status: 400 }
     )
   }
+  if (message.length > MAX_MESSAGE_LENGTH) {
+    return NextResponse.json(
+      { error: `message cannot exceed ${MAX_MESSAGE_LENGTH} characters` },
+      { status: 400 }
+    )
+  }
 
   try {
     const { anonCookieValue, sessionId } = await deriveChatSessionContext(request)
+    const limited = rateLimitByKey(`ai_chat:${sessionId}`, 10, 60_000)
+    if (limited) {
+      return attachAnonChatCookie(limited, anonCookieValue)
+    }
     const response = await sendChatbotServiceMessage({
       session_id: sessionId,
       message,
@@ -42,9 +55,10 @@ export async function POST(request: NextRequest) {
 
     return attachAnonChatCookie(NextResponse.json(response), anonCookieValue)
   } catch (error) {
+    console.error('Chatbot service error:', error)
     return NextResponse.json(
       {
-        error: error instanceof Error ? error.message : 'Failed to reach chatbot service',
+        error: 'Failed to reach chatbot service',
       },
       { status: 502 }
     )

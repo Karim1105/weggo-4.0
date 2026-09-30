@@ -135,7 +135,7 @@ export default function ConversationClient({
     const isSender = first.sender.id === currentUserId
     const otherUser = isSender ? first.receiver : first.sender
 
-    if (!window.confirm(`Block ${otherUser.name || otherUser.email}? They won't be able to message you.`)) {
+    if (!window.confirm(`Block ${otherUser.name || 'User'}? They won't be able to message you.`)) {
       return
     }
 
@@ -181,7 +181,7 @@ export default function ConversationClient({
           </Link>
           <div className="flex items-center gap-2">
             <User className="w-5 h-5 text-gray-500" />
-            <span className="font-semibold text-gray-900">{otherUser.name || otherUser.email}</span>
+            <span className="font-semibold text-gray-900">{otherUser.name || 'User'}</span>
             {isOtherUserBanned && (
               <span className="px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-semibold">BANNED</span>
             )}

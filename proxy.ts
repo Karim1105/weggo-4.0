@@ -6,7 +6,62 @@ const protectedPaths = ['/sell', '/profile', '/favorites']
 // Paths that require admin privileges
 const adminPaths = ['/appeal-review', '/admin', '/api/admin']
 
-export function proxy(request: NextRequest) {
+function base64UrlToBytes(input: string): Uint8Array {
+  const base64 = input.replace(/-/g, '+').replace(/_/g, '/')
+  const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4)
+  const binary = atob(padded)
+  const bytes = new Uint8Array(binary.length)
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+  return bytes
+}
+
+// Verify an HS256 JWT signature and expiry. Decoding the payload without
+// checking the signature would let anyone forge `role: 'admin'`.
+async function verifyJwt(tok?: string): Promise<Record<string, any> | null> {
+  if (!tok) return null
+  const secret =
+    process.env.JWT_SECRET ||
+    (process.env.NODE_ENV === 'production' ? '' : 'dev-secret-do-not-use-in-production')
+  if (!secret) return null
+  try {
+    const parts = tok.split('.')
+    if (parts.length !== 3) return null
+    const [headerB64, payloadB64, signatureB64] = parts
+    const header = JSON.parse(new TextDecoder().decode(base64UrlToBytes(headerB64)))
+    if (header?.alg !== 'HS256') return null
+
+    const encoder = new TextEncoder()
+    const key = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['verify']
+    )
+    const valid = await crypto.subtle.verify(
+      'HMAC',
+      key,
+      base64UrlToBytes(signatureB64) as BufferSource,
+      encoder.encode(`${headerB64}.${payloadB64}`)
+    )
+    if (!valid) return null
+
+    const payload = JSON.parse(new TextDecoder().decode(base64UrlToBytes(payloadB64)))
+    if (typeof payload?.exp === 'number' && payload.exp * 1000 <= Date.now()) return null
+    return payload
+  } catch {
+    return null
+  }
+}
+
+function timingSafeEqualStrings(a: string, b: string): boolean {
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  return diff === 0
+}
+
+export async function proxy(request: NextRequest) {
 	const { pathname } = request.nextUrl
 	const origin =
 		process.env.NEXT_PUBLIC_SITE_URL ||
@@ -21,27 +76,6 @@ export function proxy(request: NextRequest) {
   const isStateChanging = ['POST', 'PUT', 'DELETE', 'PATCH'].includes(request.method)
   const csrfHeader = request.headers.get('x-csrf-token')
 
-  // Helper to decode JWT payload (base64url). Uses atob in edge runtime or Buffer if available.
-  function parseJwtPayload(tok?: string) {
-    if (!tok) return null
-    try {
-      const parts = tok.split('.')
-      if (parts.length < 2) return null
-      const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/')
-      let jsonString: string
-      if (typeof globalThis.atob === 'function') {
-        jsonString = globalThis.atob(base64)
-      } else if (typeof (globalThis as any).Buffer === 'function') {
-        jsonString = (globalThis as any).Buffer.from(base64, 'base64').toString('utf8')
-      } else {
-        return null
-      }
-      return JSON.parse(jsonString)
-    } catch (e) {
-      return null
-    }
-  }
-
   // Check if the current pathname matches any admin path (exact or nested)
   function isPathAdmin(p: string) {
     return pathname === p || pathname.startsWith(p + '/')
@@ -51,15 +85,8 @@ export function proxy(request: NextRequest) {
 
   // If request targets an admin-only route, ensure token exists and user is admin
   if (isAdminPath) {
-    const payload = parseJwtPayload(token)
-    const isAdmin = !!(
-      payload && (
-        payload.isAdmin === true ||
-        payload.admin === true ||
-        payload.role === 'admin' ||
-        (Array.isArray(payload.roles) && payload.roles.includes('admin'))
-      )
-    )
+    const payload = await verifyJwt(token)
+    const isAdmin = payload?.role === 'admin'
 
     if (!isAdmin) {
       // For API admin requests return 404 JSON, for pages rewrite to /404
@@ -85,7 +112,7 @@ export function proxy(request: NextRequest) {
   // CSRF protection for state-changing API requests
   // Exempt logout and login endpoints
   if (isApiRequest && isStateChanging && token && pathname !== '/api/auth/logout' && pathname !== '/api/auth/login') {
-	if (!csrfToken || !csrfHeader || csrfToken !== csrfHeader) {
+	if (!csrfToken || !csrfHeader || !timingSafeEqualStrings(csrfToken, csrfHeader)) {
 	  return NextResponse.json(
 		{ success: false, error: 'CSRF token missing or invalid' },
 		{ status: 403 }

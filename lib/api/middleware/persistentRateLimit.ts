@@ -1,6 +1,7 @@
 import mongoose from 'mongoose'
 import { NextRequest, NextResponse } from 'next/server'
 import { rateLimit } from '@/lib/rateLimit'
+import { getClientIp } from '@/lib/clientIp'
 
 interface PersistentRateLimitOptions {
   namespace: string
@@ -32,18 +33,12 @@ function getRateLimitModel() {
   )
 }
 
-function getRequestIp(request: NextRequest): string {
-  return (request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown')
-    .split(',')[0]
-    .trim()
-}
-
 export async function applyPersistentRateLimit(
   request: NextRequest,
   options: PersistentRateLimitOptions
 ): Promise<NextResponse | null> {
   try {
-    const ip = getRequestIp(request)
+    const ip = getClientIp(request)
     const now = new Date()
     const resetAt = new Date(Date.now() + options.windowMs)
     const key = `${options.namespace}:${ip}`

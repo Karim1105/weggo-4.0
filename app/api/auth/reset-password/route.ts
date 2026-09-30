@@ -3,6 +3,7 @@ import connectDB from '@/lib/db'
 import User from '@/models/User'
 import { rateLimit } from '@/lib/rateLimit'
 import crypto from 'crypto'
+import { validatePassword } from '@/lib/validators'
 
 export const dynamic = 'force-dynamic'
 
@@ -13,15 +14,16 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
     const { token, password } = body
-    if (!token || !password || typeof password !== 'string') {
+    if (!token || typeof token !== 'string' || !password || typeof password !== 'string') {
       return NextResponse.json(
         { success: false, error: 'Token and new password are required' },
         { status: 400 }
       )
     }
-    if (password.length < 6) {
+    const passwordValidation = validatePassword(password)
+    if (!passwordValidation.valid) {
       return NextResponse.json(
-        { success: false, error: 'Password must be at least 6 characters' },
+        { success: false, error: passwordValidation.message },
         { status: 400 }
       )
     }
@@ -48,9 +50,9 @@ export async function POST(request: NextRequest) {
       success: true,
       message: 'Password updated. You can now sign in.',
     })
-  } catch (error: any) {
+  } catch {
     return NextResponse.json(
-      { success: false, error: error.message || 'Request failed' },
+      { success: false, error: 'Request failed' },
       { status: 500 }
     )
   }

@@ -43,7 +43,7 @@ async function handler(request: NextRequest, user: any) {
   } catch (error: any) {
     logger.error('Fetch user ban appeals error', error, { endpoint: '/api/users/ban-appeals' }, requestId)
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to fetch appeals' },
+      { success: false, error: 'Failed to fetch appeals' },
       { status: 500 }
     )
   }

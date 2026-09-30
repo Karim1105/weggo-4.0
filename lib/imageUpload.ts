@@ -14,12 +14,27 @@ const MAGIC: Record<string, number[]> = {
   'image/webp': [0x52, 0x49, 0x46, 0x46],
 }
 
+// The stored extension is derived from the verified type, never from the
+// client-supplied filename, so an upload can't be saved as .html/.svg.
+const EXTENSION_BY_TYPE: Record<string, string> = {
+  'image/jpeg': '.jpg',
+  'image/jpg': '.jpg',
+  'image/png': '.png',
+  'image/webp': '.webp',
+}
+
+const SAFE_PATH_SEGMENT = /^[A-Za-z0-9_-]{1,64}$/
+
 function isAllowedImage(type: string, buffer: Buffer): boolean {
   const magic = MAGIC[type]
   if (!magic) return false
   if (buffer.length < magic.length) return false
   for (let i = 0; i < magic.length; i++) {
     if (buffer[i] !== magic[i]) return false
+  }
+  // RIFF is a generic container; require the WEBP form type as well.
+  if (type === 'image/webp') {
+    return buffer.length >= 12 && buffer.toString('ascii', 8, 12) === 'WEBP'
   }
   return true
 }
@@ -49,10 +64,14 @@ async function writeFilePublic(buffer: Buffer, destPath: string) {
 export async function saveImage(file: File, userId: string, productId?: string): Promise<string> {
   const buffer = await readAndValidateImage(file)
 
+  if (!SAFE_PATH_SEGMENT.test(userId) || (productId !== undefined && !SAFE_PATH_SEGMENT.test(productId))) {
+    throw new Error('Invalid upload path')
+  }
+
   const uploadsBase = path.join(process.cwd(), 'public', 'uploads', 'listings', userId)
   // If productId provided, save in subfolder for that product
   const uploadsDir = productId ? path.join(uploadsBase, productId) : uploadsBase
-  const ext = (file.name && path.extname(file.name)) || ''
+  const ext = EXTENSION_BY_TYPE[file.type]
   const imageId = randomUUID()
   const filename = `${imageId}${ext}`
   const dest = path.join(uploadsDir, filename)

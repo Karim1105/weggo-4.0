@@ -51,7 +51,14 @@ export function validateCsrfRequest(request: NextRequest): NextResponse | null {
   const csrfCookie = request.cookies.get(CSRF_COOKIE_NAME)?.value
   const csrfHeader = request.headers.get('x-csrf-token')
 
-  if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
+  const cookieBuf = Buffer.from(csrfCookie || '')
+  const headerBuf = Buffer.from(csrfHeader || '')
+  const matches =
+    cookieBuf.length > 0 &&
+    cookieBuf.length === headerBuf.length &&
+    timingSafeEqual(cookieBuf, headerBuf)
+
+  if (!matches) {
     return NextResponse.json(
       { success: false, error: 'CSRF token missing or invalid' },
       { status: 403 }

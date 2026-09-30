@@ -43,9 +43,9 @@ export async function GET(request: NextRequest) {
       setCsrfTokenCookie(response)
     }
     return response
-  } catch (error: any) {
+  } catch {
     return NextResponse.json(
-      { success: false, error: error.message || 'Failed to get user' },
+      { success: false, error: 'Failed to get user' },
       { status: 500 }
     )
   }

@@ -1,3 +1,4 @@
+import { isValidObjectId } from 'mongoose'
 import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db'
 import User from '@/models/User'
@@ -21,6 +22,16 @@ async function handler(request: NextRequest, admin: any) {
     if (!userId && !email) {
       return NextResponse.json(
         { success: false, error: 'Either userId or email is required' },
+        { status: 400 }
+      )
+    }
+
+    if (
+      (userId !== undefined && userId !== null && (typeof userId !== 'string' || !isValidObjectId(userId))) ||
+      (!userId && typeof email !== 'string')
+    ) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid userId or email' },
         { status: 400 }
       )
     }
