@@ -11,6 +11,14 @@ import { getSafeRedirectPath } from '@/lib/safeRedirect'
 
 export const dynamic = 'force-dynamic'
 
+// Redirect with a relative Location so the browser stays on the origin it
+// submitted the form from. An absolute URL built from the server's view of
+// the origin can differ (localhost behind a proxy, www vs apex), and the
+// CSP's form-action 'self' blocks cross-origin redirects after a form post.
+function seeOther(path: string): NextResponse {
+  return new NextResponse(null, { status: 303, headers: { Location: path } })
+}
+
 export async function POST(request: NextRequest) {
   const requestId = getRequestId(request)
 
@@ -27,8 +35,7 @@ export async function POST(request: NextRequest) {
     const contentType = request.headers.get('content-type') || ''
     const isJsonRequest = contentType.includes('application/json')
 
-    // Derive the public origin for redirects. Prefer the configured
-    // NEXT_PUBLIC_SITE_URL to avoid localhost redirects behind proxies.
+    // Base origin used only to validate the user-supplied redirect path.
     const origin =
       process.env.NEXT_PUBLIC_SITE_URL ||
       request.nextUrl.origin
@@ -56,8 +63,7 @@ export async function POST(request: NextRequest) {
       if (isJsonRequest) {
         return NextResponse.json({ success: false, error: 'Invalid credentials' }, { status: 400 })
       }
-      const errorUrl = new URL('/login?error=1', origin)
-      return NextResponse.redirect(errorUrl, 303)
+      return seeOther('/login?error=1')
     }
 
     if (!password) {
@@ -65,8 +71,7 @@ export async function POST(request: NextRequest) {
       if (isJsonRequest) {
         return NextResponse.json({ success: false, error: 'Invalid credentials' }, { status: 400 })
       }
-      const errorUrl = new URL('/login?error=1', origin)
-      return NextResponse.redirect(errorUrl, 303)
+      return seeOther('/login?error=1')
     }
 
     const user = await User.findOne({ email: email.toLowerCase() })
@@ -75,8 +80,7 @@ export async function POST(request: NextRequest) {
       if (isJsonRequest) {
         return NextResponse.json({ success: false, error: 'Invalid credentials' }, { status: 401 })
       }
-      const errorUrl = new URL('/login?error=1', origin)
-      return NextResponse.redirect(errorUrl, 303)
+      return seeOther('/login?error=1')
     }
 
     const isMatch = await user.comparePassword(password)
@@ -85,8 +89,7 @@ export async function POST(request: NextRequest) {
       if (isJsonRequest) {
         return NextResponse.json({ success: false, error: 'Invalid credentials' }, { status: 401 })
       }
-      const errorUrl = new URL('/login?error=1', origin)
-      return NextResponse.redirect(errorUrl, 303)
+      return seeOther('/login?error=1')
     }
 
     // Check if user is banned
@@ -98,11 +101,9 @@ export async function POST(request: NextRequest) {
           { status: 403 }
         )
       }
-      const errorUrl = new URL(
-        `/login?error=banned&reason=${encodeURIComponent(user.bannedReason || 'Your account has been banned')}`,
-        origin
+      return seeOther(
+        `/login?error=banned&reason=${encodeURIComponent(user.bannedReason || 'Your account has been banned')}`
       )
-      return NextResponse.redirect(errorUrl, 303)
     }
 
     const token = generateToken(user)
@@ -114,8 +115,6 @@ export async function POST(request: NextRequest) {
     const safeRedirect =
       (user.role !== 'admin' && getSafeRedirectPath(redirectParam, origin)) || baseRedirect
 
-    // Use an absolute redirect based on the public origin for form requests.
-    const redirectUrl = new URL(safeRedirect, origin)
     const response = isJsonRequest
       ? NextResponse.json({
           success: true,
@@ -128,7 +127,7 @@ export async function POST(request: NextRequest) {
           },
           redirect: safeRedirect,
         })
-      : NextResponse.redirect(redirectUrl, 303)
+      : seeOther(safeRedirect)
 
     // Set token expiration: 8 hours for admins, 7 days for regular users
     const maxAge = user.role === 'admin' ? 60 * 60 * 8 : 60 * 60 * 24 * 7
@@ -159,11 +158,7 @@ export async function POST(request: NextRequest) {
     }
     // On any server error, send the user back to the login page without
     // exposing internal details.
-    const origin =
-      process.env.NEXT_PUBLIC_SITE_URL ||
-      request.nextUrl.origin
-    const errorUrl = new URL('/login?error=1', origin)
-    return NextResponse.redirect(errorUrl, 303)
+    return seeOther('/login?error=1')
   }
 }
 

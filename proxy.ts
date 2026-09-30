@@ -72,8 +72,9 @@ function createNonce(): string {
 // Scripts are allowed only when they carry this request's nonce. 'strict-dynamic'
 // lets those trusted scripts load Next.js chunks, so no 'unsafe-inline' is needed.
 function buildContentSecurityPolicy(nonce: string): string {
+  const isDev = process.env.NODE_ENV !== 'production'
   const scriptSrc = ["'self'", `'nonce-${nonce}'`, "'strict-dynamic'"]
-  if (process.env.NODE_ENV !== 'production') {
+  if (isDev) {
     // React dev tooling and HMR evaluate code at runtime.
     scriptSrc.push("'unsafe-eval'")
   }
@@ -81,7 +82,13 @@ function buildContentSecurityPolicy(nonce: string): string {
     "default-src 'self'",
     `script-src ${scriptSrc.join(' ')}`,
     "script-src-attr 'none'",
-    // Inline style attributes (React style props, framer-motion) still need this.
+    // <style> elements must carry the nonce (dev keeps 'unsafe-inline' for
+    // Next.js hot-reload styles).
+    isDev ? "style-src-elem 'self' 'unsafe-inline'" : `style-src-elem 'self' 'nonce-${nonce}'`,
+    // style="" attributes can't carry a nonce. Server-rendered framer-motion
+    // initial states, next/image and the toast container rely on them.
+    "style-src-attr 'unsafe-inline'",
+    // Fallback for browsers without the -elem/-attr directives.
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: https: blob:",
     "font-src 'self'",

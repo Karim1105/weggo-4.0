@@ -11,6 +11,8 @@ import AIChatbot from '@/components/AIChatbot'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import MotionProvider from '@/components/MotionProvider'
 import { initializeEnv } from '@/lib/env'
+import { getCspNonce } from '@/lib/csp'
+import NonceScript from '@/components/NonceScript'
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' })
 const cairo = Cairo({ subsets: ['arabic', 'latin'], variable: '--font-cairo' })
@@ -53,11 +55,16 @@ export default async function RootLayout({
 }) {
   initializeEnv()
   const role = await getUserRole()
+  const nonce = await getCspNonce()
 
   return (
     <html lang="en" dir="ltr" className="overflow-x-hidden fast-motion">
+      <head>
+        {/* react-hot-toast (goober) reads window.__nonce__ for the <style> tag it injects. */}
+        {nonce && <NonceScript code={`window.__nonce__=${JSON.stringify(nonce)}`} />}
+      </head>
       <body className={`${inter.variable} ${cairo.variable} font-sans antialiased bg-gray-50 overflow-x-hidden`}>
-        <MotionProvider>
+        <MotionProvider nonce={nonce}>
           <ErrorBoundary>
             <Navbar role={role} />
             <main className="min-h-screen overflow-x-hidden">
